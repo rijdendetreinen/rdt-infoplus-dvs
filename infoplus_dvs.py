@@ -6,42 +6,33 @@ def parse_trein(data):
 	# Parse XML:
 	root = ET.fromstring(data)
 
+	# Zoek belangrijke nodes op:
 	product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisInformatieProductDVS')
 	vertrekstaat = product.find('{urn:ndov:cdm:trein:reisinformatie:data:2}DynamischeVertrekStaat')
 	treinNode = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Trein')
 
-	print product.attrib.get('TimeStamp'),
-
-	ritID = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitId').text
-	ritDatum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitDatum').text
-	ritStation = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitStation')
-	ritStationCode = ritStation.find('{urn:ndov:cdm:trein:reisinformatie:data:2}StationCode').text
-	
-	bestemmingPlanNode = treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Gepland"]')
-	bestemmingActueelNode = treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Actueel"]')
-	
-	bestemmingPlan = parse_station(bestemmingPlanNode)
-	bestemmingActueel = parse_station(bestemmingActueelNode)
-
-	# Maak trein object
+	# Maak trein object:
 	trein = vertrektrein()
-	trein.ritID = ritID
-	trein.ritDatum = ritDatum
-	trein.ritStationCode = ritStationCode
 	
+	# Metadata over rit:
+	trein.ritID = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitId').text
+	trein.ritDatum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitDatum').text
+	trein.ritStation = parse_station(vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitStation'))
+	trein.ritTimestamp = product.attrib.get('TimeStamp')
+	
+	# Treinnummer, soort/formule, etc:
 	trein.treinNr = treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNummer').text
 	trein.soort = treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
 	trein.soortCode = treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
 
-	trein.eindbestemmingPlan = bestemmingPlan
-	trein.eindbestemming = bestemmingActueel
-
+	# Vertrektijd en vertraging:
 	trein.vertrek = isodate.parse_datetime(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Gepland"]').text)
 	trein.vertrekActueel = isodate.parse_datetime(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Actueel"]').text)
 
 	trein.vertraging = isodate.parse_duration(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ExacteVertrekVertraging').text)
 	trein.vertragingGedempt = isodate.parse_duration(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}GedempteVertrekVertraging').text)
 
+	# Gepland en actueel vertrekspoor:
 	trein.vertrekSpoor = []
 	trein.vertrekSpoorActueel = []
 
@@ -49,6 +40,10 @@ def parse_trein(data):
 		trein.vertrekSpoor.append(spoorNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
 	for spoorNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Actueel"]'):
 		trein.vertrekSpoorActueel.append(spoorNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
+
+	# Geplande en actuele bestemming:
+	trein.eindbestemmingPlan = parse_station(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Gepland"]'))
+	trein.eindbestemming = parse_station(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Actueel"]'))
 
 	return trein
 
@@ -78,8 +73,9 @@ class station:
 
 class vertrektrein:
 	ritID = None
-	ritStationCode = None
+	ritStation = None
 	ritDatum = None
+	ritTimestamp = None
 
 	treinNr = None
 	eindbestemming = None
@@ -97,7 +93,16 @@ class vertrektrein:
 	vertrekSpoor = []
 	vertrekSpoorActueel = []
 
+	def lokaalVertrek(self):
+		tz = pytz.timezone('Europe/Amsterdam')
+		return self.vertrek.astimezone(tz)
+
+	def lokaalVertrekActueel(self):
+		tz = pytz.timezone('Europe/Amsterdam')
+		return self.vertrekActueel.astimezone(tz)
+
+	def gewijzigdVertrekspoor(self):
+		return (self.vertrekSpoor != self.vertrekSpoorActueel)
+
 	def __repr__(self):
-		est = pytz.timezone('Europe/Amsterdam')
-		vertrektijd = self.vertrek.astimezone(est)
-		return '<trein %-3s %6s om %s +%s spr %s van %-4s naar %s>' % (self.soortCode, self.ritID, vertrektijd, self.vertraging, self.vertrekSpoorActueel, self.ritStationCode, self.eindbestemming)
+		return '<trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % (self.soortCode, self.ritID, self.lokaalVertrek(), self.vertraging, self.ritStation.code, '-'.join(self.vertrekSpoorActueel), self.eindbestemming.code)
