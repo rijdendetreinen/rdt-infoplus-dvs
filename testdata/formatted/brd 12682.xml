@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:PutReisInformatieBoodschapIn xmlns:ns0="urn:ndov:cdm:trein:reisinformatie:messages:3">
+    <ns1:ReisInformatieProductDVS xmlns:ns1="urn:ndov:cdm:trein:reisinformatie:data:2" Versie="6.2" TimeStamp="2013-11-08T00:08:46.71Z">
+        <ns1:RIPAdministratie>
+            <ns1:ReisInformatieProductID>1311080108462500008</ns1:ReisInformatieProductID>
+            <ns1:AbonnementId>54</ns1:AbonnementId>
+            <ns1:ReisInformatieTijdstip>2013-11-08T00:34:00Z</ns1:ReisInformatieTijdstip>
+        </ns1:RIPAdministratie>
+        <ns1:DynamischeVertrekStaat>
+            <ns1:RitId>12682</ns1:RitId>
+            <ns1:RitDatum>2013-11-07</ns1:RitDatum>
+            <ns1:RitStation>
+                <ns1:StationCode>BRD</ns1:StationCode>
+                <ns1:Type>0</ns1:Type>
+                <ns1:KorteNaam>Barendrcht</ns1:KorteNaam>
+                <ns1:MiddelNaam>Barendrecht</ns1:MiddelNaam>
+                <ns1:LangeNaam>Barendrecht</ns1:LangeNaam>
+                <ns1:UICCode>8400090</ns1:UICCode>
+            </ns1:RitStation>
+            <ns1:Trein>
+                <ns1:TreinNummer>12682</ns1:TreinNummer>
+                <ns1:TreinSoort Code="IC">Intercity</ns1:TreinSoort>
+                <ns1:TreinFormule>3</ns1:TreinFormule>
+                <ns1:TreinStatus>0</ns1:TreinStatus>
+                <ns1:Vervoerder>NS</ns1:Vervoerder>
+                <ns1:Reserveren>N</ns1:Reserveren>
+                <ns1:Toeslag>N</ns1:Toeslag>
+                <ns1:NietInstappen>N</ns1:NietInstappen>
+                <ns1:AchterBlijvenAchtersteTreinDeel>N</ns1:AchterBlijvenAchtersteTreinDeel>
+                <ns1:RangeerBeweging>N</ns1:RangeerBeweging>
+                <ns1:SpeciaalKaartje>N</ns1:SpeciaalKaartje>
+                <ns1:ReisTip>
+                    <ns1:ReisTipStation>
+                        <ns1:StationCode>ZWD</ns1:StationCode>
+                        <ns1:Type>0</ns1:Type>
+                        <ns1:KorteNaam>Zwijndrcht</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Zwijndrecht</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Zwijndrecht</ns1:LangeNaam>
+                        <ns1:UICCode>8400752</ns1:UICCode>
+                    </ns1:ReisTipStation>
+                    <ns1:ReisTipCode>STO</ns1:ReisTipCode>
+                </ns1:ReisTip>
+                <ns1:TreinEindBestemming InfoStatus="Gepland">
+                    <ns1:StationCode>DDR</ns1:StationCode>
+                    <ns1:Type>5</ns1:Type>
+                    <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                    <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                    <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                    <ns1:UICCode>8400180</ns1:UICCode>
+                </ns1:TreinEindBestemming>
+                <ns1:TreinEindBestemming InfoStatus="Actueel">
+                    <ns1:StationCode>DDR</ns1:StationCode>
+                    <ns1:Type>5</ns1:Type>
+                    <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                    <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                    <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                    <ns1:UICCode>8400180</ns1:UICCode>
+                </ns1:TreinEindBestemming>
+                <ns1:VertrekTijd InfoStatus="Gepland">2013-11-08T00:34:00Z</ns1:VertrekTijd>
+                <ns1:VertrekTijd InfoStatus="Actueel">2013-11-08T00:36:23Z</ns1:VertrekTijd>
+                <ns1:ExacteVertrekVertraging>PT2M23S</ns1:ExacteVertrekVertraging>
+                <ns1:GedempteVertrekVertraging>PT0S</ns1:GedempteVertrekVertraging>
+                <ns1:TreinVertrekSpoor InfoStatus="Gepland">
+                    <ns1:SpoorNummer>4</ns1:SpoorNummer>
+                </ns1:TreinVertrekSpoor>
+                <ns1:TreinVertrekSpoor InfoStatus="Actueel">
+                    <ns1:SpoorNummer>4</ns1:SpoorNummer>
+                </ns1:TreinVertrekSpoor>
+                <ns1:VertrekRichting>A</ns1:VertrekRichting>
+                <ns1:AfstandPerronEindKopVertrekTrein>0</ns1:AfstandPerronEindKopVertrekTrein>
+                <ns1:TreinVleugel>
+                    <ns1:TreinVleugelVertrekSpoor InfoStatus="Gepland">
+                        <ns1:SpoorNummer>4</ns1:SpoorNummer>
+                    </ns1:TreinVleugelVertrekSpoor>
+                    <ns1:TreinVleugelVertrekSpoor InfoStatus="Actueel">
+                        <ns1:SpoorNummer>4</ns1:SpoorNummer>
+                    </ns1:TreinVleugelVertrekSpoor>
+                    <ns1:TreinVleugelEindBestemming InfoStatus="Gepland">
+                        <ns1:StationCode>DDR</ns1:StationCode>
+                        <ns1:Type>5</ns1:Type>
+                        <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                        <ns1:UICCode>8400180</ns1:UICCode>
+                    </ns1:TreinVleugelEindBestemming>
+                    <ns1:TreinVleugelEindBestemming InfoStatus="Actueel">
+                        <ns1:StationCode>DDR</ns1:StationCode>
+                        <ns1:Type>5</ns1:Type>
+                        <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                        <ns1:UICCode>8400180</ns1:UICCode>
+                    </ns1:TreinVleugelEindBestemming>
+                    <ns1:StopStations InfoStatus="Gepland">
+                        <ns1:Station>
+                            <ns1:StationCode>ZWD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Zwijndrcht</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Zwijndrecht</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Zwijndrecht</ns1:LangeNaam>
+                            <ns1:UICCode>8400752</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>DDR</ns1:StationCode>
+                            <ns1:Type>5</ns1:Type>
+                            <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                            <ns1:UICCode>8400180</ns1:UICCode>
+                        </ns1:Station>
+                    </ns1:StopStations>
+                    <ns1:StopStations InfoStatus="Actueel">
+                        <ns1:Station>
+                            <ns1:StationCode>ZWD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Zwijndrcht</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Zwijndrecht</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Zwijndrecht</ns1:LangeNaam>
+                            <ns1:UICCode>8400752</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>DDR</ns1:StationCode>
+                            <ns1:Type>5</ns1:Type>
+                            <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                            <ns1:UICCode>8400180</ns1:UICCode>
+                        </ns1:Station>
+                    </ns1:StopStations>
+                    <ns1:MaterieelDeelDVS>
+                        <ns1:MaterieelSoort>VIRM</ns1:MaterieelSoort>
+                        <ns1:MaterieelAanduiding>4</ns1:MaterieelAanduiding>
+                        <ns1:MaterieelLengte>16210</ns1:MaterieelLengte>
+                        <ns1:MaterieelDeelEindBestemming InfoStatus="Gepland">
+                            <ns1:StationCode>DDR</ns1:StationCode>
+                            <ns1:Type>5</ns1:Type>
+                            <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                            <ns1:UICCode>8400180</ns1:UICCode>
+                        </ns1:MaterieelDeelEindBestemming>
+                        <ns1:MaterieelDeelEindBestemming InfoStatus="Actueel">
+                            <ns1:StationCode>DDR</ns1:StationCode>
+                            <ns1:Type>5</ns1:Type>
+                            <ns1:KorteNaam>Dordrecht</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Dordrecht</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Dordrecht</ns1:LangeNaam>
+                            <ns1:UICCode>8400180</ns1:UICCode>
+                        </ns1:MaterieelDeelEindBestemming>
+                    </ns1:MaterieelDeelDVS>
+                </ns1:TreinVleugel>
+                <ns1:Wijziging>
+                    <ns1:WijzigingType>10</ns1:WijzigingType>
+                </ns1:Wijziging>
+            </ns1:Trein>
+        </ns1:DynamischeVertrekStaat>
+    </ns1:ReisInformatieProductDVS>
+</ns0:PutReisInformatieBoodschapIn>

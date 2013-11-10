@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns0:PutReisInformatieBoodschapIn xmlns:ns0="urn:ndov:cdm:trein:reisinformatie:messages:3">
+    <ns1:ReisInformatieProductDVS xmlns:ns1="urn:ndov:cdm:trein:reisinformatie:data:2" Versie="6.2" TimeStamp="2013-11-08T16:35:30.252Z">
+        <ns1:RIPAdministratie>
+            <ns1:ReisInformatieProductID>1311081735302500005</ns1:ReisInformatieProductID>
+            <ns1:AbonnementId>54</ns1:AbonnementId>
+            <ns1:ReisInformatieTijdstip>2013-11-08T17:00:00Z</ns1:ReisInformatieTijdstip>
+        </ns1:RIPAdministratie>
+        <ns1:DynamischeVertrekStaat>
+            <ns1:RitId>5860</ns1:RitId>
+            <ns1:RitDatum>2013-11-08</ns1:RitDatum>
+            <ns1:RitStation>
+                <ns1:StationCode>HVS</ns1:StationCode>
+                <ns1:Type>5</ns1:Type>
+                <ns1:KorteNaam>Hilversum</ns1:KorteNaam>
+                <ns1:MiddelNaam>Hilversum</ns1:MiddelNaam>
+                <ns1:LangeNaam>Hilversum</ns1:LangeNaam>
+                <ns1:UICCode>8400322</ns1:UICCode>
+            </ns1:RitStation>
+            <ns1:Trein>
+                <ns1:TreinNummer>5860</ns1:TreinNummer>
+                <ns1:TreinSoort Code="SPR">Sprinter</ns1:TreinSoort>
+                <ns1:TreinFormule>1</ns1:TreinFormule>
+                <ns1:TreinStatus>0</ns1:TreinStatus>
+                <ns1:Vervoerder>NS</ns1:Vervoerder>
+                <ns1:Reserveren>N</ns1:Reserveren>
+                <ns1:Toeslag>N</ns1:Toeslag>
+                <ns1:NietInstappen>N</ns1:NietInstappen>
+                <ns1:AchterBlijvenAchtersteTreinDeel>N</ns1:AchterBlijvenAchtersteTreinDeel>
+                <ns1:RangeerBeweging>N</ns1:RangeerBeweging>
+                <ns1:SpeciaalKaartje>N</ns1:SpeciaalKaartje>
+                <ns1:InstapTip>
+                    <ns1:InstapTipTreinSoort Code="IC">Intercity</ns1:InstapTipTreinSoort>
+                    <ns1:InstapTipUitstapStation>
+                        <ns1:StationCode>SHL</ns1:StationCode>
+                        <ns1:Type>6</ns1:Type>
+                        <ns1:KorteNaam>Schiphol</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Schiphol</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Schiphol</ns1:LangeNaam>
+                        <ns1:UICCode>8400561</ns1:UICCode>
+                    </ns1:InstapTipUitstapStation>
+                    <ns1:InstapTipTreinEindBestemming>
+                        <ns1:StationCode>SHL</ns1:StationCode>
+                        <ns1:Type>6</ns1:Type>
+                        <ns1:KorteNaam>Schiphol</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Schiphol</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Schiphol</ns1:LangeNaam>
+                        <ns1:UICCode>8400561</ns1:UICCode>
+                    </ns1:InstapTipTreinEindBestemming>
+                    <ns1:InstapTipVertrekTijd>2013-11-08T16:53:00Z</ns1:InstapTipVertrekTijd>
+                    <ns1:InstapTipVertrekSpoor>
+                        <ns1:SpoorNummer>5</ns1:SpoorNummer>
+                    </ns1:InstapTipVertrekSpoor>
+                </ns1:InstapTip>
+                <ns1:TreinEindBestemming InfoStatus="Gepland">
+                    <ns1:StationCode>HFD</ns1:StationCode>
+                    <ns1:Type>0</ns1:Type>
+                    <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                    <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                    <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                    <ns1:UICCode>8400332</ns1:UICCode>
+                </ns1:TreinEindBestemming>
+                <ns1:TreinEindBestemming InfoStatus="Actueel">
+                    <ns1:StationCode>HFD</ns1:StationCode>
+                    <ns1:Type>0</ns1:Type>
+                    <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                    <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                    <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                    <ns1:UICCode>8400332</ns1:UICCode>
+                </ns1:TreinEindBestemming>
+                <ns1:VertrekTijd InfoStatus="Gepland">2013-11-08T17:00:00Z</ns1:VertrekTijd>
+                <ns1:VertrekTijd InfoStatus="Actueel">2013-11-08T17:00:00Z</ns1:VertrekTijd>
+                <ns1:ExacteVertrekVertraging>PT0S</ns1:ExacteVertrekVertraging>
+                <ns1:GedempteVertrekVertraging>PT0S</ns1:GedempteVertrekVertraging>
+                <ns1:TreinVertrekSpoor InfoStatus="Gepland">
+                    <ns1:SpoorNummer>5</ns1:SpoorNummer>
+                </ns1:TreinVertrekSpoor>
+                <ns1:TreinVertrekSpoor InfoStatus="Actueel">
+                    <ns1:SpoorNummer>5</ns1:SpoorNummer>
+                </ns1:TreinVertrekSpoor>
+                <ns1:VertrekRichting>A</ns1:VertrekRichting>
+                <ns1:AfstandPerronEindKopVertrekTrein>0</ns1:AfstandPerronEindKopVertrekTrein>
+                <ns1:VerkorteRoute InfoStatus="Gepland">
+                    <ns1:Station>
+                        <ns1:StationCode>NDB</ns1:StationCode>
+                        <ns1:Type>1</ns1:Type>
+                        <ns1:KorteNaam>Naarden-B</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Naarden-Bussum</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Naarden-Bussum</ns1:LangeNaam>
+                        <ns1:UICCode>8400452</ns1:UICCode>
+                    </ns1:Station>
+                    <ns1:Station>
+                        <ns1:StationCode>WP</ns1:StationCode>
+                        <ns1:Type>1</ns1:Type>
+                        <ns1:KorteNaam>Weesp</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Weesp</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Weesp</ns1:LangeNaam>
+                        <ns1:UICCode>8400685</ns1:UICCode>
+                    </ns1:Station>
+                    <ns1:Station>
+                        <ns1:StationCode>ASD</ns1:StationCode>
+                        <ns1:Type>6</ns1:Type>
+                        <ns1:KorteNaam>A'dam C</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Amsterdam C.</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Amsterdam Centraal</ns1:LangeNaam>
+                        <ns1:UICCode>8400058</ns1:UICCode>
+                    </ns1:Station>
+                    <ns1:Station>
+                        <ns1:StationCode>SHL</ns1:StationCode>
+                        <ns1:Type>6</ns1:Type>
+                        <ns1:KorteNaam>Schiphol</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Schiphol</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Schiphol</ns1:LangeNaam>
+                        <ns1:UICCode>8400561</ns1:UICCode>
+                    </ns1:Station>
+                </ns1:VerkorteRoute>
+                <ns1:VerkorteRoute InfoStatus="Actueel">
+                    <ns1:Station>
+                        <ns1:StationCode>NDB</ns1:StationCode>
+                        <ns1:Type>1</ns1:Type>
+                        <ns1:KorteNaam>Naarden-B</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Naarden-Bussum</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Naarden-Bussum</ns1:LangeNaam>
+                        <ns1:UICCode>8400452</ns1:UICCode>
+                    </ns1:Station>
+                    <ns1:Station>
+                        <ns1:StationCode>WP</ns1:StationCode>
+                        <ns1:Type>1</ns1:Type>
+                        <ns1:KorteNaam>Weesp</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Weesp</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Weesp</ns1:LangeNaam>
+                        <ns1:UICCode>8400685</ns1:UICCode>
+                    </ns1:Station>
+                    <ns1:Station>
+                        <ns1:StationCode>ASD</ns1:StationCode>
+                        <ns1:Type>6</ns1:Type>
+                        <ns1:KorteNaam>A'dam C</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Amsterdam C.</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Amsterdam Centraal</ns1:LangeNaam>
+                        <ns1:UICCode>8400058</ns1:UICCode>
+                    </ns1:Station>
+                    <ns1:Station>
+                        <ns1:StationCode>SHL</ns1:StationCode>
+                        <ns1:Type>6</ns1:Type>
+                        <ns1:KorteNaam>Schiphol</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Schiphol</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Schiphol</ns1:LangeNaam>
+                        <ns1:UICCode>8400561</ns1:UICCode>
+                    </ns1:Station>
+                </ns1:VerkorteRoute>
+                <ns1:TreinVleugel>
+                    <ns1:TreinVleugelVertrekSpoor InfoStatus="Gepland">
+                        <ns1:SpoorNummer>5</ns1:SpoorNummer>
+                    </ns1:TreinVleugelVertrekSpoor>
+                    <ns1:TreinVleugelVertrekSpoor InfoStatus="Actueel">
+                        <ns1:SpoorNummer>5</ns1:SpoorNummer>
+                    </ns1:TreinVleugelVertrekSpoor>
+                    <ns1:TreinVleugelEindBestemming InfoStatus="Gepland">
+                        <ns1:StationCode>HFD</ns1:StationCode>
+                        <ns1:Type>0</ns1:Type>
+                        <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                        <ns1:UICCode>8400332</ns1:UICCode>
+                    </ns1:TreinVleugelEindBestemming>
+                    <ns1:TreinVleugelEindBestemming InfoStatus="Actueel">
+                        <ns1:StationCode>HFD</ns1:StationCode>
+                        <ns1:Type>0</ns1:Type>
+                        <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                        <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                        <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                        <ns1:UICCode>8400332</ns1:UICCode>
+                    </ns1:TreinVleugelEindBestemming>
+                    <ns1:StopStations InfoStatus="Gepland">
+                        <ns1:Station>
+                            <ns1:StationCode>HVSN</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>H'sum N</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hilversum Noord</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hilversum Noord</ns1:LangeNaam>
+                            <ns1:UICCode>8400324</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>BSMZ</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Bussum Z</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Bussum Zuid</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Bussum Zuid</ns1:LangeNaam>
+                            <ns1:UICCode>8400145</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>NDB</ns1:StationCode>
+                            <ns1:Type>1</ns1:Type>
+                            <ns1:KorteNaam>Naarden-B</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Naarden-Bussum</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Naarden-Bussum</ns1:LangeNaam>
+                            <ns1:UICCode>8400452</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>WP</ns1:StationCode>
+                            <ns1:Type>1</ns1:Type>
+                            <ns1:KorteNaam>Weesp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Weesp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Weesp</ns1:LangeNaam>
+                            <ns1:UICCode>8400685</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>DMN</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Diemen</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Diemen</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Diemen</ns1:LangeNaam>
+                            <ns1:UICCode>8400165</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASSP</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Scienceprk</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Science Park</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Science Park</ns1:LangeNaam>
+                            <ns1:UICCode>8400235</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASDM</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Muiderprt</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Muiderpoort</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Muiderpoort</ns1:LangeNaam>
+                            <ns1:UICCode>8400060</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASD</ns1:StationCode>
+                            <ns1:Type>6</ns1:Type>
+                            <ns1:KorteNaam>A'dam C</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Amsterdam C.</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Centraal</ns1:LangeNaam>
+                            <ns1:UICCode>8400058</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASS</ns1:StationCode>
+                            <ns1:Type>5</ns1:Type>
+                            <ns1:KorteNaam>Sloterdijk</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Sloterdijk</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Sloterdijk</ns1:LangeNaam>
+                            <ns1:UICCode>8400059</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASDL</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Lelylaan</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Lelylaan</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Lelylaan</ns1:LangeNaam>
+                            <ns1:UICCode>8400079</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>SHL</ns1:StationCode>
+                            <ns1:Type>6</ns1:Type>
+                            <ns1:KorteNaam>Schiphol</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Schiphol</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Schiphol</ns1:LangeNaam>
+                            <ns1:UICCode>8400561</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>HFD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                            <ns1:UICCode>8400332</ns1:UICCode>
+                        </ns1:Station>
+                    </ns1:StopStations>
+                    <ns1:StopStations InfoStatus="Actueel">
+                        <ns1:Station>
+                            <ns1:StationCode>HVSN</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>H'sum N</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hilversum Noord</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hilversum Noord</ns1:LangeNaam>
+                            <ns1:UICCode>8400324</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>BSMZ</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Bussum Z</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Bussum Zuid</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Bussum Zuid</ns1:LangeNaam>
+                            <ns1:UICCode>8400145</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>NDB</ns1:StationCode>
+                            <ns1:Type>1</ns1:Type>
+                            <ns1:KorteNaam>Naarden-B</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Naarden-Bussum</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Naarden-Bussum</ns1:LangeNaam>
+                            <ns1:UICCode>8400452</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>WP</ns1:StationCode>
+                            <ns1:Type>1</ns1:Type>
+                            <ns1:KorteNaam>Weesp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Weesp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Weesp</ns1:LangeNaam>
+                            <ns1:UICCode>8400685</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>DMN</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Diemen</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Diemen</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Diemen</ns1:LangeNaam>
+                            <ns1:UICCode>8400165</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASSP</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Scienceprk</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Science Park</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Science Park</ns1:LangeNaam>
+                            <ns1:UICCode>8400235</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASDM</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Muiderprt</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Muiderpoort</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Muiderpoort</ns1:LangeNaam>
+                            <ns1:UICCode>8400060</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASD</ns1:StationCode>
+                            <ns1:Type>6</ns1:Type>
+                            <ns1:KorteNaam>A'dam C</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Amsterdam C.</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Centraal</ns1:LangeNaam>
+                            <ns1:UICCode>8400058</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASS</ns1:StationCode>
+                            <ns1:Type>5</ns1:Type>
+                            <ns1:KorteNaam>Sloterdijk</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Sloterdijk</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Sloterdijk</ns1:LangeNaam>
+                            <ns1:UICCode>8400059</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>ASDL</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Lelylaan</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Lelylaan</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Amsterdam Lelylaan</ns1:LangeNaam>
+                            <ns1:UICCode>8400079</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>SHL</ns1:StationCode>
+                            <ns1:Type>6</ns1:Type>
+                            <ns1:KorteNaam>Schiphol</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Schiphol</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Schiphol</ns1:LangeNaam>
+                            <ns1:UICCode>8400561</ns1:UICCode>
+                        </ns1:Station>
+                        <ns1:Station>
+                            <ns1:StationCode>HFD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                            <ns1:UICCode>8400332</ns1:UICCode>
+                        </ns1:Station>
+                    </ns1:StopStations>
+                    <ns1:MaterieelDeelDVS>
+                        <ns1:MaterieelSoort>SGMW</ns1:MaterieelSoort>
+                        <ns1:MaterieelAanduiding>3</ns1:MaterieelAanduiding>
+                        <ns1:MaterieelLengte>7860</ns1:MaterieelLengte>
+                        <ns1:MaterieelDeelVertrekPositie>1</ns1:MaterieelDeelVertrekPositie>
+                        <ns1:MaterieelDeelVolgordeVertrek>1</ns1:MaterieelDeelVolgordeVertrek>
+                        <ns1:MaterieelDeelEindBestemming InfoStatus="Gepland">
+                            <ns1:StationCode>HFD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                            <ns1:UICCode>8400332</ns1:UICCode>
+                        </ns1:MaterieelDeelEindBestemming>
+                        <ns1:MaterieelDeelEindBestemming InfoStatus="Actueel">
+                            <ns1:StationCode>HFD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                            <ns1:UICCode>8400332</ns1:UICCode>
+                        </ns1:MaterieelDeelEindBestemming>
+                    </ns1:MaterieelDeelDVS>
+                    <ns1:MaterieelDeelDVS>
+                        <ns1:MaterieelSoort>SGMM</ns1:MaterieelSoort>
+                        <ns1:MaterieelAanduiding>3</ns1:MaterieelAanduiding>
+                        <ns1:MaterieelLengte>7860</ns1:MaterieelLengte>
+                        <ns1:MaterieelDeelVertrekPositie>3</ns1:MaterieelDeelVertrekPositie>
+                        <ns1:MaterieelDeelVolgordeVertrek>2</ns1:MaterieelDeelVolgordeVertrek>
+                        <ns1:MaterieelDeelEindBestemming InfoStatus="Gepland">
+                            <ns1:StationCode>HFD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                            <ns1:UICCode>8400332</ns1:UICCode>
+                        </ns1:MaterieelDeelEindBestemming>
+                        <ns1:MaterieelDeelEindBestemming InfoStatus="Actueel">
+                            <ns1:StationCode>HFD</ns1:StationCode>
+                            <ns1:Type>0</ns1:Type>
+                            <ns1:KorteNaam>Hoofddorp</ns1:KorteNaam>
+                            <ns1:MiddelNaam>Hoofddorp</ns1:MiddelNaam>
+                            <ns1:LangeNaam>Hoofddorp</ns1:LangeNaam>
+                            <ns1:UICCode>8400332</ns1:UICCode>
+                        </ns1:MaterieelDeelEindBestemming>
+                    </ns1:MaterieelDeelDVS>
+                </ns1:TreinVleugel>
+            </ns1:Trein>
+        </ns1:DynamischeVertrekStaat>
+    </ns1:ReisInformatieProductDVS>
+</ns0:PutReisInformatieBoodschapIn>
