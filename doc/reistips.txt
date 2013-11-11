@@ -1,0 +1,22 @@
+Reistips
+
+STNS = stopt niet in
+STO = stopt ook in
+STVA = stopt vanaf .. op alle tussengelegen stations
+STNVA = stopt vanaf .. niet op tussengelegen stations
+STT = stopt tot .. op alle tussengelegen stations
+STNT = stopt tot .. niet op tussengelegen stations
+STAL = stopt op alle tussengelegen stations
+STN = stopt niet op tussengelegen stations
+
+
+Instaptips
+
+De <soort trein> naar <eindbestemming> is eerder in <knooppunt-bestemming>.
+The <soort trein> to <eindbestemming> reaches <knooppunt-bestemming> sooner.
+
+
+Overstaptips
+
+Voor <overstap-eindbestemming> overstappen in <overstapstation>.
+For <overstap-eindbestemming> change at <overstapstation>.

@@ -1,0 +1,13 @@
+10 = vertrekvertraging (Later vertrek i.v.m. ...)
+20 = vertrekspoor gewijzigd
+22 = vertrekspoor gefixeerd
+30 = stopgedrag wijziging
+31 = extra trein / extra vertrek
+32 = vervallen vertrek (Rijdt niet ivm ..)
+33 = omleiding 
+34 = ritverkorting (Rijdt niet verder dan .. {i.v.m. ..})
+35 = ritverlenging (Rijdt verder naar ..)
+40 = treinstatus gewijzigd
+41 = rit verlegd
+50 = treinvervangend vervoer op de route
+51 = vertrekstation tvv
