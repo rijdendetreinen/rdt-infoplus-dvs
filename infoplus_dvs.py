@@ -226,6 +226,9 @@ class Trein:
 
 	vleugels = []
 	wijzigingen = []
+	reisTips = []
+	instapTips = []
+	overstapTips = []
 
 	def lokaalVertrek(self):
 		tz = pytz.timezone('Europe/Amsterdam')
@@ -273,3 +276,7 @@ class Wijziging:
 	oorzaak = None
 	oorzaakLang = None
 	station = None
+
+class ReisTip:
+	code = None
+	stations = []
