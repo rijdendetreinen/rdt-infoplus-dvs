@@ -41,9 +41,9 @@ while True:
 		trein = infoplus_dvs.parse_trein(content)
 		print datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "## %9s ## " % msgNumber, trein
 
-		if trein.ritStationCode in ['RTD', 'UT', 'ASDZ', 'ASD'] or trein.treinNr in ['1927', '1929', '1941', '1743', '36790', '21459', '1409', '21463', '1413', '5710', '919', '9315', '9322', '1218']:
+		if trein.ritStation.code in ['RTD', 'UT', 'ASDZ', 'ASD'] or trein.treinNr in ['1927', '1929', '1941', '1743', '36790', '21459', '1409', '21463', '1413', '5710', '919', '9315', '9322', '1218']:
 			# Save event:
-			filename = '/home/geert/ndovtest/treinlog/%s-%s_%s.xml' % (trein.treinNr, trein.ritStationCode, datetime.now().strftime("%Y%m%d-%H%M%S"))
+			filename = '/home/geert/ndovtest/treinlog/%s-%s_%s.xml' % (trein.treinNr, trein.ritStation.code, datetime.now().strftime("%Y%m%d-%H%M%S"))
 			logfile = open(filename, 'w')
 			logfile.write(content)
 			logfile.close()
