@@ -38,7 +38,7 @@ while True:
 
 	# Parse trein xml:
 	try:
-		trein = InfoPlusDVS.parse_trein(content)
+		trein = infoplus_dvs.parse_trein(content)
 		print datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "## %9s ## " % msgNumber, trein
 
 		if trein.ritStationCode in ['RTD', 'UT', 'ASDZ', 'ASD'] or trein.treinNr in ['1927', '1929', '1941', '1743', '36790', '21459', '1409', '21463', '1413', '5710', '919', '9315', '9322', '1218']:
