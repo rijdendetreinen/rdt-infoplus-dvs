@@ -90,7 +90,28 @@ def parse_trein(data):
 
 			vleugel.materieel.append(mat)
 
-		# Voeg vleugel aan trein toe
+		# Wijzigingsbericht(en):
+		vleugel.wijzigingen = []
+		for wijzigingNode in vleugelNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
+			wijziging = Wijziging()
+
+			wijziging.type = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text
+			
+			oorzaakNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
+			if oorzaakNode != None:
+				wijziging.oorzaak = oorzaakNode.text
+			
+			oorzaakLangNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
+			if oorzaakLangNode != None:
+				wijziging.oorzaakLang = oorzaakLangNode.text
+
+			stationNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
+			if stationNode != None:
+				wijziging.station = parse_station(stationNode)
+
+			vleugel.wijzigingen.append(wijziging)
+
+		# Voeg vleugel aan trein toe:
 		trein.vleugels.append(vleugel)
 
 	return trein
@@ -197,6 +218,7 @@ class Trein:
 	achterBlijvenAchtersteTreinDeel = False
 
 	vleugels = []
+	wijzigingen = []
 
 	def lokaalVertrek(self):
 		tz = pytz.timezone('Europe/Amsterdam')
