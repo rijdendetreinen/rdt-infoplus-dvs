@@ -53,10 +53,43 @@ def parse_trein(data):
 	trein.achterBlijvenAchtersteTreinDeel = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}AchterBlijvenAchtersteTreinDeel').text)
 
 	# Parse wijzigingsberichten:
+	trein.wijzigingen = []
 	for wijzigingNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
 		trein.wijzigingen.append(parse_wijziging(wijzigingNode))
 
-	# TODO: verkorte route, reistips
+	# Reistips:
+	trein.reisTips = []
+	for reisTipNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTip'):
+		reisTip = ReisTip()
+
+		reisTip.code = reisTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipCode').text
+		reisTip.stations = parse_stations(reisTipNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipStation'))
+		trein.reisTips.append(reisTip)
+
+	# Instaptips:
+	trein.instapTips = []
+	for instapTipNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTip'):
+		instapTip = InstapTip()
+
+		instapTip.uitstapStation = parse_station(instapTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipUitstapStation'))
+		instapTip.eindbestemming = parse_station(instapTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinEindBestemming'))
+		instapTip.treinSoort = instapTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinSoort').text
+		instapTip.instapSpoor = parse_spoor(instapTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekSpoor'))
+		instapTip.instapVertrek = isodate.parse_datetime(instapTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekTijd').text)
+
+		trein.instapTips.append(instapTip)
+
+	# Overstaptips:
+	trein.overstapTips = []
+	for overstapTipNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTip'):
+		overstapTip = OverstapTip()
+
+		overstapTip.bestemming = parse_station(overstapTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipBestemming'))
+		overstapTip.overstapStation = parse_station(overstapTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipOverstapStation'))
+
+		trein.overstapTips.append(overstapTip)
+
+	# TODO: verkorte route
 
 	# Parse treinvleugels
 	trein.vleugels = []
@@ -280,3 +313,15 @@ class Wijziging:
 class ReisTip:
 	code = None
 	stations = []
+
+class InstapTip:
+	treinSoort = None
+	treinSoortCode = None
+	uitstapStation = None
+	eindbestemming = None
+	instapVertrek = None
+	instapSpoor = None
+
+class OverstapTip:
+	bestemming = None
+	overstapStation = None
