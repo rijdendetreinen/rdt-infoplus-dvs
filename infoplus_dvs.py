@@ -52,7 +52,11 @@ def parse_trein(data):
 	trein.speciaalKaartje = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpeciaalKaartje').text)
 	trein.achterBlijvenAchtersteTreinDeel = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}AchterBlijvenAchtersteTreinDeel').text)
 
-	# TODO: verkorte route, wijzigingsberichten
+	# Parse wijzigingsberichten:
+	for wijzigingNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
+		trein.wijzigingen.append(parse_wijziging(wijzigingNode))
+
+	# TODO: verkorte route, reistips
 
 	# Parse treinvleugels
 	trein.vleugels = []
@@ -93,23 +97,7 @@ def parse_trein(data):
 		# Wijzigingsbericht(en):
 		vleugel.wijzigingen = []
 		for wijzigingNode in vleugelNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
-			wijziging = Wijziging()
-
-			wijziging.type = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text
-			
-			oorzaakNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
-			if oorzaakNode != None:
-				wijziging.oorzaak = oorzaakNode.text
-			
-			oorzaakLangNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
-			if oorzaakLangNode != None:
-				wijziging.oorzaakLang = oorzaakLangNode.text
-
-			stationNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
-			if stationNode != None:
-				wijziging.station = parse_station(stationNode)
-
-			vleugel.wijzigingen.append(wijziging)
+			vleugel.wijzigingen.append(parse_wijziging(wijzigingNode))
 
 		# Voeg vleugel aan trein toe:
 		trein.vleugels.append(vleugel)
@@ -135,6 +123,25 @@ def parse_station(stationElement):
 	station_object.type = stationElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Type').text
 
 	return station_object
+
+
+def parse_wijziging(wijzigingNode):
+	wijziging = Wijziging()
+	wijziging.type = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text
+	
+	oorzaakNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
+	if oorzaakNode != None:
+		wijziging.oorzaak = oorzaakNode.text
+	
+	oorzaakLangNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
+	if oorzaakLangNode != None:
+		wijziging.oorzaakLang = oorzaakLangNode.text
+
+	stationNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
+	if stationNode != None:
+		wijziging.station = parse_station(stationNode)
+
+	return wijziging
 
 
 def parse_vertreksporen(sporenNode):
