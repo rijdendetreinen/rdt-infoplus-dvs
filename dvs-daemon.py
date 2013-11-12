@@ -102,9 +102,9 @@ except KeyboardInterrupt:
 	pprint.pprint(stationStore)
 
 	print "Saving station store..."
-	pickle.dump(stationStore, open('datadump/station.store', 'wb'))
+	pickle.dump(stationStore, open('datadump/station.store', 'wb'), -1)
 
 	print "Saving trein store..."
-	pickle.dump(treinStore, open('datadump/trein.store', 'wb'))
+	pickle.dump(treinStore, open('datadump/trein.store', 'wb'), -1)
 
 	print "Processed %s messages" % msgNumber
