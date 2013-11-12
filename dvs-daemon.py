@@ -8,6 +8,8 @@ import cPickle as pickle
 import argparse
 import pprint
 
+from threading import Thread
+
 import infoplus_dvs
 
 # Maak output in utf-8 mogelijk in Python 2.x:
@@ -16,10 +18,14 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 
 
+# Default config (nog naar losse configfile):
+#dvs_server = "tcp://post.ndovloket.nl:7660"
+dvs_server = "tcp://46.19.34.170:8100"
+dvs_client_bind = "tcp://127.0.0.1:8120"
+
 # Initialiseer argparse
 parser = argparse.ArgumentParser(description='RDT InfoPlus DVS daemon')
 
-#parser.add_argument('-c', dest='configfile', action='store', help='Configuration file (defaults to %s)' % defaultConfig)
 parser.add_argument('-ls', '--laad-stations', dest='laadStations', action='store_true', help='Laad stationstore')
 parser.add_argument('-lt', '--laad-treinen', dest='laadTreinen', action='store_true', help='Laad treinstore')
 
@@ -61,26 +67,56 @@ def garbage_collect():
 # Laad oude datastores in (indien gespecifeerd):
 if args.laadStations == True:
 	print "Inladen stationStore..."
-	stationStoreFile = open('datastore/station.store', 'rb')
+	stationStoreFile = open('datadump/station.store', 'rb')
 	stationStore = pickle.load(stationStoreFile)
 	stationStoreFile.close()
 
 if args.laadTreinen == True:
 	print "Inladen treinStore..."
-	treinStoreFile = open('datastore/trein.store', 'rb')
+	treinStoreFile = open('datadump/trein.store', 'rb')
 	treinStore = pickle.load(treinStoreFile)
 	treinStoreFile.close()
 
+# Start eigen daemon:
+class read_client(Thread):
+	def __init__ (self):
+		Thread.__init__(self)
+		print "read_client init"
+	def run(self):
+		print "read_client run"
+		client_socket = context.socket(zmq.REP)
+		client_socket.bind(dvs_client_bind)
+		while True:
+			url = client_socket.recv()
+			try:
+				arguments = url.split('/')
+
+				if arguments[0] == 'station' and len(arguments) == 2:
+					stationCode = arguments[1].upper()
+					if stationCode in stationStore:
+						client_socket.send_pyobj(stationStore[stationCode])
+					else:
+						client_socket.send_pyobj({})
+				else:
+					client_socket.send_pyobj(None)
+			except Exception as e:
+				client_socket.send_pyobj(None)
+				print e
+		Thread.__init__(self)
+
 # Socket to talk to server
 context = zmq.Context()
-socket = context.socket(zmq.SUB)
 
-#socket.connect ("tcp://post.ndovloket.nl:7660")
-socket.connect ("tcp://46.19.34.170:8100")
-socket.setsockopt(zmq.SUBSCRIBE, '')
+# Start een nieuwe thread om client requests uit te lezen
+thread = read_client()
+thread.start()
+
+server_socket = context.socket(zmq.SUB)
+server_socket.connect(dvs_server)
+server_socket.setsockopt(zmq.SUBSCRIBE, '')
 
 poller = zmq.Poller()
-poller.register(socket, zmq.POLLIN)
+poller.register(server_socket, zmq.POLLIN)
 
 starttime = datetime.now()
 msgNumber = 0
@@ -96,7 +132,7 @@ print "Collecting updates from DVS server..."
 
 try:
 	while True:
-		multipart = socket.recv_multipart()
+		multipart = server_socket.recv_multipart()
 		address = multipart[0]
 		content = GzipFile('','r',0,StringIO(''.join(multipart[1:]))).read()
 
@@ -159,7 +195,7 @@ try:
 except KeyboardInterrupt:
 	print "Exiting..."
 
-	socket.close()
+	server_socket.close()
 	context.term()
 
 	print "Saving station store..."
