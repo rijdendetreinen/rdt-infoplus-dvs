@@ -3,6 +3,7 @@ import zmq
 from gzip import GzipFile
 from cStringIO import StringIO
 from datetime import datetime
+import cPickle as pickle
 
 import pprint
 
@@ -90,7 +91,7 @@ try:
 			print "** (i) Statistieken **"
 			print "   Station store: %s stations" % len(stationStore)
 			print "   Trein store: %s treinen" % len(treinStore)
-			print "   Messages verwerkt: %s" % msgnum
+			print "   Messages verwerkt: %s" % msgNumber
 except KeyboardInterrupt:
 	print "Exiting..."
 
@@ -99,5 +100,11 @@ except KeyboardInterrupt:
 
 	print "Station store:"
 	pprint.pprint(stationStore)
+
+	print "Saving station store..."
+	pickle.dump(stationStore, open('datadump/station.store', 'wb'))
+
+	print "Saving trein store..."
+	pickle.dump(treinStore, open('datadump/trein.store', 'wb'))
 
 	print "Processed %s messages" % msgNumber
