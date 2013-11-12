@@ -49,28 +49,28 @@ try:
 
 			ritStationCode = trein.ritStation.code
 			
-			# Maak item in stationStore indien niet aanwezig:
-			if ritStationCode not in stationStore:
-				stationStore[ritStationCode] = {}
-
-			# Maak item in treinStore indien niet aanwezig
-			if trein.treinNr not in treinStore:
-				treinStore[trein.treinNr] = {}
-			
 			if trein.status == '5':
 				# Trein vertrokken
 				print datetime.now().strftime("%H:%M:%S"), ' -->> trein %6s vertrokken van  %s' % (trein.treinNr, ritStationCode)
 
 				# Verwijder uit stationStore
-				if trein.treinNr in stationStore[ritStationCode]:
+				if ritStationCode in stationStore and trein.treinNr in stationStore[ritStationCode]:
 					del(stationStore[ritStationCode][trein.treinNr])
 
 				# Verwijder uit treinStore
-				if ritStationCode in treinStore[trein.treinNr]:
+				if trein.treinNr in treinStore and ritStationCode in treinStore[trein.treinNr]:
 					del(treinStore[trein.treinNr][ritStationCode])
 					if len(treinStore[trein.treinNr]) == 0:
 						del(treinStore[trein.treinNr])
 			else:
+				# Maak item in treinStore indien niet aanwezig
+				if trein.treinNr not in treinStore:
+					treinStore[trein.treinNr] = {}
+
+				# Maak item in stationStore indien niet aanwezig:
+				if ritStationCode not in stationStore:
+					stationStore[ritStationCode] = {}
+
 				# Update of insert trein aan station:
 				stationStore[ritStationCode][trein.treinNr] = trein
 				treinStore[trein.treinNr][ritStationCode] = trein
