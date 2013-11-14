@@ -97,6 +97,12 @@ class read_client(Thread):
 						client_socket.send_pyobj(stationStore[stationCode])
 					else:
 						client_socket.send_pyobj({})
+				elif arguments[0] == 'trein' and len(arguments) == 2:
+					treinNr = arguments[1]
+					if treinNr in treinStore:
+						client_socket.send_pyobj(treinStore[treinNr])
+					else:
+						client_socket.send_pyobj({})
 				else:
 					client_socket.send_pyobj(None)
 			except Exception as e:
