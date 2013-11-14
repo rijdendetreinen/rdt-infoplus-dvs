@@ -9,7 +9,7 @@ import bottle
 import infoplus_dvs
 
 # Default config (tijdelijk)
-dvs_client_server = "tcp://127.0.0.1:8120"
+dvs_client_server = "tcp://46.19.34.170:8120"
 
 # Maak verbinding
 context = zmq.Context()
@@ -25,8 +25,16 @@ def index(station):
 
 	# Lees trein array uit:
 	if treinen != None:
-		# Sorteer op geplande vertrektijd
-		treinenSorted = sorted(treinen, key=lambda trein: treinen[trein].vertrek)
+		# Bepaal sortering adhv GET-parameter sorteer=
+		if bottle.request.query.get('sorteer') == 'actueel':
+			# Sorteer op geplande vertrektijd
+			treinenSorted = sorted(treinen, key=lambda trein: treinen[trein].vertrekActueel)
+		elif bottle.request.query.get('sorteer') == 'vertraging':
+			# Sorteer op vertraging (hoog naar laag)
+			treinenSorted = sorted(treinen, key=lambda trein: treinen[trein].vertraging)[::-1]
+		else:
+			# (Standaard) Sorteer op gepland vertrek
+			treinenSorted = sorted(treinen, key=lambda trein: treinen[trein].vertrek)
 
 		vertrektijden = []
 
@@ -45,11 +53,14 @@ def index(station):
 				trein_dict['sprWijziging'] = True
 			else:
 				trein_dict['sprWijziging'] = False
+
+			# Todo:
 			trein_dict['opmerkingen'] = None
 			trein_dict['via'] = None
 			trein_dict['opgeheven'] = False
 
 			vertrektijden.append(trein_dict)
+
 		return { 'status': 'OK', 'vertrektijden': vertrektijden }
 	else:
 		return { 'result': 'OK', 'vertrektijden': [] }
