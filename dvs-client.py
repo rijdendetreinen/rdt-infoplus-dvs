@@ -33,20 +33,15 @@ if treinen != None:
 		trein = treinen[treinNr]
 
 		print "%s (%s)  +%s  %-10s %6s  naar " % (trein.lokaalVertrek().strftime("%H:%M"), trein.lokaalVertrekActueel().strftime("%H:%M"), trein.vertraging, trein.soort, trein.treinNr),
-		for bestemming in trein.eindbestemming:
-			print bestemming.langeNaam,
-		print
+		print '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemming)
 
 		for vleugel in trein.vleugels:
 			if (len(trein.vleugels) > 1):
 				print "                         * %s" % vleugel.eindbestemming.langeNaam
 			print "                           via: ",
-			for station in vleugel.stopstations:
-				print station.middelNaam,
-			print
+			print ', '.join(station.langeNaam for station in vleugel.stopstations)
+
 			print "                           mat: ",
-			for mat in vleugel.materieel:
-				print mat.soort, mat.aanduiding, " ",
-			print
+			print ', '.join(mat.soort + ' ' + mat.aanduiding for mat in vleugel.materieel)
 else:
 	print "Geen treinen"
