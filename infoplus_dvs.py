@@ -274,6 +274,15 @@ class Trein:
 	def gewijzigdVertrekspoor(self):
 		return (self.vertrekSpoor != self.vertrekSpoorActueel)
 
+	def wijzigingen_str(self, taal='nl'):
+		wijzigingen = []
+
+		for wijziging in self.wijzigingen:
+			if wijziging.type != 40:
+				wijzigingen.append(wijziging.to_str(taal))
+
+		return wijzigingen
+
 	def tips(self, taal='nl'):
 		tips = []
 
@@ -321,6 +330,61 @@ class Wijziging:
 	oorzaak = None
 	oorzaakLang = None
 	station = None
+
+	def to_str(self, taal='nl'):
+		if self.type == '10':
+			if taal == 'en':
+				return 'Delayed'
+			else:
+				return 'Later vertrek%s' % self.oorzaak_prefix(taal)
+		if self.type == '20':
+			if taal == 'en':
+				return 'Platform has been changed'
+			else:
+				return 'Gewijzigd vertrekspoor'
+		if self.type == '22':
+			if taal == 'en':
+				return 'Platform has been allocated'
+			else:
+				return 'Vertrekspoor toegewezen'
+		if self.type == '31':
+			if taal == 'en':
+				return 'Additional train'
+			else:
+				return 'Extra trein'
+		if self.type == '32':
+			if taal == 'en':
+				return 'Train is cancelled'
+			else:
+				return 'Trein rijdt niet%s' % self.oorzaak_prefix(taal)
+		if self.type == '33':
+			if taal == 'en':
+				return 'Diverted train'
+			else:
+				return 'Rijdt via een andere route%s' % self.oorzaak_prefix(taal)
+		if self.type == '34':
+			if taal == 'en':
+				return 'Terminates at %s' % self.station.langeNaam
+			else:
+				return 'Rijdt niet verder dan %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
+		if self.type == '35':
+			if taal == 'en':
+				return 'Continues to %s' % self.station.langeNaam
+			else:
+				return 'Rijdt verder naar %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
+		if self.type == '41':
+			if taal == 'en':
+				return 'Attention, train goes to %s' % self.station.langeNaam
+			else:
+				return 'Let op, rijdt naar %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
+		else:
+			return '%s' % self.type
+
+	def oorzaak_prefix(self, taal):
+		if taal == 'en' or self.oorzaakLang == None:
+			return ''
+		else:
+			return ' i.v.m. %s' % self.oorzaakLang
 
 class ReisTip:
 	code = None
