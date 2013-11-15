@@ -21,7 +21,7 @@ sys.setdefaultencoding("utf-8")
 # Default config (nog naar losse configfile):
 #dvs_server = "tcp://post.ndovloket.nl:7660"
 dvs_server = "tcp://46.19.34.170:8100"
-dvs_client_bind = "tcp://127.0.0.1:8120"
+dvs_client_bind = "tcp://0.0.0.0:8120"
 
 # Initialiseer argparse
 parser = argparse.ArgumentParser(description='RDT InfoPlus DVS daemon')
