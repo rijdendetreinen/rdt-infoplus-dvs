@@ -274,11 +274,18 @@ class Trein:
 	def gewijzigdVertrekspoor(self):
 		return (self.vertrekSpoor != self.vertrekSpoorActueel)
 
+	def is_opgeheven(self):
+		for wijziging in self.wijzigingen:
+			if wijziging.type == '32':
+				return True
+
+		return False
+
 	def wijzigingen_str(self, taal='nl'):
 		wijzigingen = []
 
 		for wijziging in self.wijzigingen:
-			if wijziging.type != 40:
+			if wijziging.type != '40':
 				wijzigingen.append(wijziging.to_str(taal))
 
 		return wijzigingen

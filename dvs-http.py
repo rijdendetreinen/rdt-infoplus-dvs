@@ -44,7 +44,7 @@ def index(station):
 			trein_dict = { }
 			trein_dict['treinNr'] = trein.treinNr
 			trein_dict['vertrek'] = trein.lokaalVertrek().isoformat()
-			trein_dict['bestemming'] = '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemming)
+			trein_dict['bestemming'] = '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemmingActueel)
 			trein_dict['soort'] = trein.soort
 			trein_dict['soortAfk'] = trein.soortCode
 			trein_dict['vertraging'] = round(trein.vertraging.seconds / 60)
@@ -54,12 +54,12 @@ def index(station):
 			else:
 				trein_dict['sprWijziging'] = False
 
-			trein_dict['opmerkingen'] = trein.wijzigingen_str() + trein.tips()
+			trein_dict['opmerkingen'] = trein.wijzigingen_str('nl') + trein.tips('nl')
+			trein_dict['opgeheven'] = trein.is_opgeheven()
+			trein_dict['status'] = trein.status
 
 			# Todo:
 			trein_dict['via'] = None
-			trein_dict['opgeheven'] = False
-			trein_dict['status'] = trein.status
 
 			vertrektijden.append(trein_dict)
 
