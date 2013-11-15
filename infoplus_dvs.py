@@ -456,9 +456,9 @@ class InstapTip:
 
 	def to_str(self, taal='nl'):
 		if taal == 'en':
-			return 'The %s to %s reaches %s sooner.' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+			return 'The %s to %s reaches %s sooner' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
 		else:
-			return 'De %s naar %s is eerder in %s.' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+			return 'De %s naar %s is eerder in %s' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
 
 class OverstapTip:
 	bestemming = None
@@ -466,6 +466,6 @@ class OverstapTip:
 
 	def to_str(self, taal='nl'):
 		if taal == 'en':
-			return 'For %s, change at %s.' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
+			return 'For %s, change at %s' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
 		else:
-			return 'Voor %s overstappen in %s.' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
+			return 'Voor %s overstappen in %s' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
