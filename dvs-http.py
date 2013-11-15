@@ -59,6 +59,7 @@ def index(station):
 			# Todo:
 			trein_dict['via'] = None
 			trein_dict['opgeheven'] = False
+			trein_dict['status'] = trein.status
 
 			vertrektijden.append(trein_dict)
 

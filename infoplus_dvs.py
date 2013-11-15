@@ -293,7 +293,17 @@ class Trein:
 		for tip in self.overstapTips:
 			tips.append(tip.to_str(taal))
 
+		if self.nietInstappen == True:
+			tips.append(self.nietInstappen_str(taal))
+
 		return tips
+
+	def nietInstappen_str(self, taal):
+		if self.nietInstappen == True:
+			if taal == 'en':
+				return 'Do not board'
+			else:
+				return 'Niet instappen'
 
 	def __repr__(self):
 		return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % (self.soortCode, self.ritID, self.lokaalVertrek(), self.vertraging, self.ritStation.code, self.vertrekSpoorActueel, self.eindbestemmingActueel)
