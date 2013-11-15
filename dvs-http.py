@@ -54,8 +54,9 @@ def index(station):
 			else:
 				trein_dict['sprWijziging'] = False
 
+			trein_dict['opmerkingen'] = trein.tips()
+
 			# Todo:
-			trein_dict['opmerkingen'] = None
 			trein_dict['via'] = None
 			trein_dict['opgeheven'] = False
 

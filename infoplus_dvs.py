@@ -274,6 +274,18 @@ class Trein:
 	def gewijzigdVertrekspoor(self):
 		return (self.vertrekSpoor != self.vertrekSpoorActueel)
 
+	def tips(self, taal='nl'):
+		tips = []
+
+		for tip in self.reisTips:
+			tips.append(tip.to_str(taal))
+		for tip in self.instapTips:
+			tips.append(tip.to_str(taal))
+		for tip in self.overstapTips:
+			tips.append(tip.to_str(taal))
+
+		return tips
+
 	def __repr__(self):
 		return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % (self.soortCode, self.ritID, self.lokaalVertrek(), self.vertraging, self.ritStation.code, self.vertrekSpoorActueel, self.eindbestemmingActueel)
 
@@ -314,6 +326,62 @@ class ReisTip:
 	code = None
 	stations = []
 
+	def to_str(self, taal='nl'):
+		if self.code == 'STNS':
+			if taal == 'en':
+				return 'Does not call at %s' % self.stations_str(taal)
+			else:
+				return 'Stopt niet in %s' % self.stations_str(taal)
+		elif self.code == 'STO':
+			if taal == 'en':
+				return 'Also calls at %s' % self.stations_str(taal)
+			else:
+				return 'Stopt ook in %s' % self.stations_str(taal)
+		elif self.code == 'STVA':
+			if taal == 'en':
+				return 'Calls at all stations after %s' % self.stations_str(taal)
+			else:
+				return 'Stopt vanaf %s op alle stations' % self.stations_str(taal)
+		elif self.code == 'STNVA':
+			if taal == 'en':
+				return 'Does not call at intermediate stations after %s' % self.stations_str(taal)
+			else:
+				return 'Stopt vanaf %s niet op tussengelegen stations' % self.stations_str(taal)
+		elif self.code == 'STT':
+			if taal == 'en':
+				return 'Calls at all stations until %s' % self.stations_str(taal)
+			else:
+				return 'Stopt tot %s op alle tussengelegen stations' % self.stations_str(taal)
+		elif self.code == 'STNT':
+			if taal == 'en':
+				return 'First stop at %s' % self.stations_str(taal)
+			else:
+				return 'Non-stop tot %s' % self.stations_str(taal)
+		elif self.code == 'STAL':
+			if taal == 'en':
+				return 'Calls at all stations'
+			else:
+				return 'Stopt op alle tussengelegen stations'
+		elif self.code == 'STN':
+			if taal == 'en':
+				return 'Does not call at intermediate stations'
+			else:
+				return 'Stopt niet op tussengelegen stations'
+		else:
+			return self.code
+
+	def stations_str(self, taal='nl'):
+		if taal == 'en':
+			if len(self.stations) <= 2:
+				return ' and '.join(station.langeNaam for station in self.stations)
+			else:
+				return ', '.join(station.langeNaam for station in self.stations[:-1]) + ', and ' + self.stations[-1].langeNaam
+		else:
+			if len(self.stations) <= 2:
+				return ' en '.join(station.langeNaam for station in self.stations)
+			else:
+				return ', '.join(station.langeNaam for station in self.stations[:-1]) + ' en ' + self.stations[-1].langeNaam
+
 class InstapTip:
 	treinSoort = None
 	treinSoortCode = None
@@ -322,6 +390,18 @@ class InstapTip:
 	instapVertrek = None
 	instapSpoor = None
 
+	def to_str(self, taal='nl'):
+		if taal == 'en':
+			return 'The %s to %s reaches %s sooner.' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+		else:
+			return 'De %s naar %s is eerder in %s.' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+
 class OverstapTip:
 	bestemming = None
 	overstapStation = None
+
+	def to_str(self, taal='nl'):
+		if taal == 'en':
+			return 'For %s, change at %s.' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
+		else:
+			return 'Voor %s overstappen in %s.' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
