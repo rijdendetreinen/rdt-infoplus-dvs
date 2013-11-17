@@ -89,7 +89,12 @@ def parse_trein(data):
 
 		trein.overstapTips.append(overstapTip)
 
-	# TODO: verkorte route
+	# Verkorte route
+	trein.verkorteRoute = []
+	trein.verkorteRouteActueel = []
+
+	trein.verkorteRoute = parse_stations(treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
+	trein.verkorteRouteActueel = parse_stations(treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
 
 	# Parse treinvleugels
 	trein.vleugels = []
@@ -256,6 +261,9 @@ class Trein:
 	speciaalKaartje = False
 	rangeerBeweging = False
 	achterBlijvenAchtersteTreinDeel = False
+
+	verkorteRoute = []
+	verkorteRouteActueel = []
 
 	vleugels = []
 	wijzigingen = []
