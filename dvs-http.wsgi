@@ -56,12 +56,13 @@ def index(station):
 			else:
 				trein_dict['sprWijziging'] = False
 
-			trein_dict['opmerkingen'] = trein.wijzigingen_str('nl') + trein.tips('nl')
+			trein_dict['opmerkingen'] = trein.wijzigingen_str('nl')
+			trein_dict['tips'] = trein.tips('nl')
 			trein_dict['opgeheven'] = trein.is_opgeheven()
 			trein_dict['status'] = trein.status
 
 			if trein.verkorteRouteActueel == None or len(trein.verkorteRouteActueel) == 0:
-				trein_dict['via'] = ''
+				trein_dict['via'] = None
 			else:
 				trein_dict['via'] = ', '.join(via.middelNaam for via in trein.verkorteRouteActueel)
 

@@ -289,11 +289,11 @@ class Trein:
 
 		return False
 
-	def wijzigingen_str(self, taal='nl'):
+	def wijzigingen_str(self, taal='nl', only_important=True):
 		wijzigingen = []
 
 		for wijziging in self.wijzigingen:
-			if wijziging.type != '40':
+			if wijziging.type != '40' and (wijziging.is_important() == True or only_important != True):
 				wijzigingen.append(wijziging.to_str(taal))
 
 		return wijzigingen
@@ -355,6 +355,12 @@ class Wijziging:
 	oorzaak = None
 	oorzaakLang = None
 	station = None
+
+	def is_important(self):
+		if self.type == 20 or self.type == '22':
+			return False
+		else:
+			return True
 
 	def to_str(self, taal='nl'):
 		if self.type == '10':
