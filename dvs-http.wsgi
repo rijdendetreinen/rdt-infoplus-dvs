@@ -61,13 +61,13 @@ def index(station):
 			trein_dict['status'] = trein.status
 
 			if trein.verkorteRouteActueel == None or len(trein.verkorteRouteActueel) == 0:
-				trein_dict['via'] = None
+				trein_dict['via'] = ''
 			else:
 				trein_dict['via'] = ', '.join(via.middelNaam for via in trein.verkorteRouteActueel)
 
 			vertrektijden.append(trein_dict)
 
-		return { 'status': 'OK', 'vertrektijden': vertrektijden }
+		return { 'result': 'OK', 'vertrektijden': vertrektijden }
 	else:
 		return { 'result': 'OK', 'vertrektijden': [] }
 
