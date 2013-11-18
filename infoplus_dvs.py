@@ -357,7 +357,7 @@ class Wijziging:
 	station = None
 
 	def is_important(self):
-		if self.type == 20 or self.type == '22':
+		if self.type == '10' or self.type == '22':
 			return False
 		else:
 			return True
