@@ -39,6 +39,8 @@ def index(station):
 			trein = treinen[treinNr]
 
 			trein_dict = { }
+
+			# Basis treininformatie
 			trein_dict['treinNr'] = trein.treinNr
 			trein_dict['vertrek'] = trein.lokaalVertrek().isoformat()
 			trein_dict['bestemming'] = '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemmingActueel)
@@ -46,6 +48,7 @@ def index(station):
 			trein_dict['soortAfk'] = trein.soortCode
 			trein_dict['vertraging'] = round(trein.vertraging.seconds / 60)
 			trein_dict['spoor'] = '/'.join(str(spoor) for spoor in trein.vertrekSpoorActueel)
+
 			if '/'.join(str(spoor) for spoor in trein.vertrekSpoor) != '/'.join(str(spoor) for spoor in trein.vertrekSpoorActueel):
 				trein_dict['sprWijziging'] = True
 			else:
@@ -53,13 +56,28 @@ def index(station):
 
 			trein_dict['opmerkingen'] = trein.wijzigingen_str('nl')
 			trein_dict['tips'] = trein.tips('nl')
-			trein_dict['opgeheven'] = trein.is_opgeheven()
+			trein_dict['opgeheven'] = False
 			trein_dict['status'] = trein.status
 
+			# Trein opgeheven: wis spoor, vertraging etc.
+			if trein.is_opgeheven() or True:
+				trein_dict['opgeheven'] = True
+				trein_dict['spoor'] = None
+				trein_dict['vertraging'] = 0
+
+			# Verkorte (via)-route
 			if trein.verkorteRouteActueel == None or len(trein.verkorteRouteActueel) == 0:
 				trein_dict['via'] = None
 			else:
 				trein_dict['via'] = ', '.join(via.middelNaam for via in trein.verkorteRouteActueel)
+
+			# Treinvleugels:
+			trein_dict['vleugels'] = []
+			for vleugel in trein.vleugels:
+				vleugel_dict = { 'bestemming': vleugel.eindbestemmingActueel.langeNaam }
+				vleugel_dict['mat'] = [mat.treintype() for mat in vleugel.materieel]
+
+				trein_dict['vleugels'].append(vleugel_dict)
 
 			vertrektijden.append(trein_dict)
 
