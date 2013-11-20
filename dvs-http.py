@@ -11,13 +11,14 @@ import infoplus_dvs
 # Default config (tijdelijk)
 dvs_client_server = "tcp://46.19.34.170:8120"
 
-# Maak verbinding
-context = zmq.Context()
-client = context.socket(zmq.REQ)
-client.connect(dvs_client_server)
-
 @bottle.route('/station/<station>')
 def index(station):
+	# Maak verbinding
+	context = zmq.Context()
+	client = context.socket(zmq.REQ)
+	client.connect(dvs_client_server)
+
+	# Stuur opdracht:
 	client.send('station/%s' % station)
 	treinen = client.recv_pyobj()
 
@@ -54,7 +55,8 @@ def index(station):
 			else:
 				trein_dict['sprWijziging'] = False
 
-			trein_dict['opmerkingen'] = trein.wijzigingen_str('nl') + trein.tips('nl')
+			trein_dict['opmerkingen'] = trein.wijzigingen_str('nl')
+			trein_dict['tips'] = trein.tips('nl')
 			trein_dict['opgeheven'] = trein.is_opgeheven()
 			trein_dict['status'] = trein.status
 
@@ -65,13 +67,12 @@ def index(station):
 
 			vertrektijden.append(trein_dict)
 
-		return { 'status': 'OK', 'vertrektijden': vertrektijden }
+		return { 'result': 'OK', 'vertrektijden': vertrektijden }
 	else:
 		return { 'result': 'OK', 'vertrektijden': [] }
 
+	client.close()
+	context.term()
+
 bottle.debug(True)
-
 bottle.run(host='localhost', port=8080, reloader=True)
-
-client.close()
-context.term()
