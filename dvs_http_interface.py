@@ -60,7 +60,7 @@ def index(station):
 			trein_dict['status'] = trein.status
 
 			# Trein opgeheven: wis spoor, vertraging etc.
-			if trein.is_opgeheven() or True:
+			if trein.is_opgeheven():
 				trein_dict['opgeheven'] = True
 				trein_dict['spoor'] = None
 				trein_dict['vertraging'] = 0
