@@ -65,11 +65,19 @@ def index(station):
 				trein_dict['spoor'] = None
 				trein_dict['vertraging'] = 0
 
+				# Toon geplande eindbestemming bij opgeheven trein:
+				trein_dict['bestemming'] = '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemming)
+
 			# Verkorte (via)-route
-			if trein.verkorteRouteActueel == None or len(trein.verkorteRouteActueel) == 0:
+			if trein_dict['opgeheven'] == True:
+				verkorteRoute = trein.verkorteRoute
+			else:
+				verkorteRoute = trein.verkorteRouteActueel
+
+			if verkorteRoute == None or len(verkorteRoute) == 0:
 				trein_dict['via'] = None
 			else:
-				trein_dict['via'] = ', '.join(via.middelNaam for via in trein.verkorteRouteActueel)
+				trein_dict['via'] = ', '.join(via.middelNaam for via in verkorteRoute)
 
 			# Treinvleugels:
 			trein_dict['vleugels'] = []
