@@ -6,9 +6,8 @@ import pytz
 from datetime import datetime, timedelta
 import cPickle as pickle
 import argparse
-import pprint
 
-from threading import Thread
+from threading import Thread, Event
 
 import infoplus_dvs
 
@@ -78,12 +77,12 @@ if args.laadTreinen == True:
 	treinStoreFile.close()
 
 # Start eigen daemon:
-class read_client(Thread):
+class ClientThread(Thread):
 	def __init__ (self):
 		Thread.__init__(self)
-		print "read_client init"
+		print "Initializing read_thread"
 	def run(self):
-		print "read_client run"
+		print "Running read_thread"
 		client_socket = context.socket(zmq.REP)
 		client_socket.bind(dvs_client_bind)
 		while True:
@@ -110,12 +109,28 @@ class read_client(Thread):
 				print e
 		Thread.__init__(self)
 
+# Garbage collection thread:
+class GarbageThread(Thread):
+	def __init__(self, event):
+		Thread.__init__(self)
+		print "GC thread initialized"
+		self.stopped = event
+
+	def run(self):
+		while not self.stopped.wait(60):
+			print "Garbage collecting..."
+			garbage_collect()
+
+			print "** (i) Statistieken **"
+			print "   Station store: %s stations" % len(stationStore)
+			print "   Trein store: %s treinen" % len(treinStore)
+
 # Socket to talk to server
 context = zmq.Context()
 
 # Start een nieuwe thread om client requests uit te lezen
-thread = read_client()
-thread.start()
+client_thread = ClientThread()
+client_thread.start()
 
 server_socket = context.socket(zmq.SUB)
 server_socket.connect(dvs_server)
@@ -129,6 +144,11 @@ msgNumber = 0
 
 print "Initial GC"
 garbage_collect()
+
+# Start nieuwe thread voor garbage collecting:
+gc_stopped = Event()
+gc_thread = GarbageThread(gc_stopped)
+gc_thread.start()
 
 #socks = dict(poller.poll())
 #print socks
@@ -185,24 +205,14 @@ try:
 			
 		msgNumber = msgNumber + 1
 
-		# Statistics update every 500 messages:
-		if msgNumber % 500 == 0:
-			print "** (i) Statistieken **"
-			print "   Station store: %s stations" % len(stationStore)
-			print "   Trein store: %s treinen" % len(treinStore)
-			print "   Messages verwerkt: %s" % msgNumber
-
-		# Check elke 150 berichten op laatste GC tijd:
-		if msgNumber % 50 == 0:
-			if msgNumber % 1000 == 0 or lastGC == None or lastGC < (datetime.now(pytz.utc) - timedelta(minutes=5)):
-				print "Garbage collecting..."
-				garbage_collect()
 
 except KeyboardInterrupt:
 	print "Exiting..."
 
 	server_socket.close()
 	context.term()
+
+	gc_stopped.set()
 
 	print "Saving station store..."
 	pickle.dump(stationStore, open('datadump/station.store', 'wb'), -1)
