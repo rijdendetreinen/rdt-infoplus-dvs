@@ -6,6 +6,7 @@ import pytz
 from datetime import datetime, timedelta
 import cPickle as pickle
 import argparse
+import gc
 
 from threading import Thread, Event
 
@@ -33,7 +34,6 @@ args = parser.parse_args()
 # Datastores:
 stationStore = { }
 treinStore = { }
-lastGC = None
 
 def garbage_collect():
 	"""
@@ -41,8 +41,6 @@ def garbage_collect():
 	Ruimt alle treinen op welke nog niet vertrokken zijn, maar welke
 	al wel 10 minuten weg hadden moeten zijn (volgens actuele vertrektijd)
 	"""
-	global lastGC
-
 	alles_vertrokken_tijdstip = datetime.now(pytz.utc) - timedelta(minutes=10)
 
 	# Check alle treinen in stationStore:
@@ -59,7 +57,8 @@ def garbage_collect():
 				del(treinStore[treinRit][station])
 				print '[GC] Trein %s te %s verwijderd' % (treinRit, station)
 
-	lastGC = datetime.now(pytz.utc)
+	gc.collect()
+
 	return
 
 
