@@ -1,7 +1,9 @@
 import cPickle as pickle
 import zmq
 import argparse
+from datetime import datetime, timedelta
 import isodate
+import pytz
 import bottle
 
 import infoplus_dvs
@@ -9,6 +11,8 @@ import infoplus_dvs
 
 @bottle.route('/station/<station>')
 def index(station):
+	nu = datetime.now(pytz.utc)
+
 	# Maak verbinding
 	context = zmq.Context()
 	client = context.socket(zmq.REQ)
@@ -67,6 +71,11 @@ def index(station):
 
 				# Toon geplande eindbestemming bij opgeheven trein:
 				trein_dict['bestemming'] = '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemming)
+
+				if trein.vertrekActueel + timedelta(minutes = 2) < nu:
+					# Sla deze trein over.
+					# We laten opgeheven treinen tot 2 min na vertrek in de feed zitten
+					continue
 
 			# Verkorte (via)-route
 			if trein_dict['opgeheven'] == True:
