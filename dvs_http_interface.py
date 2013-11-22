@@ -1,12 +1,7 @@
-import cPickle as pickle
 import zmq
-import argparse
 from datetime import datetime, timedelta
-import isodate
 import pytz
 import bottle
-
-import infoplus_dvs
 
 
 @bottle.route('/station/<station>')
@@ -22,7 +17,7 @@ def index(station):
 	client.send('station/%s' % station)
 	treinen = client.recv_pyobj()
 
-	treinen_dict = {}
+	vertrektijden = {}
 
 	# Lees trein array uit:
 	if treinen != None:
@@ -92,7 +87,7 @@ def index(station):
 			trein_dict['vleugels'] = []
 			for vleugel in trein.vleugels:
 				vleugel_dict = { 'bestemming': vleugel.eindbestemmingActueel.langeNaam }
-				vleugel_dict['mat'] = [mat.treintype() for mat in vleugel.materieel]
+				vleugel_dict['mat'] = [(mat.treintype(), mat.eindbestemmingActueel.middelNaam) for mat in vleugel.materieel]
 
 				trein_dict['vleugels'].append(vleugel_dict)
 
