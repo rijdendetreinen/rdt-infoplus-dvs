@@ -51,11 +51,16 @@ def garbage_collect():
 				print '[GC] Trein %s te %s verwijderd' % (treinRit, station)
 
 	# Check alle treinen in treinStore:
-	for treinRit in treinStore:
+	for treinRit in treinStore.keys():
 		for station, trein in treinStore[treinRit].items():
 			if trein.vertrekActueel < alles_vertrokken_tijdstip:
 				del(treinStore[treinRit][station])
 				print '[GC] Trein %s te %s verwijderd' % (treinRit, station)
+
+		# Verwijder treinen uit treinStore dict
+		# indien geen informatie meer:
+		if len(treinStore[treinRit]) == 0:
+			del(treinStore[treinRit])
 
 	gc.collect()
 
