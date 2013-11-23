@@ -5,7 +5,8 @@ import bottle
 
 
 @bottle.route('/station/<station>')
-def index(station):
+@bottle.route('/station/<station>/<taal>')
+def index(station, taal='nl'):
 	nu = datetime.now(pytz.utc)
 
 	# Maak verbinding
@@ -53,8 +54,8 @@ def index(station):
 			else:
 				trein_dict['sprWijziging'] = False
 
-			trein_dict['opmerkingen'] = trein.wijzigingen_str('nl')
-			trein_dict['tips'] = trein.tips('nl')
+			trein_dict['opmerkingen'] = trein.wijzigingen_str(taal)
+			trein_dict['tips'] = trein.tips(taal)
 			trein_dict['opgeheven'] = False
 			trein_dict['status'] = trein.status
 
