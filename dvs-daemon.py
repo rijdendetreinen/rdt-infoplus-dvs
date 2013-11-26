@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import cPickle as pickle
 import argparse
 import gc
+import logging
 
 from threading import Thread, Event
 
@@ -27,12 +28,30 @@ parser = argparse.ArgumentParser(description='RDT InfoPlus DVS daemon')
 
 parser.add_argument('-ls', '--laad-stations', dest='laadStations', action='store_true', help='Laad stationstore')
 parser.add_argument('-lt', '--laad-treinen', dest='laadTreinen', action='store_true', help='Laad treinstore')
+parser.add_argument('-d', '--debug', dest='debug', action='store_true', help='Debug modus')
+parser.add_argument('-l', '--log-file', dest='logfile', action='store', help='File to which we should log')
 
 args = parser.parse_args()
 
 # Datastores:
 stationStore = { }
 treinStore = { }
+
+
+# Tijdelijke code om een Logger te maken, moet nog refactored worden:
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+handler = logging.FileHandler('dvs-daemon.log')
+handler.setLevel(logging.INFO)
+
+# create a logging format
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+
+logger.info('Starting up')
 
 def garbage_collect():
     """
@@ -47,14 +66,14 @@ def garbage_collect():
         for treinRit, trein in stationStore[station].items():
             if trein.vertrekActueel < alles_vertrokken_tijdstip:
                 del(stationStore[station][treinRit])
-                print '[GC] Trein %s te %s verwijderd' % (treinRit, station)
+                logger.info('[GC][SS] Trein %s te %s verwijderd' % (treinRit, station))
 
     # Check alle treinen in treinStore:
     for treinRit in treinStore.keys():
         for station, trein in treinStore[treinRit].items():
             if trein.vertrekActueel < alles_vertrokken_tijdstip:
                 del(treinStore[treinRit][station])
-                print '[GC] Trein %s te %s verwijderd' % (treinRit, station)
+                logger.info('[GC][TS] Trein %s te %s verwijderd' % (treinRit, station))
 
         # Verwijder treinen uit treinStore dict
         # indien geen informatie meer:
@@ -68,13 +87,13 @@ def garbage_collect():
 
 # Laad oude datastores in (indien gespecifeerd):
 if args.laadStations == True:
-    print "Inladen stationStore..."
+    logger.info('Inladen stationStore...')
     stationStoreFile = open('datadump/station.store', 'rb')
     stationStore = pickle.load(stationStoreFile)
     stationStoreFile.close()
 
 if args.laadTreinen == True:
-    print "Inladen treinStore..."
+    logger.info('Inladen treinStore...')
     treinStoreFile = open('datadump/trein.store', 'rb')
     treinStore = pickle.load(treinStoreFile)
     treinStoreFile.close()
@@ -82,10 +101,10 @@ if args.laadTreinen == True:
 # Start eigen daemon:
 class ClientThread(Thread):
     def __init__ (self):
+        logger.info('Initializing client thread')
         Thread.__init__(self)
-        print "Initializing read_thread"
     def run(self):
-        print "Running read_thread"
+        logger.info('Running client thread')
         client_socket = context.socket(zmq.REP)
         client_socket.bind(dvs_client_bind)
         while True:
@@ -116,16 +135,16 @@ class ClientThread(Thread):
 class GarbageThread(Thread):
     def __init__(self, event):
         Thread.__init__(self)
-        print "GC thread initialized"
+        logger.info("GC thread initialized")
         self.stopped = event
 
     def run(self):
         while not self.stopped.wait(60):
             try:
-                print "Garbage collecting..."
+                logger.info("Garbage collecting")
                 garbage_collect()
 
-                print "** (i) Statistieken **"
+                logger.info("** (i) Statistieken **")
                 print "   Station store: %s stations" % len(stationStore)
                 print "   Trein store: %s treinen" % len(treinStore)
             except Exception as e:
