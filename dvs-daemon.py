@@ -122,12 +122,15 @@ class GarbageThread(Thread):
 
 	def run(self):
 		while not self.stopped.wait(60):
-			print "Garbage collecting..."
-			garbage_collect()
+			try:
+				print "Garbage collecting..."
+				garbage_collect()
 
-			print "** (i) Statistieken **"
-			print "   Station store: %s stations" % len(stationStore)
-			print "   Trein store: %s treinen" % len(treinStore)
+				print "** (i) Statistieken **"
+				print "   Station store: %s stations" % len(stationStore)
+				print "   Trein store: %s treinen" % len(treinStore)
+			except Exception as e:
+				print e
 
 # Socket to talk to server
 context = zmq.Context()
