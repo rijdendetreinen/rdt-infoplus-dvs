@@ -13,7 +13,6 @@ from threading import Thread, Event
 import infoplus_dvs
 
 # Maak output in utf-8 mogelijk in Python 2.x:
-import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
