@@ -109,6 +109,7 @@ class ClientThread(Thread):
         client_socket.bind(dvs_client_bind)
         while True:
             url = client_socket.recv()
+
             try:
                 arguments = url.split('/')
 
@@ -128,7 +129,7 @@ class ClientThread(Thread):
                     client_socket.send_pyobj(None)
             except Exception as e:
                 client_socket.send_pyobj(None)
-                print e
+                logger.e('Fout bij sturen client respone', exc_info=True)
         Thread.__init__(self)
 
 # Garbage collection thread:
@@ -144,11 +145,9 @@ class GarbageThread(Thread):
                 logger.info("Garbage collecting")
                 garbage_collect()
 
-                logger.info("** (i) Statistieken **")
-                print "   Station store: %s stations" % len(stationStore)
-                print "   Trein store: %s treinen" % len(treinStore)
+                logger.info("Statistieken: stationStore=%s, treinStore=%s" % (len(stationStore), len(treinStore)))
             except Exception as e:
-                print e
+                logger.error('Fout in GC thread', exc_info=True)
 
 # Socket to talk to server
 context = zmq.Context()
@@ -167,7 +166,7 @@ poller.register(server_socket, zmq.POLLIN)
 starttime = datetime.now()
 msgNumber = 0
 
-print "Initial GC"
+logger.debug('Initial GC')
 garbage_collect()
 
 # Start nieuwe thread voor garbage collecting:
@@ -178,8 +177,7 @@ gc_thread.start()
 #socks = dict(poller.poll())
 #print socks
 
-
-print "Collecting updates from DVS server..."
+logger.info("Collecting updates from DVS server...")
 
 try:
     while True:
@@ -196,7 +194,7 @@ try:
             
             if trein.status == '5':
                 # Trein vertrokken
-                print datetime.now().strftime("%H:%M:%S"), ' -->> trein %6s vertrokken van  %s' % (trein.treinNr, ritStationCode)
+                #print datetime.now().strftime("%H:%M:%S"), ' -->> trein %6s vertrokken van  %s' % (trein.treinNr, ritStationCode)
 
                 # Verwijder uit stationStore
                 if ritStationCode in stationStore and trein.treinNr in stationStore[ritStationCode]:
@@ -220,29 +218,30 @@ try:
                 stationStore[ritStationCode][trein.treinNr] = trein
                 treinStore[trein.treinNr][ritStationCode] = trein
 
-                if trein.status == '2':
-                    print datetime.now().strftime("%H:%M:%S"), ' >>-- trein %6s aangekomen te   %s' % (trein.treinNr, ritStationCode)
-                if trein.status == '0':
-                    print datetime.now().strftime("%H:%M:%S"), ' ---- trein %6s status onbekend %s' % (trein.treinNr, ritStationCode)
+                #if trein.status == '2':
+                #    print datetime.now().strftime("%H:%M:%S"), ' >>-- trein %6s aangekomen te   %s' % (trein.treinNr, ritStationCode)
+                #if trein.status == '0':
+                #    print datetime.now().strftime("%H:%M:%S"), ' ---- trein %6s status onbekend %s' % (trein.treinNr, ritStationCode)
 
         except Exception as e:
-            print "!!!!!! Error: %s" % e
+            logger.error('Fout tijdens DVS bericht verwerken', exc_info=True)
+            logger.debug('DVS bericht: %s', content)
             
         msgNumber = msgNumber + 1
 
 
 except KeyboardInterrupt:
-    print "Exiting..."
+    logger.info('Shutting down...')
 
     server_socket.close()
     context.term()
 
     gc_stopped.set()
 
-    print "Saving station store..."
+    logger.info("Saving station store...")
     pickle.dump(stationStore, open('datadump/station.store', 'wb'), -1)
 
-    print "Saving trein store..."
+    logger.info("Saving trein store...")
     pickle.dump(treinStore, open('datadump/trein.store', 'wb'), -1)
 
-    print "Processed %s messages since %s" % (msgNumber, starttime)
+    logger.info("Statistieken: %s berichten verwerkt sinds %s", msgNumber, starttime)
