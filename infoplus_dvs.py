@@ -1,10 +1,17 @@
 import xml.etree.cElementTree as ET
 import isodate
 import pytz
+import logging
+
+__logger__ = logging.getLogger(__name__)
 
 def parse_trein(data):
     # Parse XML:
-    root = ET.fromstring(data)
+    try:
+        root = ET.fromstring(data)
+    except ET.ParseError as exception:
+        __logger__.error("Kan XML niet parsen: %s", exception)
+        raise OngeldigDvsBericht()
 
     # Zoek belangrijke nodes op:
     product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisInformatieProductDVS')
@@ -51,6 +58,8 @@ def parse_trein(data):
 
     if ninNode != None:
         trein.nietInstappen = parse_boolean(ninNode.text)
+    else:
+        __logger__.warn("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinNr, trein.ritStation.code)
 
     trein.rangeerBeweging = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RangeerBeweging').text)
     trein.speciaalKaartje = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpeciaalKaartje').text)
@@ -504,3 +513,7 @@ class OverstapTip:
             return 'For %s, change at %s' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
         else:
             return 'Voor %s overstappen in %s' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
+
+class OngeldigDvsBericht(Exception):
+    """Exception voor ongeldige DVS berichten"""
+    pass

@@ -262,10 +262,13 @@ def main():
                     station_store[rit_station_code][trein.treinNr] = trein
                     trein_store[trein.treinNr][rit_station_code] = trein
 
+            except infoplus_dvs.OngeldigDvsBericht as e:
+                logger.error('Ongeldig DVS bericht')
+                logger.debug('Ongeldig DVS bericht: %s', content)
             except Exception as e:
                 logger.error(
                     'Fout tijdens DVS bericht verwerken', exc_info=True)
-                logger.debug('DVS bericht: %s', content)
+                logger.error('DVS crash bericht: %s', content)
                 
             msg_nr = msg_nr + 1
 
