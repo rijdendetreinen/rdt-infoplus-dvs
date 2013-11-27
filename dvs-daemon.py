@@ -1,4 +1,5 @@
 import sys
+import os
 import zmq
 from gzip import GzipFile
 from cStringIO import StringIO
@@ -8,10 +9,27 @@ import cPickle as pickle
 import argparse
 import gc
 import logging
+import logging.config
+import yaml
 
 from threading import Thread, Event
 
 import infoplus_dvs
+
+def setup_logging(default_path='logging.yaml', default_level=logging.INFO, env_key='LOG_CFG'):
+    """
+    Setup logging configuration
+    """
+    path = default_path
+    value = os.getenv(env_key, None)
+    if value:
+        path = value
+    if os.path.exists(path):
+        with open(path, 'rt') as f:
+            config = yaml.load(f.read())
+        logging.config.dictConfig(config)
+    else:
+        logging.basicConfig(level=default_level)
 
 def main():
     # Maak output in utf-8 mogelijk in Python 2.x:
@@ -38,20 +56,9 @@ def main():
     stationStore = { }
     treinStore = { }
 
-
-    # Tijdelijke code om een Logger te maken, moet nog refactored worden:
-    logging.basicConfig(level=logging.INFO)
+    # Stel logging in:
+    setup_logging()
     logger = logging.getLogger(__name__)
-
-    handler = logging.FileHandler('dvs-daemon.log')
-    handler.setLevel(logging.INFO)
-
-    # create a logging format
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-
     logger.info('Starting up')
 
     def garbage_collect():
