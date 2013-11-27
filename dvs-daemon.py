@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+
+"""DVS daemon welke alle DVS berichten verwerkt en in geheugen opslaat.
+"""
+
 import sys
 import os
 import zmq
@@ -16,7 +21,8 @@ from threading import Thread, Event
 
 import infoplus_dvs
 
-def setup_logging(default_path='logging.yaml', default_level=logging.INFO, env_key='LOG_CFG'):
+def setup_logging(default_path='logging.yaml',
+    default_level=logging.INFO, env_key='LOG_CFG'):
     """
     Setup logging configuration
     """
@@ -25,8 +31,8 @@ def setup_logging(default_path='logging.yaml', default_level=logging.INFO, env_k
     if value:
         path = value
     if os.path.exists(path):
-        with open(path, 'rt') as f:
-            config = yaml.load(f.read())
+        with open(path, 'rt') as config_file:
+            config = yaml.load(config_file.read())
         logging.config.dictConfig(config)
     else:
         logging.basicConfig(level=default_level)
@@ -46,16 +52,20 @@ def main():
     # Initialiseer argparse
     parser = argparse.ArgumentParser(description='RDT InfoPlus DVS daemon')
 
-    parser.add_argument('-ls', '--laad-stations', dest='laadStations', action='store_true', help='Laad stationstore')
-    parser.add_argument('-lt', '--laad-treinen', dest='laadTreinen', action='store_true', help='Laad treinstore')
-    parser.add_argument('-d', '--debug', dest='debug', action='store_true', help='Debug modus')
-    parser.add_argument('-l', '--log-file', dest='logfile', action='store', help='File to which we should log')
+    parser.add_argument('-ls', '--laad-stations', dest='laadStations',
+        action='store_true', help='Laad station_store')
+    parser.add_argument('-lt', '--laad-treinen', dest='laadTreinen',
+        action='store_true', help='Laad trein_store')
+    parser.add_argument('-d', '--debug', dest='debug',
+        action='store_true', help='Debug modus')
+    parser.add_argument('-l', '--log-file', dest='logfile',
+        action='store', help='File to which we should log')
 
     args = parser.parse_args()
 
     # Datastores:
-    stationStore = { }
-    treinStore = { }
+    station_store = { }
+    trein_store = { }
 
     # Stel logging in:
     setup_logging()
@@ -70,24 +80,24 @@ def main():
         """
         alles_vertrokken_tijdstip = datetime.now(pytz.utc) - timedelta(minutes=10)
 
-        # Check alle treinen in stationStore:
-        for station in stationStore:
-            for treinRit, trein in stationStore[station].items():
+        # Check alle treinen in station_store:
+        for station in station_store:
+            for trein_rit, trein in station_store[station].items():
                 if trein.vertrekActueel < alles_vertrokken_tijdstip:
-                    del(stationStore[station][treinRit])
-                    logger.info('[GC][SS] Trein %s te %s verwijderd' % (treinRit, station))
+                    del(station_store[station][trein_rit])
+                    logger.info('[GC][SS] Del %s te %s' % (trein_rit, station))
 
-        # Check alle treinen in treinStore:
-        for treinRit in treinStore.keys():
-            for station, trein in treinStore[treinRit].items():
+        # Check alle treinen in trein_store:
+        for trein_rit in trein_store.keys():
+            for station, trein in trein_store[trein_rit].items():
                 if trein.vertrekActueel < alles_vertrokken_tijdstip:
-                    del(treinStore[treinRit][station])
-                    logger.info('[GC][TS] Trein %s te %s verwijderd' % (treinRit, station))
+                    del(trein_store[trein_rit][station])
+                    logger.info('[GC][TS] Del %s te %s' % (trein_rit, station))
 
-            # Verwijder treinen uit treinStore dict
+            # Verwijder treinen uit trein_store dict
             # indien geen informatie meer:
-            if len(treinStore[treinRit]) == 0:
-                del(treinStore[treinRit])
+            if len(trein_store[trein_rit]) == 0:
+                del(trein_store[trein_rit])
 
         gc.collect()
 
@@ -96,16 +106,16 @@ def main():
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
-        logger.info('Inladen stationStore...')
-        stationStoreFile = open('datadump/station.store', 'rb')
-        stationStore = pickle.load(stationStoreFile)
-        stationStoreFile.close()
+        logger.info('Inladen station_store...')
+        station_store_file = open('datadump/station.store', 'rb')
+        station_store = pickle.load(station_store_file)
+        station_store_file.close()
 
     if args.laadTreinen == True:
-        logger.info('Inladen treinStore...')
-        treinStoreFile = open('datadump/trein.store', 'rb')
-        treinStore = pickle.load(treinStoreFile)
-        treinStoreFile.close()
+        logger.info('Inladen trein_store...')
+        trein_store_file = open('datadump/trein.store', 'rb')
+        trein_store = pickle.load(trein_store_file)
+        trein_store_file.close()
 
     # Start eigen daemon:
     class ClientThread(Thread):
@@ -123,15 +133,16 @@ def main():
                     arguments = url.split('/')
 
                     if arguments[0] == 'station' and len(arguments) == 2:
-                        stationCode = arguments[1].upper()
-                        if stationCode in stationStore:
-                            client_socket.send_pyobj(stationStore[stationCode])
+                        station_code = arguments[1].upper()
+                        if station_code in station_store:
+                            client_socket.send_pyobj(
+                                station_store[station_code])
                         else:
                             client_socket.send_pyobj({})
                     elif arguments[0] == 'trein' and len(arguments) == 2:
-                        treinNr = arguments[1]
-                        if treinNr in treinStore:
-                            client_socket.send_pyobj(treinStore[treinNr])
+                        trein_nr = arguments[1]
+                        if trein_nr in trein_store:
+                            client_socket.send_pyobj(trein_store[trein_nr])
                         else:
                             client_socket.send_pyobj({})
                     else:
@@ -154,7 +165,9 @@ def main():
                     logger.info("Garbage collecting")
                     garbage_collect()
 
-                    logger.info("Statistieken: stationStore=%s, treinStore=%s" % (len(stationStore), len(treinStore)))
+                    logger.info(
+                        "Statistieken: station_store=%s, trein_store=%s"
+                        % (len(station_store), len(trein_store)))
                 except Exception as e:
                     logger.error('Fout in GC thread', exc_info=True)
 
@@ -173,7 +186,7 @@ def main():
     poller.register(server_socket, zmq.POLLIN)
 
     starttime = datetime.now()
-    msgNumber = 0
+    msg_nr = 0
 
     logger.debug('Initial GC')
     garbage_collect()
@@ -191,52 +204,47 @@ def main():
     try:
         while True:
             multipart = server_socket.recv_multipart()
-            address = multipart[0]
-            content = GzipFile('','r',0,StringIO(''.join(multipart[1:]))).read()
+            content = GzipFile('', 'r', 0 ,
+                StringIO(''.join(multipart[1:]))).read()
 
             # Parse trein xml:
             try:
                 trein = infoplus_dvs.parse_trein(content)
-                #print datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "## %9s ## trst=%s " % (msgNumber, trein.status), trein
 
-                ritStationCode = trein.ritStation.code
+                rit_station_code = trein.ritStation.code
                 
                 if trein.status == '5':
                     # Trein vertrokken
-                    #print datetime.now().strftime("%H:%M:%S"), ' -->> trein %6s vertrokken van  %s' % (trein.treinNr, ritStationCode)
+                    # Verwijder uit station_store
+                    if rit_station_code in station_store \
+                    and trein.treinNr in station_store[rit_station_code]:
+                        del(station_store[rit_station_code][trein.treinNr])
 
-                    # Verwijder uit stationStore
-                    if ritStationCode in stationStore and trein.treinNr in stationStore[ritStationCode]:
-                        del(stationStore[ritStationCode][trein.treinNr])
-
-                    # Verwijder uit treinStore
-                    if trein.treinNr in treinStore and ritStationCode in treinStore[trein.treinNr]:
-                        del(treinStore[trein.treinNr][ritStationCode])
-                        if len(treinStore[trein.treinNr]) == 0:
-                            del(treinStore[trein.treinNr])
+                    # Verwijder uit trein_store
+                    if trein.treinNr in trein_store \
+                    and rit_station_code in trein_store[trein.treinNr]:
+                        del(trein_store[trein.treinNr][rit_station_code])
+                        if len(trein_store[trein.treinNr]) == 0:
+                            del(trein_store[trein.treinNr])
                 else:
-                    # Maak item in treinStore indien niet aanwezig
-                    if trein.treinNr not in treinStore:
-                        treinStore[trein.treinNr] = {}
+                    # Maak item in trein_store indien niet aanwezig
+                    if trein.treinNr not in trein_store:
+                        trein_store[trein.treinNr] = {}
 
-                    # Maak item in stationStore indien niet aanwezig:
-                    if ritStationCode not in stationStore:
-                        stationStore[ritStationCode] = {}
+                    # Maak item in station_store indien niet aanwezig:
+                    if rit_station_code not in station_store:
+                        station_store[rit_station_code] = {}
 
                     # Update of insert trein aan station:
-                    stationStore[ritStationCode][trein.treinNr] = trein
-                    treinStore[trein.treinNr][ritStationCode] = trein
-
-                    #if trein.status == '2':
-                    #    print datetime.now().strftime("%H:%M:%S"), ' >>-- trein %6s aangekomen te   %s' % (trein.treinNr, ritStationCode)
-                    #if trein.status == '0':
-                    #    print datetime.now().strftime("%H:%M:%S"), ' ---- trein %6s status onbekend %s' % (trein.treinNr, ritStationCode)
+                    station_store[rit_station_code][trein.treinNr] = trein
+                    trein_store[trein.treinNr][rit_station_code] = trein
 
             except Exception as e:
-                logger.error('Fout tijdens DVS bericht verwerken', exc_info=True)
+                logger.error(
+                    'Fout tijdens DVS bericht verwerken', exc_info=True)
                 logger.debug('DVS bericht: %s', content)
                 
-            msgNumber = msgNumber + 1
+            msg_nr = msg_nr + 1
 
 
     except KeyboardInterrupt:
@@ -248,12 +256,13 @@ def main():
         gc_stopped.set()
 
         logger.info("Saving station store...")
-        pickle.dump(stationStore, open('datadump/station.store', 'wb'), -1)
+        pickle.dump(station_store, open('datadump/station.store', 'wb'), -1)
 
         logger.info("Saving trein store...")
-        pickle.dump(treinStore, open('datadump/trein.store', 'wb'), -1)
+        pickle.dump(trein_store, open('datadump/trein.store', 'wb'), -1)
 
-        logger.info("Statistieken: %s berichten verwerkt sinds %s", msgNumber, starttime)
+        logger.info(
+            "Statistieken: %s berichten verwerkt sinds %s", msg_nr, starttime)
 
     except Exception:
         logger.error("Fout in main loop", exc_info=True)
