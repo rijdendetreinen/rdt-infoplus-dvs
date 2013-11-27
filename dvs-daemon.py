@@ -36,6 +36,7 @@ def main():
     reload(sys)
     sys.setdefaultencoding("utf-8")
 
+    gc.set_debug(gc.DEBUG_UNCOLLECTABLE | gc.DEBUG_INSTANCES | gc.DEBUG_OBJECTS)
 
     # Default config (nog naar losse configfile):
     #dvs_server = "tcp://post.ndovloket.nl:7660"
