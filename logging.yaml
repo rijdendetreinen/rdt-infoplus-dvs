@@ -14,7 +14,7 @@ handlers:
 
     info_file_handler:
         class: logging.handlers.RotatingFileHandler
-        level: INFO            
+        level: DEBUG
         formatter: simple
         filename: logs/dvs-daemon.info.log
         maxBytes: 10485760 # 10MB
@@ -23,18 +23,12 @@ handlers:
 
     error_file_handler:
         class: logging.handlers.RotatingFileHandler
-        level: ERROR            
+        level: ERROR
         formatter: simple
         filename: logs/dvs-daemon.errors.log
         maxBytes: 10485760 # 10MB
         backupCount: 20
         encoding: utf8
-
-loggers:
-    my_module:
-        level: ERROR
-        handlers: [console]
-        propagate: no
 
 root:
     level: INFO
