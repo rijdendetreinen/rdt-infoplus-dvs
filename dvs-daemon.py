@@ -245,3 +245,6 @@ except KeyboardInterrupt:
     pickle.dump(treinStore, open('datadump/trein.store', 'wb'), -1)
 
     logger.info("Statistieken: %s berichten verwerkt sinds %s", msgNumber, starttime)
+
+except Exception:
+    logger.error("Fout in main loop", exc_info=True)
