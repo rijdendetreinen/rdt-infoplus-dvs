@@ -47,7 +47,11 @@ def parse_trein(data):
 	# Diverse statusvariabelen:
 	trein.reserveren = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Reserveren').text)
 	trein.toeslag = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Toeslag').text)
-	trein.nietInstappen = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}NietInstappen').text)
+	ninNode = treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}NietInstappen')
+
+	if ninNode != None:
+		trein.nietInstappen = parse_boolean(ninNode.text)
+
 	trein.rangeerBeweging = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RangeerBeweging').text)
 	trein.speciaalKaartje = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpeciaalKaartje').text)
 	trein.achterBlijvenAchtersteTreinDeel = parse_boolean(treinNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}AchterBlijvenAchtersteTreinDeel').text)
