@@ -108,35 +108,47 @@ def main():
 
         # Check alle treinen in station_store:
         for station in station_store:
-            for trein_rit, trein in station_store[station].items():
-                if trein.vertrekActueel < treshold:
-                    del(station_store[station][trein_rit])
+            try:
+                for trein_rit, trein in station_store[station].items():
+                    if trein.vertrekActueel < treshold:
+                        try:
+                            del(station_store[station][trein_rit])
 
-                    if trein.is_opgeheven():
-                        # Voor opgeheven treinen komt geen wisbericht,
-                        # daarom is het te verwachten dat deze GC'd worden
-                        # Log alleen debug melding
-                        logger.debug('GC [SS] Del %s/%s, opgeheven' % (trein_rit, station))
-                    else:
-                        # Waarschuwing indien trein niet opgeheven, maar
-                        # wel 10-minuten window overschreden:
-                        logger.warn('GC [SS] Del %s/%s' % (trein_rit, station))
+                            if trein.is_opgeheven():
+                                # Voor opgeheven treinen komt geen wisbericht,
+                                # daarom is het te verwachten dat deze GC'd worden
+                                # Log alleen debug melding
+                                logger.debug('GC [SS] Del %s/%s, opgeheven' % (trein_rit, station))
+                            else:
+                                # Waarschuwing indien trein niet opgeheven, maar
+                                # wel 10-minuten window overschreden:
+                                logger.warn('GC [SS] Del %s/%s' % (trein_rit, station))
+                        except KeyError:
+                            logger.debug('GC [SS] Al verwijderd %s/%s', trein_rit, station)
+            except KeyError:
+                logger.warn('GC [SS] Station verwijderd %s', station)
 
         # Check alle treinen in trein_store:
         for trein_rit in trein_store.keys():
-            for station, trein in trein_store[trein_rit].items():
-                if trein.vertrekActueel < treshold:
-                    del(trein_store[trein_rit][station])
+            try:
+                for station, trein in trein_store[trein_rit].items():
+                    if trein.vertrekActueel < treshold:
+                        try:
+                            del(trein_store[trein_rit][station])
 
-                    if trein.is_opgeheven():
-                        # Voor opgeheven treinen komt geen wisbericht,
-                        # daarom is het te verwachten dat deze GC'd worden
-                        # Log alleen debug melding
-                        logger.debug('GC [TS] Del %s/%s, opgeheven' % (trein_rit, station))
-                    else:
-                        # Waarschuwing indien trein niet opgeheven, maar
-                        # wel 10-minuten window overschreden:
-                        logger.warn('GC [TS] Del %s/%s' % (trein_rit, station))
+                            if trein.is_opgeheven():
+                                # Voor opgeheven treinen komt geen wisbericht,
+                                # daarom is het te verwachten dat deze GC'd worden
+                                # Log alleen debug melding
+                                logger.debug('GC [TS] Del %s/%s, opgeheven' % (trein_rit, station))
+                            else:
+                                # Waarschuwing indien trein niet opgeheven, maar
+                                # wel 10-minuten window overschreden:
+                                logger.warn('GC [TS] Del %s/%s' % (trein_rit, station))
+                        except KeyError:
+                            logger.debug('GC [TS] Al verwijderd %s/%s', trein_rit, station)
+            except KeyError:
+                logger.debug('GC [TS] Al verwijderd %s', trein_rit)
 
             # Verwijder treinen uit trein_store dict
             # indien geen informatie meer:
