@@ -1,10 +1,15 @@
 import infoplus_dvs
 import glob
+import logging
 
 # Maak output in utf-8 mogelijk in Python 2.x:
 import sys
 reload(sys)
 sys.setdefaultencoding("utf-8")
+
+# Stel logger in:
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Laad testdata:
 xmlFiles = glob.glob('./testdata/*/*.xml') + glob.glob('./testdata/treinlog/*/*.xml')
@@ -29,7 +34,7 @@ for xmlFile in xmlFiles:
 
 	# Parse treinbericht:
 	trein = infoplus_dvs.parse_trein(content)
-	print trein
+	print trein.wijzigingen_str()
 
 	counter = counter + 1
 
