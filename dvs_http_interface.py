@@ -42,8 +42,8 @@ def index(station, taal='nl'):
 
             # Basis treininformatie
             trein_dict['treinNr'] = trein.treinNr
-            trein_dict['vertrek'] = trein.lokaalVertrek().isoformat()
-            trein_dict['bestemming'] = '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemmingActueel)
+            trein_dict['vertrek'] = trein.lokaal_vertrek().isoformat()
+            trein_dict['bestemming'] = '/'.join(bestemming.lange_naam for bestemming in trein.eindbestemmingActueel)
             trein_dict['soort'] = trein.soort
             trein_dict['soortAfk'] = trein.soortCode
             trein_dict['vertraging'] = round(trein.vertraging.seconds / 60)
@@ -66,7 +66,7 @@ def index(station, taal='nl'):
                 trein_dict['vertraging'] = 0
 
                 # Toon geplande eindbestemming bij opgeheven trein:
-                trein_dict['bestemming'] = '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemming)
+                trein_dict['bestemming'] = '/'.join(bestemming.lange_naam for bestemming in trein.eindbestemming)
 
                 if trein.vertrekActueel + timedelta(minutes = 2) < nu:
                     # Sla deze trein over.
@@ -82,13 +82,13 @@ def index(station, taal='nl'):
             if verkorteRoute == None or len(verkorteRoute) == 0:
                 trein_dict['via'] = None
             else:
-                trein_dict['via'] = ', '.join(via.middelNaam for via in verkorteRoute)
+                trein_dict['via'] = ', '.join(via.middel_naam for via in verkorteRoute)
 
             # Treinvleugels:
             trein_dict['vleugels'] = []
             for vleugel in trein.vleugels:
-                vleugel_dict = { 'bestemming': vleugel.eindbestemmingActueel.langeNaam }
-                vleugel_dict['mat'] = [(mat.treintype(), mat.eindbestemmingActueel.middelNaam) for mat in vleugel.materieel]
+                vleugel_dict = { 'bestemming': vleugel.eindbestemmingActueel.lange_naam }
+                vleugel_dict['mat'] = [(mat.treintype(), mat.eindbestemmingActueel.middel_naam) for mat in vleugel.materieel]
 
                 trein_dict['vleugels'].append(vleugel_dict)
 
