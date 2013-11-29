@@ -73,9 +73,8 @@ def parse_trein(data):
     # Reistips:
     trein.reisTips = []
     for reisTipNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTip'):
-        reisTip = ReisTip()
+        reisTip = ReisTip(reisTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipCode').text)
 
-        reisTip.code = reisTipNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipCode').text
         reisTip.stations = parse_stations(reisTipNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipStation'))
         trein.reisTips.append(reisTip)
 
@@ -113,12 +112,12 @@ def parse_trein(data):
     trein.vleugels = []
 
     for vleugelNode in treinNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugel'):
-        vleugel = TreinVleugel()
+        vleugel_eindbestemming = parse_station(vleugelNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Gepland"]'))
+        vleugel = TreinVleugel(vleugel_eindbestemming)
 
         # Vertrekspoor en bestemming voor de vleugel:
         vleugel.vertrekSpoor = parse_vertreksporen(vleugelNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Gepland"]'))
         vleugel.vertrekSpoorActueel = parse_vertreksporen(vleugelNode.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Actueel"]'))
-        vleugel.eindbestemming = parse_station(vleugelNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Gepland"]'))
         vleugel.eindbestemmingActueel = parse_station(vleugelNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Actueel"]'))
 
         # Stopstations:
@@ -177,8 +176,7 @@ def parse_station(stationElement):
 
 
 def parse_wijziging(wijzigingNode):
-    wijziging = Wijziging()
-    wijziging.type = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text
+    wijziging = Wijziging(wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text)
     
     oorzaakNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
     if oorzaakNode != None:
@@ -204,9 +202,9 @@ def parse_vertreksporen(sporenNode):
 
 
 def parse_spoor(spoorElement):
-    spoor = Spoor()
-    
-    spoor.nummer = spoorElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text
+    spoor = Spoor(spoorElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
+
+    # Zoek eventuele fase:
     faseNode = spoorElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorFase')
     if (faseNode != None):
         spoor.fase = faseNode.text
@@ -233,18 +231,30 @@ class Station:
 
 
 class Spoor:
+    """
+    Class om spoornummers te bewaren. Een spoor bestaat uit een nummer
+    en optioneel een fase (a, b, ...)
+    """
+
     nummer = None
     fase = None
 
-    def __repr__(self):
-        if self.fase == None:
-            return self.nummer
-        else:
-            return '%s%s' % (self.nummer, self.fase)
+    def __init__(self, nummer, fase=None):
+        self.nummer = nummer
+        self.fase = fase
 
-        return spoor
+    def __repr__(self):
+        if self.fase != None:
+            return '%s%s' % (self.nummer, self.fase)
+        else:
+            return self.nummer
+
 
 class Trein:
+    """
+    Class om treinen in te bewaren, inclusief metadata.
+    """
+
     ritID = None
     ritStation = None
     ritDatum = None
@@ -296,19 +306,34 @@ class Trein:
         return (self.vertrekSpoor != self.vertrekSpoorActueel)
 
     def is_opgeheven(self):
+        """
+        Geef met een boolean waarde aan of de trein opgeheven is of niet.
+        Deze functie leest hiervoor de wijzigingen op treinniveau uit.
+        """
+
         for wijziging in self.wijzigingen:
-            if wijziging.type == '32':
+            if wijziging.wijziging_type == '32':
                 return True
 
         return False
 
-    def wijzigingen_str(self, taal='nl', only_important=True):
+    def wijzigingen_str(self, taal='nl', alleen_belangrijk=True):
+        """
+        Geef alle wijzigingsberichten op trein- en vleugelniveau
+        terug als list met strings. Berichten op vleugelniveau krijgen een
+        prefix met de vleugelbestemming als de trein meerdere vleugels heeft.
+
+        De parameter alleen_belangrijk geeft alleen 'belangrijke' bepaalt of
+        alle wijzigingsberichten worden teruggegeven, of alleen de belangrijke.
+        Dit wordt bepaald door Wijziging.is_belangrijk().
+        """
+
         wijzigingen = []
 
         # Eerst de wijzigingen op treinniveau:
         for wijziging in self.wijzigingen:
-            if wijziging.type != '40' and \
-            (wijziging.is_important() == True or only_important != True):
+            if wijziging.wijziging_type != '40' and \
+            (wijziging.is_belangrijk() or alleen_belangrijk != True):
                 # Voeg bericht toe aan list met berichten:
                 wijzigingen.append(wijziging.to_str(taal))
 
@@ -318,9 +343,9 @@ class Trein:
                 # Filter op type 40 (status gewijzigd)
                 # en op type 20 (gewijzigd vertrekspoor)
                 # Type 20 zit bijna altijd al op treinniveau
-                if wijziging.type != '40' and \
-                wijziging.type != '20' and \
-                (wijziging.is_important() == True or only_important != True):
+                if wijziging.wijziging_type != '40' and \
+                wijziging.wijziging_type != '20' and \
+                (wijziging.is_belangrijk() or alleen_belangrijk != True):
                     # Vertaal Wijziging object naar string:
                     bericht = wijziging.to_str(taal)
 
@@ -336,6 +361,12 @@ class Trein:
         return wijzigingen
 
     def tips(self, taal='nl'):
+        """
+        Vertaal de reistips naar strings en geef alle reistips
+        terug als list met strings. Deze functie geeft alle soorten
+        reistips terug, inclusief InstapTips en OverstapTips.
+        """
+
         tips = []
 
         for tip in self.reisTips:
@@ -346,11 +377,16 @@ class Trein:
             tips.append(tip.to_str(taal))
 
         if self.nietInstappen == True:
-            tips.append(self.nietInstappen_str(taal))
+            tips.append(self.niet_instappen_str(taal))
 
         return tips
 
-    def nietInstappen_str(self, taal):
+    def niet_instappen_str(self, taal):
+        """
+        Geef een tekstmelding terug als de trein gemarkeerd is
+        als 'Niet Instappen'.
+        """
+
         if self.nietInstappen == True:
             if taal == 'en':
                 return 'Do not board'
@@ -358,10 +394,19 @@ class Trein:
                 return 'Niet instappen'
 
     def __repr__(self):
-        return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % (self.soortCode, self.ritID, self.lokaalVertrek(), self.vertraging, self.ritStation.code, self.vertrekSpoorActueel, self.eindbestemmingActueel)
+        return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % \
+        (self.soortCode, self.ritID, self.lokaalVertrek(),
+            self.vertraging, self.ritStation.code, self.vertrekSpoorActueel,
+            self.eindbestemmingActueel)
 
 
-class TreinVleugel:
+class TreinVleugel: 
+    """
+    Een treinvleugel is een deel van de trein met een bepaalde eindbestemming,
+    materieel en wijzigingen. Een trein kan uit meerdere vleugels bestaan met
+    verschillende bestemmingen.
+    """
+
     vertrekSpoor = []
     vertrekSpoorActueel = []
     eindbestemming = None
@@ -371,8 +416,18 @@ class TreinVleugel:
     materieel = []
     wijzigingen = []
 
+    def __init__(self, eindbestemming):
+        self.eindbestemming = eindbestemming
+        self.eindbestemmingActueel = eindbestemming
+
 
 class Materieel:
+    """
+    Class om treinmaterieel bij te houden.
+    Elk materieeldeel heeft een eindbestemming en is
+    semantisch gezien onderdeel van een treinvleugel.
+    """
+
     soort = None
     aanduiding = None
     lengte = 0
@@ -381,84 +436,133 @@ class Materieel:
     vertrekPositie = None
     volgordeVertrek = None
 
+    def __init__(self):
+        pass
+
     def treintype(self):
+        """
+        Geef het treintype terug als string.
+        """
+
         if self.aanduiding != None:
             return '%s-%s' % (self.soort, self.aanduiding)
         else:
             return self.soort
 
 class Wijziging:
-    type = 0
+    """
+    Class om wijzigingsberichten bij te houden.
+    Iedere wijziging wordt geidentificeerd met een code (wijziging_type),
+    dit is een numerieke code die te vertalen is naar een concreet bericht.
+    Optioneel wordt het bericht aangevuld met stationsinformatie of een oorzaak
+    voor een wijziging.
+    """
+
+    wijziging_type = 0
     oorzaak = None
     oorzaakLang = None
     station = None
 
-    def is_important(self):
-        if self.type == '10' or self.type == '22':
+    def __init__(self, wijziging_type):
+        self.wijziging_type = wijziging_type
+
+    def is_belangrijk(self):
+        """
+        Bepaal of een Wijziging een belangrijk bericht is of niet (voor
+        treinreizigers). Op dit moment worden code 10 (vertraging) en
+        code 22 (vertrekspoorfixatie) weggefilterd.
+        """
+
+        if self.wijziging_type == '10' or self.wijziging_type == '22':
             return False
         else:
             return True
 
     def to_str(self, taal='nl'):
-        if self.type == '10':
+        """
+        Vertaal een wijziging_type naar een concreet bericht in Nederlands
+        of Engels (aangegeven met parameter taal). Gebruik 'nl' of 'en'.
+        """
+
+        if self.wijziging_type == '10':
             if taal == 'en':
                 return 'Delayed'
             else:
                 return 'Later vertrek%s' % self.oorzaak_prefix(taal)
-        if self.type == '20':
+        elif self.wijziging_type == '20':
             if taal == 'en':
                 return 'Platform has been changed'
             else:
                 return 'Gewijzigd vertrekspoor'
-        if self.type == '22':
+        elif self.wijziging_type == '22':
             if taal == 'en':
                 return 'Platform has been allocated'
             else:
                 return 'Vertrekspoor toegewezen'
-        if self.type == '31':
+        elif self.wijziging_type == '31':
             if taal == 'en':
                 return 'Additional train'
             else:
                 return 'Extra trein'
-        if self.type == '32':
+        elif self.wijziging_type == '32':
             if taal == 'en':
                 return 'Train is cancelled'
             else:
                 return 'Trein rijdt niet%s' % self.oorzaak_prefix(taal)
-        if self.type == '33':
+        elif self.wijziging_type == '33':
             if taal == 'en':
                 return 'Diverted train'
             else:
                 return 'Rijdt via een andere route%s' % self.oorzaak_prefix(taal)
-        if self.type == '34':
+        elif self.wijziging_type == '34':
             if taal == 'en':
                 return 'Terminates at %s' % self.station.langeNaam
             else:
                 return 'Rijdt niet verder dan %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
-        if self.type == '35':
+        elif self.wijziging_type == '35':
             if taal == 'en':
                 return 'Continues to %s' % self.station.langeNaam
             else:
                 return 'Rijdt verder naar %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
-        if self.type == '41':
+        elif self.wijziging_type == '41':
             if taal == 'en':
                 return 'Attention, train goes to %s' % self.station.langeNaam
             else:
                 return 'Let op, rijdt naar %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
         else:
-            return '%s' % self.type
+            return '%s' % self.wijziging_type
 
     def oorzaak_prefix(self, taal):
+        """
+        Geeft een string terug met oorzaak (indien aanwezig), inclusief een
+        prefix 'i.v.m.'. Geeft een lege string terug indien de taal Engels is,
+        oorzaken worden namelijk alleen in het Nederlands geboden.
+        """
+
         if taal == 'en' or self.oorzaakLang == None:
             return ''
         else:
             return ' i.v.m. %s' % self.oorzaakLang
 
 class ReisTip:
+    """
+    Class om reistips in te bewaren. Een reistip is voor reizigers belangrijke
+    informatie zoals stations die worden overgeslagen. De variabele code
+    bepaalt de exacte boodschap, aan deze boodschap kunnen 0 of meer stations
+    worden meegegeven.
+    """
+
     code = None
     stations = []
 
+    def __init__(self, code):
+        self.code = code
+
     def to_str(self, taal='nl'):
+        """
+        Vertaal de reistip naar een concreet bericht in de gegeven taal.
+        """
+
         if self.code == 'STNS':
             if taal == 'en':
                 return 'Does not call at %s' % self.stations_str(taal)
@@ -503,6 +607,10 @@ class ReisTip:
             return self.code
 
     def stations_str(self, taal='nl'):
+        """
+        Vertaal de lijst met stations naar een geformatteerde string in de
+        gegeven taal.
+        """
         if taal == 'en':
             if len(self.stations) <= 2:
                 return ' and '.join(station.langeNaam for station in self.stations)
@@ -515,6 +623,12 @@ class ReisTip:
                 return ', '.join(station.langeNaam for station in self.stations[:-1]) + ' en ' + self.stations[-1].langeNaam
 
 class InstapTip:
+    """
+    Class om instaptips te bewaren. Een instaptip is een tip voor reizigers
+    dat een alternatieve trein eerder op een bepaald station is (bijvoorbeeld
+    een intercity die eerder een knooppunt bereikt).
+    """
+
     treinSoort = None
     treinSoortCode = None
     uitstapStation = None
@@ -522,22 +636,54 @@ class InstapTip:
     instapVertrek = None
     instapSpoor = None
 
+    def __init__(self):
+        pass
+
     def to_str(self, taal='nl'):
+        """
+        Vertaal de instaptip naar een concreet bericht (string)
+        in de gegeven taal.
+        """
+
         if taal == 'en':
-            return 'The %s to %s reaches %s sooner' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+            return 'The %s to %s reaches %s sooner' % (self.treinSoort,
+                self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
         else:
-            return 'De %s naar %s is eerder in %s' % (self.treinSoort, self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+            return 'De %s naar %s is eerder in %s' % (self.treinSoort,
+                self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
 
 class OverstapTip:
+    """
+    Class om overstaptips te bewaren. Een overstaptip is een tip dat om een
+    bepaalde bestemming te bereiken op een overstapstation moet worden
+    overgestapt.
+    """
+
     bestemming = None
     overstapStation = None
 
+    def __init__(self):
+        pass
+
     def to_str(self, taal='nl'):
+        """
+        Vertaal de overstaptip naar een concreet bericht (string)
+        in de gegeven taal.
+        """
+
         if taal == 'en':
-            return 'For %s, change at %s' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
+            return 'For %s, change at %s' % (self.bestemming.langeNaam,
+                self.overstapStation.langeNaam)
         else:
-            return 'Voor %s overstappen in %s' % (self.bestemming.langeNaam, self.overstapStation.langeNaam)
+            return 'Voor %s overstappen in %s' % (self.bestemming.langeNaam,
+                self.overstapStation.langeNaam)
+
 
 class OngeldigDvsBericht(Exception):
-    """Exception voor ongeldige DVS berichten"""
+    """
+    Exception voor ongeldige DVS berichten
+    """
+
+    # Verder een standaard Exception
+
     pass
