@@ -315,7 +315,11 @@ class Trein:
         # Dan de wijzigingen op vleugelniveau:
         for vleugel in self.vleugels:
             for wijziging in vleugel.wijzigingen:
+                # Filter op type 40 (status gewijzigd)
+                # en op type 20 (gewijzigd vertrekspoor)
+                # Type 20 zit bijna altijd al op treinniveau
                 if wijziging.type != '40' and \
+                wijziging.type != '20' and \
                 (wijziging.is_important() == True or only_important != True):
                     # Vertaal Wijziging object naar string:
                     bericht = wijziging.to_str(taal)
