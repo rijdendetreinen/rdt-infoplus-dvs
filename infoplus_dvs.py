@@ -305,9 +305,29 @@ class Trein:
     def wijzigingen_str(self, taal='nl', only_important=True):
         wijzigingen = []
 
+        # Eerst de wijzigingen op treinniveau:
         for wijziging in self.wijzigingen:
-            if wijziging.type != '40' and (wijziging.is_important() == True or only_important != True):
+            if wijziging.type != '40' and \
+            (wijziging.is_important() == True or only_important != True):
+                # Voeg bericht toe aan list met berichten:
                 wijzigingen.append(wijziging.to_str(taal))
+
+        # Dan de wijzigingen op vleugelniveau:
+        for vleugel in self.vleugels:
+            for wijziging in vleugel.wijzigingen:
+                if wijziging.type != '40' and \
+                (wijziging.is_important() == True or only_important != True):
+                    # Vertaal Wijziging object naar string:
+                    bericht = wijziging.to_str(taal)
+
+                    # Zet de vleugelbestemming voor het bericht
+                    # indien deze trein uit meerdere vleugels bestaat:
+                    if len(self.vleugels) > 1:
+                        bericht = '%s: %s' % (vleugel.eindbestemming.middelNaam,
+                            bericht)
+
+                    # Voeg bericht toe aan list met berichten:
+                    wijzigingen.append(bericht)
 
         return wijzigingen
 
