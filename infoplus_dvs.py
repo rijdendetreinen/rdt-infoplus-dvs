@@ -1,11 +1,21 @@
+"""
+Module om DVS berichten uit InfoPlus te kunnen verwerken.
+"""
+
 import xml.etree.cElementTree as ET
 import isodate
 import pytz
 import logging
 
+# Vraag een logger object:
 __logger__ = logging.getLogger(__name__)
 
 def parse_trein(data):
+    """
+    Vertaal een XML-bericht over een trein (uit de DVS feed)
+    naar een Trein object.
+    """
+
     # Parse XML:
     try:
         root = ET.fromstring(data)
@@ -155,79 +165,123 @@ def parse_trein(data):
     return trein
 
 
-def parse_stations(stationsNode):
+def parse_stations(station_nodes):
+    """
+    Vertaal een node met stations naar een list van Station objecten.
+    """
+
     stations = []
-    for stationNode in stationsNode:
-        stations.append(parse_station(stationNode))
+
+    for station_node in station_nodes:
+        stations.append(parse_station(station_node))
 
     return stations
 
 
-def parse_station(stationElement):
-    station_object = Station()
-    station_object.code = stationElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}StationCode').text
-    station_object.korteNaam = stationElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}KorteNaam').text
-    station_object.middelNaam = stationElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MiddelNaam').text
-    station_object.langeNaam = stationElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}LangeNaam').text
-    station_object.uic = stationElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}UICCode').text
-    station_object.type = stationElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Type').text
+def parse_station(station_element):
+    """
+    Vertaal een XML node met een station naar een Station object.
+    """
+
+    station_object = Station(
+        station_element.find(
+            '{urn:ndov:cdm:trein:reisinformatie:data:2}StationCode').text,
+        station_element.find(
+            '{urn:ndov:cdm:trein:reisinformatie:data:2}LangeNaam').text
+        )
+
+    station_object.korte_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}KorteNaam').text
+    station_object.middel_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MiddelNaam').text
+    station_object.uic = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}UICCode').text
+    station_object.station_type = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Type').text
 
     return station_object
 
 
-def parse_wijziging(wijzigingNode):
-    wijziging = Wijziging(wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text)
-    
-    oorzaakNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
-    if oorzaakNode != None:
-        wijziging.oorzaak = oorzaakNode.text
-    
-    oorzaakLangNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
-    if oorzaakLangNode != None:
-        wijziging.oorzaakLang = oorzaakLangNode.text
+def parse_wijziging(wijziging_node):
+    """
+    Vertaal een XML node met een wijziging naar een Wijziging object.
+    """
 
-    stationNode = wijzigingNode.find('{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
-    if stationNode != None:
-        wijziging.station = parse_station(stationNode)
+    wijziging = Wijziging(wijziging_node.find(
+        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text)
+    
+    oorzaak_node = wijziging_node.find(
+        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
+    if oorzaak_node != None:
+        wijziging.oorzaak = oorzaak_node.text
+    
+    oorzaak_lang_node = wijziging_node.find(
+        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
+    if oorzaak_lang_node != None:
+        wijziging.oorzaak_lang = oorzaak_lang_node.text
+
+    station_node = wijziging_node.find(
+        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
+    if station_node != None:
+        wijziging.station = parse_station(station_node)
 
     return wijziging
 
 
-def parse_vertreksporen(sporenNode):
+def parse_vertreksporen(spoor_nodes):
+    """
+    Vertaal een XML node met vertreksporen naar een list met Spoor objecten.
+    """
     sporen = []
-    for spoorNode in sporenNode:
-        sporen.append(parse_spoor(spoorNode))
+    
+    for spoor_node in spoor_nodes:
+        sporen.append(parse_spoor(spoor_node))
 
     return sporen
 
 
-def parse_spoor(spoorElement):
-    spoor = Spoor(spoorElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
+def parse_spoor(spoor_node):
+    """
+    Vertaal een XML node met een vertrekspoor naar een Spoor object.
+    """
+
+    spoor = Spoor(spoor_node.find(
+        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
 
     # Zoek eventuele fase:
-    faseNode = spoorElement.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorFase')
-    if (faseNode != None):
-        spoor.fase = faseNode.text
+    fase_node = spoor_node.find(
+        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorFase')
+    if (fase_node != None):
+        spoor.fase = fase_node.text
 
     return spoor
 
 
 def parse_boolean(value):
+    """
+    Vertaal een booleaanse waarde in een DVS bericht (string 'J' of 'N')
+    naar True of False.
+    """
+
     if value == 'J':
         return True
     else:
         return False
 
 class Station:
+    """
+    Class om informatie over een station in te bewaren.
+    """
+
     code = None
-    korteNaam = None
-    middelNaam = None
-    langeNaam = None
+    korte_naam = None
+    middel_naam = None
+    lange_naam = None
     uic = None
-    type = None
+    station_type = None
+
+    def __init__(self, code, lange_naam):
+        self.code = code
+        self.lange_naam = lange_naam
 
     def __repr__(self):
-        return '<station %s %s>' % (self.code, self.langeNaam)
+        return '<station %s %s>' % (self.code, self.lange_naam)
 
 
 class Spoor:
@@ -294,15 +348,27 @@ class Trein:
     instapTips = []
     overstapTips = []
 
-    def lokaalVertrek(self):
-        tz = pytz.timezone('Europe/Amsterdam')
-        return self.vertrek.astimezone(tz)
+    def lokaal_vertrek(self):
+        """
+        Geef de geplande vertrektijd terug in lokale (NL) tijd.
+        """
 
-    def lokaalVertrekActueel(self):
-        tz = pytz.timezone('Europe/Amsterdam')
-        return self.vertrekActueel.astimezone(tz)
+        tijdzone = pytz.timezone('Europe/Amsterdam')
+        return self.vertrek.astimezone(tijdzone)
 
-    def gewijzigdVertrekspoor(self):
+    def lokaal_vertrek_actueel(self):
+        """
+        Geef de actuele vertrektijd terug in lokale (NL) tijd.
+        """
+
+        tijdzone = pytz.timezone('Europe/Amsterdam')
+        return self.vertrekActueel.astimezone(tijdzone)
+
+    def is_gewijzigd_vertrekspoor(self):
+        """
+        Geeft True terug indien het vertrekspoor gewijzigd is.
+        """
+
         return (self.vertrekSpoor != self.vertrekSpoorActueel)
 
     def is_opgeheven(self):
@@ -352,8 +418,8 @@ class Trein:
                     # Zet de vleugelbestemming voor het bericht
                     # indien deze trein uit meerdere vleugels bestaat:
                     if len(self.vleugels) > 1:
-                        bericht = '%s: %s' % (vleugel.eindbestemming.middelNaam,
-                            bericht)
+                        bericht = '%s: %s' % \
+                        (vleugel.eindbestemming.middel_naam, bericht)
 
                     # Voeg bericht toe aan list met berichten:
                     wijzigingen.append(bericht)
@@ -395,7 +461,7 @@ class Trein:
 
     def __repr__(self):
         return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % \
-        (self.soortCode, self.ritID, self.lokaalVertrek(),
+        (self.soortCode, self.ritID, self.lokaal_vertrek(),
             self.vertraging, self.ritStation.code, self.vertrekSpoorActueel,
             self.eindbestemmingActueel)
 
@@ -460,7 +526,7 @@ class Wijziging:
 
     wijziging_type = 0
     oorzaak = None
-    oorzaakLang = None
+    oorzaak_lang = None
     station = None
 
     def __init__(self, wijziging_type):
@@ -516,19 +582,19 @@ class Wijziging:
                 return 'Rijdt via een andere route%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '34':
             if taal == 'en':
-                return 'Terminates at %s' % self.station.langeNaam
+                return 'Terminates at %s' % self.station.lange_naam
             else:
-                return 'Rijdt niet verder dan %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
+                return 'Rijdt niet verder dan %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         elif self.wijziging_type == '35':
             if taal == 'en':
-                return 'Continues to %s' % self.station.langeNaam
+                return 'Continues to %s' % self.station.lange_naam
             else:
-                return 'Rijdt verder naar %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
+                return 'Rijdt verder naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         elif self.wijziging_type == '41':
             if taal == 'en':
-                return 'Attention, train goes to %s' % self.station.langeNaam
+                return 'Attention, train goes to %s' % self.station.lange_naam
             else:
-                return 'Let op, rijdt naar %s%s' % (self.station.langeNaam, self.oorzaak_prefix(taal))
+                return 'Let op, rijdt naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         else:
             return '%s' % self.wijziging_type
 
@@ -539,10 +605,10 @@ class Wijziging:
         oorzaken worden namelijk alleen in het Nederlands geboden.
         """
 
-        if taal == 'en' or self.oorzaakLang == None:
+        if taal == 'en' or self.oorzaak_lang == None:
             return ''
         else:
-            return ' i.v.m. %s' % self.oorzaakLang
+            return ' i.v.m. %s' % self.oorzaak_lang
 
 class ReisTip:
     """
@@ -613,14 +679,14 @@ class ReisTip:
         """
         if taal == 'en':
             if len(self.stations) <= 2:
-                return ' and '.join(station.langeNaam for station in self.stations)
+                return ' and '.join(station.lange_naam for station in self.stations)
             else:
-                return ', '.join(station.langeNaam for station in self.stations[:-1]) + ', and ' + self.stations[-1].langeNaam
+                return ', '.join(station.lange_naam for station in self.stations[:-1]) + ', and ' + self.stations[-1].lange_naam
         else:
             if len(self.stations) <= 2:
-                return ' en '.join(station.langeNaam for station in self.stations)
+                return ' en '.join(station.lange_naam for station in self.stations)
             else:
-                return ', '.join(station.langeNaam for station in self.stations[:-1]) + ' en ' + self.stations[-1].langeNaam
+                return ', '.join(station.lange_naam for station in self.stations[:-1]) + ' en ' + self.stations[-1].lange_naam
 
 class InstapTip:
     """
@@ -647,10 +713,10 @@ class InstapTip:
 
         if taal == 'en':
             return 'The %s to %s reaches %s sooner' % (self.treinSoort,
-                self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+                self.eindbestemming.lange_naam, self.uitstapStation.lange_naam)
         else:
             return 'De %s naar %s is eerder in %s' % (self.treinSoort,
-                self.eindbestemming.langeNaam, self.uitstapStation.langeNaam)
+                self.eindbestemming.lange_naam, self.uitstapStation.lange_naam)
 
 class OverstapTip:
     """
@@ -672,11 +738,11 @@ class OverstapTip:
         """
 
         if taal == 'en':
-            return 'For %s, change at %s' % (self.bestemming.langeNaam,
-                self.overstapStation.langeNaam)
+            return 'For %s, change at %s' % (self.bestemming.lange_naam,
+                self.overstapStation.lange_naam)
         else:
-            return 'Voor %s overstappen in %s' % (self.bestemming.langeNaam,
-                self.overstapStation.langeNaam)
+            return 'Voor %s overstappen in %s' % (self.bestemming.lange_naam,
+                self.overstapStation.lange_naam)
 
 
 class OngeldigDvsBericht(Exception):
