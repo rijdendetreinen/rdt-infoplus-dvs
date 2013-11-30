@@ -565,6 +565,11 @@ class Wijziging:
                 return 'Platform has been allocated'
             else:
                 return 'Vertrekspoor toegewezen'
+        elif self.wijziging_type == '30':
+            if taal == 'en':
+                return 'Schedule changed'
+            else:
+                return 'Gewijzigde dienstregeling'
         elif self.wijziging_type == '31':
             if taal == 'en':
                 return 'Additional train'
