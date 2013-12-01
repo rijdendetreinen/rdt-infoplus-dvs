@@ -54,6 +54,15 @@ def index(station, taal='nl'):
             else:
                 trein_dict['sprWijziging'] = False
 
+            # Stuur bij een gewijzigde eindbestemming
+            # ook de oorspronkelijke eindbestemming mee:
+            if trein_dict['bestemming'] != \
+                '/'.join(bestemming.lange_naam \
+            for bestemming in trein.eindbestemming):
+                trein_dict['bestemmingOrigineel'] = '/'. \
+                    join(bestemming.lange_naam \
+                    for bestemming in trein.eindbestemming)
+
             trein_dict['opmerkingen'] = trein.wijzigingen_str(taal)
             trein_dict['tips'] = trein.tips(taal)
             trein_dict['opgeheven'] = False
