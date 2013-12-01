@@ -54,15 +54,6 @@ def index(station, taal='nl'):
             else:
                 trein_dict['sprWijziging'] = False
 
-            # Stuur bij een gewijzigde eindbestemming
-            # ook de oorspronkelijke eindbestemming mee:
-            if trein_dict['bestemming'] != \
-                '/'.join(bestemming.lange_naam \
-            for bestemming in trein.eindbestemming):
-                trein_dict['bestemmingOrigineel'] = '/'. \
-                    join(bestemming.lange_naam \
-                    for bestemming in trein.eindbestemming)
-
             trein_dict['opmerkingen'] = trein.wijzigingen_str(taal)
             trein_dict['tips'] = trein.tips(taal)
             trein_dict['opgeheven'] = False
@@ -77,10 +68,23 @@ def index(station, taal='nl'):
                 # Toon geplande eindbestemming bij opgeheven trein:
                 trein_dict['bestemming'] = '/'.join(bestemming.lange_naam for bestemming in trein.eindbestemming)
 
+                # Controleer of vertrektijd meer dan 2 min geleden is:
                 if trein.vertrekActueel + timedelta(minutes = 2) < nu:
-                    # Sla deze trein over.
-                    # We laten opgeheven treinen tot 2 min na vertrek in de feed zitten
+                    # Sla deze trein over. We laten opgeheven treinen tot 2 min
+                    # na vertrek in de feed zitten; vertrektijd van deze trein
+                    # is meer dan 2 minuten na vertrektijd
                     continue
+            else:
+                # Trein is niet opgeheven
+
+                # Stuur bij een gewijzigde eindbestemming
+                # ook de oorspronkelijke eindbestemming mee:
+                if trein_dict['bestemming'] != \
+                    '/'.join(bestemming.lange_naam \
+                for bestemming in trein.eindbestemming):
+                    trein_dict['bestemmingOrigineel'] = '/'. \
+                        join(bestemming.lange_naam \
+                        for bestemming in trein.eindbestemming)
 
             # Verkorte (via)-route
             if trein_dict['opgeheven'] == True:
