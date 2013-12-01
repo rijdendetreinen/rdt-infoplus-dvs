@@ -1,3 +1,9 @@
+"""
+Module om HTTP requests te vertalen naar de DVS daemon.
+Deze module maakt het mogelijk om informatie per station of per trein
+op te vragen. Iedere request geeft een JSON response terug.
+"""
+
 import zmq
 from datetime import datetime, timedelta
 import pytz
@@ -17,8 +23,6 @@ def index(station, taal='nl'):
     # Stuur opdracht:
     client.send('station/%s' % station)
     treinen = client.recv_pyobj()
-
-    vertrektijden = {}
 
     # Lees trein array uit:
     if treinen != None:
