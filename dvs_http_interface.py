@@ -64,7 +64,7 @@ def index(station, taal='nl'):
             else:
                 trein_dict['sprWijziging'] = False
 
-            trein_dict['opmerkingen'] = trein.wijzigingen_str(taal)
+            trein_dict['opmerkingen'] = trein.wijzigingen_str(taal, True, trein)
             trein_dict['tips'] = trein.tips(taal)
             trein_dict['opgeheven'] = False
             trein_dict['status'] = trein.status

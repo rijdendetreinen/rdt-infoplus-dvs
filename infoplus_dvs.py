@@ -383,7 +383,7 @@ class Trein:
 
         return False
 
-    def wijzigingen_str(self, taal='nl', alleen_belangrijk=True):
+    def wijzigingen_str(self, taal='nl', alleen_belangrijk=True, trein=None):
         """
         Geef alle wijzigingsberichten op trein- en vleugelniveau
         terug als list met strings. Berichten op vleugelniveau krijgen een
@@ -401,7 +401,7 @@ class Trein:
             if wijziging.wijziging_type != '40' and \
             (wijziging.is_belangrijk() or alleen_belangrijk != True):
                 # Voeg bericht toe aan list met berichten:
-                wijzigingen.append(wijziging.to_str(taal))
+                wijzigingen.append(wijziging.to_str(taal, trein))
 
         # Dan de wijzigingen op vleugelniveau:
         for vleugel in self.vleugels:
@@ -413,7 +413,7 @@ class Trein:
                 wijziging.wijziging_type != '20' and \
                 (wijziging.is_belangrijk() or alleen_belangrijk != True):
                     # Vertaal Wijziging object naar string:
-                    bericht = wijziging.to_str(taal)
+                    bericht = wijziging.to_str(taal, trein)
 
                     # Zet de vleugelbestemming voor het bericht
                     # indien deze trein uit meerdere vleugels bestaat:
@@ -544,7 +544,7 @@ class Wijziging:
         else:
             return True
 
-    def to_str(self, taal='nl'):
+    def to_str(self, taal='nl', trein=None):
         """
         Vertaal een wijziging_type naar een concreet bericht in Nederlands
         of Engels (aangegeven met parameter taal). Gebruik 'nl' of 'en'.
@@ -556,10 +556,18 @@ class Wijziging:
             else:
                 return 'Later vertrek%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '20':
-            if taal == 'en':
-                return 'Platform has been changed'
+            if trein == None:
+                if taal == 'en':
+                    return 'Platform has been changed'
+                else:
+                    return 'Vertrekspoor gewijzigd'
             else:
-                return 'Gewijzigd vertrekspoor'
+                if taal == 'en':
+                    return 'Platform changed, departs from platform %s' % \
+                    '/'.join(str(spoor) for spoor in trein.vertrekSpoorActueel)
+                else:
+                    return 'Spoorwijziging, vertrekt van spoor %s' % \
+                    '/'.join(str(spoor) for spoor in trein.vertrekSpoorActueel)
         elif self.wijziging_type == '22':
             if taal == 'en':
                 return 'Platform has been allocated'
