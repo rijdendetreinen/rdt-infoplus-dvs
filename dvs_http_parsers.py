@@ -6,10 +6,12 @@ van de DVS HTTP interface.
 from datetime import timedelta
 
 
-def trein_to_dict(trein, taal, tijd_nu):
+def trein_to_dict(trein, taal, tijd_nu, verbose=False):
     """
     Vertaal een InfoPlus_DVS Trein object naar een dict,
     geschokt voor een JSON output.
+    Met de parameter verbose wordt bepaald of er extra informatie
+    teruggegeven wordt, zoals alle stopstations per trein.
     """
 
     trein_dict = { }
@@ -86,6 +88,23 @@ def trein_to_dict(trein, taal, tijd_nu):
             (mat.treintype(), mat.eindbestemmingActueel.middel_naam)
             for mat in vleugel.materieel]
 
+        if verbose == True:
+            vleugel_dict['stopstations'] = \
+                stopstations_to_list(vleugel.stopstationsActueel)
+
         trein_dict['vleugels'].append(vleugel_dict)
 
     return trein_dict
+
+def stopstations_to_list(stations):
+    """
+    Vertaal de stopstations van een trein naar een list van
+    stopstations, geschikt om als JSON result terug te geven.
+    """
+
+    stations_list = []
+
+    for station in stations:
+        stations_list.append(station.lange_naam)
+
+    return stations_list

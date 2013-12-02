@@ -56,3 +56,33 @@ def index(station, taal='nl'):
 
     client.close()
     context.term()
+
+
+@bottle.route('/trein/<trein>/<station>')
+@bottle.route('/trein/<trein>/<station>/<taal>')
+def index(trein, station, taal='nl'):
+    tijd_nu = datetime.now(pytz.utc)
+
+    # Maak verbinding
+    context = zmq.Context()
+    client = context.socket(zmq.REQ)
+    client.connect(dvs_client_server)
+
+    # Stuur opdracht: haal alle informatie op voor dit treinnummer
+    client.send('trein/%s' % trein)
+    vertrekken = client.recv_pyobj()
+
+    # Lees trein array uit:
+    if vertrekken != None and station.upper() in vertrekken:
+        trein_info = vertrekken[station.upper()]
+
+        # Parse basis informatie:
+        trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
+            taal, tijd_nu, True)
+
+        return { 'result': 'OK', 'trein': trein_dict }
+    else:
+        return { 'result': 'ERR', 'msg': 'NOTFOUND' }
+
+    client.close()
+    context.term()
