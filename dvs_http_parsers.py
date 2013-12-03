@@ -105,6 +105,7 @@ def stopstations_to_list(stations):
     stations_list = []
 
     for station in stations:
-        stations_list.append(station.lange_naam)
+        stations_list.append(
+            {'code': station.code, 'naam': station.lange_naam})
 
     return stations_list
