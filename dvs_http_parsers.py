@@ -49,7 +49,7 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
             for bestemming in trein.eindbestemming)
 
         # Controleer of vertrektijd meer dan 2 min geleden is:
-        if trein.vertrekActueel + timedelta(minutes = 2) < tijd_nu:
+        if trein.vertrek + timedelta(minutes = 2) < tijd_nu:
             # Sla deze trein over. We laten opgeheven treinen tot 2 min
             # na vertrek in de feed zitten; vertrektijd van deze trein
             # is meer dan 2 minuten na vertrektijd

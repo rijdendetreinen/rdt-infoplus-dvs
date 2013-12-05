@@ -48,7 +48,8 @@ def index(station, taal='nl'):
 
             trein_dict = dvs_http_parsers.trein_to_dict(trein, taal, tijd_nu)
 
-            vertrektijden.append(trein_dict)
+            if trein_dict != None:
+                vertrektijden.append(trein_dict)
 
         return { 'result': 'OK', 'vertrektijden': vertrektijden }
     else:
