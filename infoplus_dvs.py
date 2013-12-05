@@ -445,6 +445,18 @@ class Trein:
         if self.nietInstappen == True:
             tips.append(self.niet_instappen_str(taal))
 
+        if self.achterBlijvenAchtersteTreinDeel == True:
+            tips.append(self.achterblijven_str(taal))
+
+        if self.speciaalKaartje == True:
+            tips.append(self.speciaal_kaartje_str(taal))
+
+        if self.reserveren == True:
+            tips.append(self.reserveren_str(taal))
+
+        if self.toeslag == True:
+            tips.append(self.toeslag_str(taal))
+
         return tips
 
     def niet_instappen_str(self, taal):
@@ -458,6 +470,51 @@ class Trein:
                 return 'Do not board'
             else:
                 return 'Niet instappen'
+
+    def speciaal_kaartje_str(self, taal):
+        """
+        Geef een tekstmelding terug als voor deze trein een speciaal kaartje
+        vereist is.
+        """
+
+        if self.speciaalKaartje == True:
+            if taal == 'en':
+                return 'Special ticket required'
+            else:
+                return 'Bijzonder ticket'
+
+    def achterblijven_str(self, taal):
+        """
+        Geef een tekstmelding terug als het achterste treindeel achterblijft.
+        """
+
+        if self.achterBlijvenAchtersteTreinDeel == True:
+            if taal == 'en':
+                return 'Rear trainpart: do not board'
+            else:
+                return 'Achterste treindeel blijft achter'
+
+    def toeslag_str(self, taal):
+        """
+        Geef een tekstmelding terug als een toeslag verplicht is.
+        """
+
+        if self.toeslag == True:
+            if taal == 'en':
+                return 'Supplement required'
+            else:
+                return 'Toeslag verplicht'
+
+    def reserveren_str(self, taal):
+        """
+        Geef een tekstmelding terug als reserveren verplicht is.
+        """
+
+        if self.reserveren == True:
+            if taal == 'en':
+                return 'Reservation required'
+            else:
+                return 'Reservering verplicht'
 
     def __repr__(self):
         return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % \
