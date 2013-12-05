@@ -785,7 +785,8 @@ class InstapTip:
             return 'The %s to %s reaches %s sooner' % (self.treinSoort,
                 self.eindbestemming.lange_naam, self.uitstapStation.lange_naam)
         else:
-            return 'De %s naar %s is eerder in %s' % (self.treinSoort,
+            return '%s %s naar %s is eerder in %s' % (self.treinSoort,
+                self.instapVertrek.strftime('%H:%M'),
                 self.eindbestemming.lange_naam, self.uitstapStation.lange_naam)
 
 class OverstapTip:
