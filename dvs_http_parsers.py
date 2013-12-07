@@ -17,18 +17,18 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
     trein_dict = { }
 
     # Basis treininformatie
-    trein_dict['treinNr'] = trein.treinNr
+    trein_dict['treinNr'] = trein.treinnr
     trein_dict['vertrek'] = trein.lokaal_vertrek().isoformat()
     trein_dict['bestemming'] = '/'.join(bestemming.lange_naam
-        for bestemming in trein.eindbestemmingActueel)
+        for bestemming in trein.eindbestemming_actueel)
     trein_dict['soort'] = trein.soort
-    trein_dict['soortAfk'] = trein.soortCode
+    trein_dict['soortAfk'] = trein.soort_code
     trein_dict['vertraging'] = round(trein.vertraging.seconds / 60)
     trein_dict['spoor'] = '/'.join(str(spoor)
-        for spoor in trein.vertrekSpoorActueel)
+        for spoor in trein.vertrekspoor_actueel)
 
-    if '/'.join(str(spoor) for spoor in trein.vertrekSpoor) \
-        != '/'.join(str(spoor) for spoor in trein.vertrekSpoorActueel):
+    if '/'.join(str(spoor) for spoor in trein.vertrekspoor) \
+        != '/'.join(str(spoor) for spoor in trein.vertrekspoor_actueel):
         trein_dict['sprWijziging'] = True
     else:
         trein_dict['sprWijziging'] = False
@@ -69,9 +69,9 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
 
     # Verkorte (via)-route
     if trein_dict['opgeheven'] == True:
-        verkorte_route = trein.verkorteRoute
+        verkorte_route = trein.verkorte_route
     else:
-        verkorte_route = trein.verkorteRouteActueel
+        verkorte_route = trein.verkorte_route_actueel
 
     if verkorte_route == None or len(verkorte_route) == 0:
         trein_dict['via'] = None
@@ -83,14 +83,14 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
     trein_dict['vleugels'] = []
     for vleugel in trein.vleugels:
         vleugel_dict = {
-            'bestemming': vleugel.eindbestemmingActueel.lange_naam }
+            'bestemming': vleugel.eindbestemming_actueel.lange_naam }
         vleugel_dict['mat'] = [
-            (mat.treintype(), mat.eindbestemmingActueel.middel_naam)
+            (mat.treintype(), mat.eindbestemming_actueel.middel_naam)
             for mat in vleugel.materieel]
 
         if verbose == True:
             vleugel_dict['stopstations'] = \
-                stopstations_to_list(vleugel.stopstationsActueel)
+                stopstations_to_list(vleugel.stopstations_actueel)
 
         trein_dict['vleugels'].append(vleugel_dict)
 

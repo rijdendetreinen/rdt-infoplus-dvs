@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""DVS daemon welke alle DVS berichten verwerkt en in geheugen opslaat.
+"""
+DVS daemon welke alle DVS berichten verwerkt en in geheugen opslaat.
 """
 
 import sys
@@ -23,7 +24,8 @@ import infoplus_dvs
 
 def setup_logging(default_path='logging.yaml',
     default_level=logging.INFO, env_key='LOG_CFG'):
-    """Setup logging configuration
+    """
+    Setup logging configuration
     """
 
     path = default_path
@@ -38,15 +40,19 @@ def setup_logging(default_path='logging.yaml',
         logging.basicConfig(level=default_level)
 
 def main():
-    """Main loop
+    """
+    Main loop
     """
 
     class ClientThread(Thread):
-        """Client thread voor verwerken requests van clients
         """
+        Client thread voor verwerken requests van clients
+        """
+
         def __init__ (self):
             logger.info('Initializing client thread')
             Thread.__init__(self)
+
         def run(self):
             logger.info('Running client thread')
             client_socket = context.socket(zmq.REP)
@@ -79,8 +85,10 @@ def main():
 
     # Garbage collection thread:
     class GarbageThread(Thread):
-        """Thread die verantwoordelijk is voor garbage collection
         """
+        Thread die verantwoordelijk is voor garbage collection
+        """
+
         def __init__(self, event):
             Thread.__init__(self)
             logger.info("GC thread initialized")
@@ -110,7 +118,7 @@ def main():
         for station in station_store:
             try:
                 for trein_rit, trein in station_store[station].items():
-                    if trein.vertrekActueel < treshold:
+                    if trein.vertrek_actueel < treshold:
                         try:
                             del(station_store[station][trein_rit])
 
@@ -132,7 +140,7 @@ def main():
         for trein_rit in trein_store.keys():
             try:
                 for station, trein in trein_store[trein_rit].items():
-                    if trein.vertrekActueel < treshold:
+                    if trein.vertrek_actueel < treshold:
                         try:
                             del(trein_store[trein_rit][station])
 
@@ -161,7 +169,8 @@ def main():
         return
 
     def laad_stations():
-        """Laad stations uit pickle dump
+        """
+        Laad stations uit pickle dump
         """
         logger.info('Inladen station_store...')
         station_store_file = open('datadump/station.store', 'rb')
@@ -171,7 +180,8 @@ def main():
         return store
 
     def laad_treinen():
-        """Laad treinen uit pickle dump
+        """
+        Laad treinen uit pickle dump
         """
         logger.info('Inladen trein_store...')
         trein_store_file = open('datadump/trein.store', 'rb')
@@ -265,38 +275,38 @@ def main():
             try:
                 trein = infoplus_dvs.parse_trein(content)
 
-                rit_station_code = trein.ritStation.code
+                rit_station_code = trein.rit_station.code
                 
                 if trein.status == '5':
                     # Trein vertrokken
                     # Verwijder uit station_store
                     if rit_station_code in station_store \
-                    and trein.treinNr in station_store[rit_station_code]:
-                        del(station_store[rit_station_code][trein.treinNr])
+                    and trein.treinnr in station_store[rit_station_code]:
+                        del(station_store[rit_station_code][trein.treinnr])
 
                     # Verwijder uit trein_store
-                    if trein.treinNr in trein_store \
-                    and rit_station_code in trein_store[trein.treinNr]:
-                        del(trein_store[trein.treinNr][rit_station_code])
-                        if len(trein_store[trein.treinNr]) == 0:
-                            del(trein_store[trein.treinNr])
+                    if trein.treinnr in trein_store \
+                    and rit_station_code in trein_store[trein.treinnr]:
+                        del(trein_store[trein.treinnr][rit_station_code])
+                        if len(trein_store[trein.treinnr]) == 0:
+                            del(trein_store[trein.treinnr])
                 else:
                     # Maak item in trein_store indien niet aanwezig
-                    if trein.treinNr not in trein_store:
-                        trein_store[trein.treinNr] = {}
+                    if trein.treinnr not in trein_store:
+                        trein_store[trein.treinnr] = {}
 
                     # Maak item in station_store indien niet aanwezig:
                     if rit_station_code not in station_store:
                         station_store[rit_station_code] = {}
 
                     # Update of insert trein aan station:
-                    station_store[rit_station_code][trein.treinNr] = trein
-                    trein_store[trein.treinNr][rit_station_code] = trein
+                    station_store[rit_station_code][trein.treinnr] = trein
+                    trein_store[trein.treinnr][rit_station_code] = trein
 
-            except infoplus_dvs.OngeldigDvsBericht as e:
+            except infoplus_dvs.OngeldigDvsBericht:
                 logger.error('Ongeldig DVS bericht')
                 logger.debug('Ongeldig DVS bericht: %s', content)
-            except Exception as e:
+            except Exception:
                 logger.error(
                     'Fout tijdens DVS bericht verwerken', exc_info=True)
                 logger.error('DVS crash bericht: %s', content)
