@@ -76,6 +76,13 @@ def main():
                             client_socket.send_pyobj(trein_store[trein_nr])
                         else:
                             client_socket.send_pyobj({})
+                    elif arguments[0] == 'store' and len(arguments) == 2:
+                        if arguments[1] == 'trein':
+                            client_socket.send_pyobj(trein_store)
+                        elif arguments[1] == 'station':
+                            client_socket.send_pyobj(station_store)
+                        else:
+                            client_socket.send_pyobj(None)
                     else:
                         client_socket.send_pyobj(None)
                 except Exception:
