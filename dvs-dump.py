@@ -7,11 +7,16 @@ Debug script welke rechtstreeks opdrachten naar DVS stuurt.
 import zmq
 import argparse
 import pprint
+import sys
 
 def main():
 	"""
 	Main functie
 	"""
+
+	# Maak output in utf-8 mogelijk in Python 2.x:
+	reload(sys)
+	sys.setdefaultencoding("utf-8")
 
 	# Initialiseer argparse
 	parser = argparse.ArgumentParser(description='DVS test tool. Stuur opdracht naar DVS daemon')
