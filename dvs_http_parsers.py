@@ -9,7 +9,7 @@ from datetime import timedelta
 def trein_to_dict(trein, taal, tijd_nu, verbose=False):
     """
     Vertaal een InfoPlus_DVS Trein object naar een dict,
-    geschokt voor een JSON output.
+    geschikt voor een JSON output.
     Met de parameter verbose wordt bepaald of er extra informatie
     teruggegeven wordt, zoals alle stopstations per trein.
     """
