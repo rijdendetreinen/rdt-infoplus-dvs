@@ -84,11 +84,12 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
     for vleugel in trein.vleugels:
         vleugel_dict = {
             'bestemming': vleugel.eindbestemming_actueel.lange_naam }
-        vleugel_dict['mat'] = [
-            (mat.treintype(), mat.eindbestemming_actueel.middel_naam)
-            for mat in vleugel.materieel]
 
         if verbose == True:
+            vleugel_dict['mat'] = [
+                (mat.treintype(), mat.eindbestemming_actueel.middel_naam)
+                for mat in vleugel.materieel]
+
             vleugel_dict['stopstations'] = \
                 stopstations_to_list(vleugel.stopstations_actueel)
 
