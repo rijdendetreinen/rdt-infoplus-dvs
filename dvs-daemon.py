@@ -306,9 +306,25 @@ def main():
                     if rit_station_code not in station_store:
                         station_store[rit_station_code] = {}
 
-                    # Update of insert trein aan station:
-                    station_store[rit_station_code][trein.treinnr] = trein
-                    trein_store[trein.treinnr][rit_station_code] = trein
+                    # Update of insert trein aan station store:
+                    if trein.treinnr in station_store[rit_station_code]:
+                        # Trein komt reeds voor in station store voor dit station
+                        if trein.rit_timestamp > station_store[rit_station_code][trein.treinnr].rit_timestamp:
+                            # Bericht is nieuwer, update store:
+                            station_store[rit_station_code][trein.treinnr] = trein
+                    else:
+                        # Trein kwam op dit station nog niet voor, voeg toe:
+                        station_store[rit_station_code][trein.treinnr] = trein
+
+                    # Update of insert trein aan trein store:
+                    if rit_station_code in trein_store[trein.treinnr]:
+                        # Trein komt reeds voor in trein store voor dit treinnr
+                        if trein.rit_timestamp > trein_store[trein.treinnr][rit_station_code].rit_timestamp:
+                            # Bericht is nieuwer, update store:
+                            trein_store[trein.treinnr][rit_station_code] = trein
+                    else:
+                        # Treinnr kwam op dit station nog niet voor, voeg toe:
+                        trein_store[trein.treinnr][rit_station_code] = trein
 
             except infoplus_dvs.OngeldigDvsBericht:
                 logger.error('Ongeldig DVS bericht')
