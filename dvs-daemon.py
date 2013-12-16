@@ -99,6 +99,9 @@ def main():
                         elif arguments[1] == 'station':
                             # Grootte van station store:
                             client_socket.send_pyobj(len(station_store))
+                        elif arguments[1] == 'msg':
+                            # Aantal verwerkte messages:
+                            client_socket.send_pyobj(msg_nr)
                         else:
                             client_socket.send_pyobj(None)
 
