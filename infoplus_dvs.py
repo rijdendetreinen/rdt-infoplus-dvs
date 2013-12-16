@@ -643,7 +643,7 @@ class Wijziging:
                 return 'Extra trein'
         elif self.wijziging_type == '32':
             if taal == 'en':
-                return 'Train is cancelled'
+                return 'Train is cancelled%s' % self.oorzaak_prefix(taal)
             else:
                 return 'Trein rijdt niet%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '33':
@@ -676,10 +676,44 @@ class Wijziging:
         oorzaken worden namelijk alleen in het Nederlands geboden.
         """
 
-        if taal == 'en' or self.oorzaak_lang == None:
+        if self.oorzaak_lang == None:
             return ''
+        elif taal == 'en':
+            oorzaak_vertaald = self.oorzaak_engels()
+
+            if oorzaak_vertaald != None:
+                return ' due to %s' % oorzaak_vertaald
+            else:
+                return ''
         else:
             return ' i.v.m. %s' % self.oorzaak_lang
+
+    def oorzaak_engels(self):
+        """
+        Vertaal de oorzaak naar Engels (indien een vertaling beschikbaar is).
+        """
+
+        vertalingen = {
+            'geplande werkzaamheden': 'planned engineering work',
+            'eerdere verstoring': 'an earlier disruption',
+            'seinstoring': 'signalling problems',
+            'defect materieel': 'a broken down train',
+            'wisselstoring': 'switch failure',
+            'aanrijding met een persoon': 'a person hit by a train',
+            'uitgelopen werkzaamheden': 'over-running engineering works',
+            'persoon op het spoor': 'a trespassing incident',
+            'defect spoor': 'poor rail conditions',
+            'defect aan het spoor': 'poor rail conditions',
+            'gladde sporen': 'slippery rail',
+            'defecte bovenleiding': 'overhead wire problems',
+            'stroomstoring': 'power disruption',
+            'bermbrand': 'a lineside fire'
+        }
+
+        if self.oorzaak_lang in vertalingen:
+            return vertalingen[self.oorzaak_lang]
+        else:
+            return None
 
 class ReisTip:
     """
