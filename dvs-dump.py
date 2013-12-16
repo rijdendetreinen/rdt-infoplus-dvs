@@ -24,6 +24,8 @@ def main():
 
     parser.add_argument('-l', '--lokaal', dest='lokaal',
         action='store_true', help='Test met lokale server 127.0.0.1:8120')
+    parser.add_argument('-q', '--quiet', dest='quiet',
+        action='store_true', help='Verberg meegegeven opdracht')
     parser.add_argument('OPDRACHT', nargs='?',
         action='store', help='opdracht naar DVS server', default='store/trein')
 
@@ -36,9 +38,10 @@ def main():
 
     opdracht = args.OPDRACHT
 
-    print "Opdracht naar DVS: %s" % opdracht
-    print "--------------------------------"
-    print
+    if args.quiet == False:
+        print "Opdracht naar DVS: %s" % opdracht
+        print "--------------------------------"
+        print
 
     # Maak verbinding
     context = zmq.Context()
