@@ -696,7 +696,9 @@ class Wijziging:
         vertalingen = {
             'geplande werkzaamheden': 'planned engineering work',
             'eerdere verstoring': 'an earlier disruption',
+            'herstelwerkzaamheden': 'reparation works',
             'seinstoring': 'signalling problems',
+            'sein- en wisselstoring': 'signalling and switch problems',
             'defect materieel': 'a broken down train',
             'wisselstoring': 'switch failure',
             'aanrijding met een persoon': 'a person hit by a train',
