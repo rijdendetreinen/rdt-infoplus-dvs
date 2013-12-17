@@ -708,6 +708,7 @@ class Wijziging:
             'defect aan het spoor': 'poor rail conditions',
             'gladde sporen': 'slippery rail',
             'defecte bovenleiding': 'overhead wire problems',
+            'versperring': 'an obstruction on the line',
             'stroomstoring': 'power disruption',
             'bermbrand': 'a lineside fire'
         }
