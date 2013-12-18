@@ -710,6 +710,8 @@ class Wijziging:
             'een aanrijding met een persoon': 'a person hit by a train',
             'aanrijding': 'a collision',
             'een aanrijding': 'a collision',
+            'aanrijding met een voertuig': 'a collision with a vehicle',
+            'een aanrijding met een voertuig': 'a collision with a vehicle',
             'uitgelopen werkzaamheden': 'over-running engineering works',
             'persoon op het spoor': 'a trespassing incident',
             'een persoon op het spoor': 'a trespassing incident',
