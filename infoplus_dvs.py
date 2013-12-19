@@ -610,7 +610,7 @@ class Wijziging:
 
         if self.wijziging_type == '10':
             if taal == 'en':
-                return 'Delayed'
+                return 'Delayed%s' % self.oorzaak_prefix(taal)
             else:
                 return 'Later vertrek%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '20':
@@ -633,14 +633,14 @@ class Wijziging:
                 return 'Vertrekspoor toegewezen'
         elif self.wijziging_type == '30':
             if taal == 'en':
-                return 'Schedule changed'
+                return 'Schedule changed%s' % self.oorzaak_prefix(taal)
             else:
-                return 'Gewijzigde dienstregeling'
+                return 'Gewijzigde dienstregeling%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '31':
             if taal == 'en':
-                return 'Additional train'
+                return 'Additional train%s' % self.oorzaak_prefix(taal)
             else:
-                return 'Extra trein'
+                return 'Extra trein%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '32':
             if taal == 'en':
                 return 'Train is cancelled%s' % self.oorzaak_prefix(taal)
@@ -648,22 +648,22 @@ class Wijziging:
                 return 'Trein rijdt niet%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '33':
             if taal == 'en':
-                return 'Diverted train'
+                return 'Diverted train%s' % self.oorzaak_prefix(taal)
             else:
                 return 'Rijdt via een andere route%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '34':
             if taal == 'en':
-                return 'Terminates at %s' % self.station.lange_naam
+                return 'Terminates at %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Rijdt niet verder dan %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         elif self.wijziging_type == '35':
             if taal == 'en':
-                return 'Continues to %s' % self.station.lange_naam
+                return 'Continues to %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Rijdt verder naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         elif self.wijziging_type == '41':
             if taal == 'en':
-                return 'Attention, train goes to %s' % self.station.lange_naam
+                return 'Attention, train goes to %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Let op, rijdt naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         else:
