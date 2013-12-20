@@ -1,0 +1,19 @@
+#!/bin/sh
+
+case $1 in
+   config)
+        cat <<'EOM'
+graph_title Aantal treinen
+graph_vlabel treinen
+graph_args --base 1000 -l 0
+graph_scale no
+graph_category rdt-dvs
+graph_info Aantal treinen in de trein store
+treinen.label treinen
+treinen.info Aantal treinen in trein store
+EOM
+        exit 0;;
+esac
+
+printf "treinen.value "
+/opt/rdt/infoplus-dvs/dvs-dump.py count/trein -q -l
