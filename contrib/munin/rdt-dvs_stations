@@ -1,0 +1,19 @@
+#!/bin/sh
+
+case $1 in
+   config)
+        cat <<'EOM'
+graph_title Aantal stations
+graph_vlabel stations
+graph_args --base 1000 -l 0
+graph_scale no
+graph_category rdt-dvs
+graph_info Aantal stations in de station store
+stations.label stations
+stations.info Aantal stations in station store
+EOM
+        exit 0;;
+esac
+
+printf "stations.value "
+/opt/rdt/infoplus-dvs/dvs-dump.py count/station -q -l

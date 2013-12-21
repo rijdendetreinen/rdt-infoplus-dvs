@@ -610,7 +610,7 @@ class Wijziging:
 
         if self.wijziging_type == '10':
             if taal == 'en':
-                return 'Delayed'
+                return 'Delayed%s' % self.oorzaak_prefix(taal)
             else:
                 return 'Later vertrek%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '20':
@@ -633,37 +633,37 @@ class Wijziging:
                 return 'Vertrekspoor toegewezen'
         elif self.wijziging_type == '30':
             if taal == 'en':
-                return 'Schedule changed'
+                return 'Schedule changed%s' % self.oorzaak_prefix(taal)
             else:
-                return 'Gewijzigde dienstregeling'
+                return 'Gewijzigde dienstregeling%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '31':
             if taal == 'en':
-                return 'Additional train'
+                return 'Additional train%s' % self.oorzaak_prefix(taal)
             else:
-                return 'Extra trein'
+                return 'Extra trein%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '32':
             if taal == 'en':
-                return 'Train is cancelled'
+                return 'Train is cancelled%s' % self.oorzaak_prefix(taal)
             else:
                 return 'Trein rijdt niet%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '33':
             if taal == 'en':
-                return 'Diverted train'
+                return 'Diverted train%s' % self.oorzaak_prefix(taal)
             else:
                 return 'Rijdt via een andere route%s' % self.oorzaak_prefix(taal)
         elif self.wijziging_type == '34':
             if taal == 'en':
-                return 'Terminates at %s' % self.station.lange_naam
+                return 'Terminates at %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Rijdt niet verder dan %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         elif self.wijziging_type == '35':
             if taal == 'en':
-                return 'Continues to %s' % self.station.lange_naam
+                return 'Continues to %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Rijdt verder naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         elif self.wijziging_type == '41':
             if taal == 'en':
-                return 'Attention, train goes to %s' % self.station.lange_naam
+                return 'Attention, train goes to %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Let op, rijdt naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
         else:
@@ -676,10 +676,65 @@ class Wijziging:
         oorzaken worden namelijk alleen in het Nederlands geboden.
         """
 
-        if taal == 'en' or self.oorzaak_lang == None:
+        if self.oorzaak_lang == None:
             return ''
+        elif taal == 'en':
+            oorzaak_vertaald = self.oorzaak_engels()
+
+            if oorzaak_vertaald != None:
+                return ' due to %s' % oorzaak_vertaald
+            else:
+                return ''
         else:
             return ' i.v.m. %s' % self.oorzaak_lang
+
+    def oorzaak_engels(self):
+        """
+        Vertaal de oorzaak naar Engels (indien een vertaling beschikbaar is).
+        """
+
+        vertalingen = {
+            'geplande werkzaamheden': 'planned engineering work',
+            'eerdere verstoring': 'an earlier disruption',
+            'een eerdere verstoring': 'an earlier disruption',
+            'herstelwerkzaamheden': 'reparation works',
+            'seinstoring': 'signalling problems',
+            'een seinstoring': 'signalling problems',
+            'sein- en wisselstoring': 'signalling and switch problems',
+            'een sein- en wisselstoring': 'signalling and switch problems',
+            'defect materieel': 'a broken down train',
+            'wisselstoring': 'switch failure',
+            'een wisselstoring': 'switch failure',
+            'een wisselstoring': 'switch failure',
+            'aanrijding met een persoon': 'a person hit by a train',
+            'een aanrijding met een persoon': 'a person hit by a train',
+            'aanrijding': 'a collision',
+            'een aanrijding': 'a collision',
+            'aanrijding met een voertuig': 'a collision with a vehicle',
+            'een aanrijding met een voertuig': 'a collision with a vehicle',
+            'uitgelopen werkzaamheden': 'over-running engineering works',
+            'persoon op het spoor': 'a trespassing incident',
+            'een persoon op het spoor': 'a trespassing incident',
+            'defect spoor': 'poor rail conditions',
+            'een defect spoor': 'poor rail conditions',
+            'defect aan het spoor': 'poor rail conditions',
+            'een defect aan het spoor': 'poor rail conditions',
+            'gladde sporen': 'slippery rail',
+            'defecte bovenleiding': 'overhead wire problems',
+            'een defecte bovenleiding': 'overhead wire problems',
+            'versperring': 'an obstruction on the line',
+            'een versperring': 'an obstruction on the line',
+            'beperkingen op last van de politie': 'restrictions imposed by the police',
+            'beperkingen op last van de brandweer': 'restrictions imposed by the fire brigade',
+            'stroomstoring': 'power disruption',
+            'een stroomstoring': 'power disruption',
+            'bermbrand': 'a lineside fire'
+        }
+
+        if self.oorzaak_lang in vertalingen:
+            return vertalingen[self.oorzaak_lang]
+        else:
+            return None
 
 class ReisTip:
     """

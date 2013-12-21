@@ -64,25 +64,47 @@ def main():
                     arguments = url.split('/')
 
                     if arguments[0] == 'station' and len(arguments) == 2:
+                        # Haal alle treinen op voor gegeven station
                         station_code = arguments[1].upper()
                         if station_code in station_store:
                             client_socket.send_pyobj(
                                 station_store[station_code])
                         else:
                             client_socket.send_pyobj({})
+
                     elif arguments[0] == 'trein' and len(arguments) == 2:
+                        # Haal alle stations op voor gegeven trein
                         trein_nr = arguments[1]
                         if trein_nr in trein_store:
                             client_socket.send_pyobj(trein_store[trein_nr])
                         else:
                             client_socket.send_pyobj({})
+
                     elif arguments[0] == 'store' and len(arguments) == 2:
+                        # Haal de volledige datastore op...
                         if arguments[1] == 'trein':
+                            # Volledige trein store:
                             client_socket.send_pyobj(trein_store)
                         elif arguments[1] == 'station':
+                            # Volledige station store:
                             client_socket.send_pyobj(station_store)
                         else:
                             client_socket.send_pyobj(None)
+
+                    elif arguments[0] == 'count' and len(arguments) == 2:
+                        # Haal de grootte van de store op:
+                        if arguments[1] == 'trein':
+                            # Grootte van trein store:
+                            client_socket.send_pyobj(len(trein_store))
+                        elif arguments[1] == 'station':
+                            # Grootte van station store:
+                            client_socket.send_pyobj(len(station_store))
+                        elif arguments[1] == 'msg':
+                            # Aantal verwerkte messages:
+                            client_socket.send_pyobj(msg_nr)
+                        else:
+                            client_socket.send_pyobj(None)
+
                     else:
                         client_socket.send_pyobj(None)
                 except Exception:

@@ -37,6 +37,7 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
     trein_dict['tips'] = trein.tips(taal)
     trein_dict['opgeheven'] = False
     trein_dict['status'] = trein.status
+    trein_dict['vervoerder'] = trein.vervoerder
 
     # Trein opgeheven: wis spoor, vertraging etc.
     if trein.is_opgeheven():
