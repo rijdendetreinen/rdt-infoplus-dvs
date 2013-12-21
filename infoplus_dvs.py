@@ -597,8 +597,14 @@ class Wijziging:
         code 22 (vertrekspoorfixatie) weggefilterd.
         """
 
-        if self.wijziging_type == '10' or self.wijziging_type == '22':
+        if self.wijziging_type == '22':
             return False
+        elif self.wijziging_type == '10':
+            # Filter vertraging alleen indien zonder oorzaak
+            if self.oorzaak_lang == None:
+                return False
+            else:
+                return True
         else:
             return True
 
