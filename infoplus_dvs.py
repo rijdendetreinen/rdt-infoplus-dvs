@@ -724,6 +724,8 @@ class Wijziging:
             'een defecte bovenleiding': 'overhead wire problems',
             'versperring': 'an obstruction on the line',
             'een versperring': 'an obstruction on the line',
+            'beperkingen op last van de politie': 'restrictions imposed by the police',
+            'beperkingen op last van de brandweer': 'restrictions imposed by the fire brigade',
             'stroomstoring': 'power disruption',
             'een stroomstoring': 'power disruption',
             'bermbrand': 'a lineside fire'
