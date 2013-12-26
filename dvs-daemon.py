@@ -334,8 +334,14 @@ def main():
                         if trein.rit_timestamp > station_store[rit_station_code][trein.treinnr].rit_timestamp:
                             # Bericht is nieuwer, update store:
                             station_store[rit_station_code][trein.treinnr] = trein
+                        elif trein.rit_timestamp == station_store[rit_station_code][trein.treinnr].rit_timestamp:
+                            # Bericht is nieuwer, update store:
+                            logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
+                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
+                                trein.treinnr, trein.rit_station.code)
                         else:
-                            logger.info('Ouder bericht ontvangen, niet verwerkt (trein %s/%s)',
+                            logger.info('Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
+                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
                                 trein.treinnr, trein.rit_station.code)
                     else:
                         # Trein kwam op dit station nog niet voor, voeg toe:
