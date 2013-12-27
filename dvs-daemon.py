@@ -102,6 +102,12 @@ def main():
                         elif arguments[1] == 'msg':
                             # Aantal verwerkte messages:
                             client_socket.send_pyobj(msg_nr)
+                        elif arguments[1] == 'dubbel':
+                            # Aantal gedetecteerde dubbele berichten:
+                            client_socket.send_pyobj(msg_dubbel_nr)
+                        elif arguments[1] == 'ouder':
+                            # Aantal gedetecteerde oudere berichten:
+                            client_socket.send_pyobj(msg_ouder_nr)
                         else:
                             client_socket.send_pyobj(None)
 
@@ -250,12 +256,17 @@ def main():
     station_store = { }
     trein_store = { }
 
+    # Initialiseer counters voor aantal verwerkte berichten,
+    # aantal dubbele berichten, aantal verouderde berichten,
+    # aantal keren GC op trein- en station store
+    msg_nr = 0
+    msg_dubbel_nr = 0
+    msg_ouder_nr = 0
+
     # Stel logging in:
     setup_logging()
     logger = logging.getLogger(__name__)
     logger.info('Starting up')
-
-
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
@@ -264,6 +275,10 @@ def main():
     if args.laadTreinen == True:
         trein_store = laad_treinen()
 
+    # Initiele GC:
+    logger.debug('Initial GC')
+    garbage_collect()
+
     # Socket to talk to server
     context = zmq.Context()
 
@@ -271,6 +286,7 @@ def main():
     client_thread = ClientThread()
     client_thread.start()
 
+    # Stel ZeroMQ in:
     server_socket = context.socket(zmq.SUB)
     server_socket.connect(dvs_server)
     server_socket.setsockopt(zmq.SUBSCRIBE, '')
@@ -278,11 +294,8 @@ def main():
     poller = zmq.Poller()
     poller.register(server_socket, zmq.POLLIN)
 
+    # Registreer starttijd server:
     starttime = datetime.now()
-    msg_nr = 0
-
-    logger.debug('Initial GC')
-    garbage_collect()
 
     # Start nieuwe thread voor garbage collecting:
     gc_stopped = Event()
@@ -339,10 +352,25 @@ def main():
                             logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
                                 trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
                                 trein.treinnr, trein.rit_station.code)
+
+                            # Update counter voor dubbele berichten:
+                            msg_dubbel_nr = msg_dubbel_nr + 1
                         else:
-                            logger.info('Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
+                            # Bepaal 5 seconden treshold:
+                            warn_treshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
+                            
+                            # Warning log message indien treshold van 5 seconden overschreden is:
+                            if trein.rit_timestamp <= warn_treshold:
+                                log_level = logging.WARNING
+                            else:
+                                log_level = logging.INFO
+
+                            logger.log(log_level, 'Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
                                 trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
                                 trein.treinnr, trein.rit_station.code)
+
+                            # Update counter voor verouderde berichten:
+                            msg_ouder_nr = msg_ouder_nr + 1
                     else:
                         # Trein kwam op dit station nog niet voor, voeg toe:
                         station_store[rit_station_code][trein.treinnr] = trein
