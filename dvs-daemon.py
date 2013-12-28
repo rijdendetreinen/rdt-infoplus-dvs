@@ -356,10 +356,10 @@ def main():
                             # Update counter voor dubbele berichten:
                             msg_dubbel_nr = msg_dubbel_nr + 1
                         else:
-                            # Bepaal 5 seconden treshold:
+                            # Bepaal 1 seconde treshold:
                             warn_treshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
                             
-                            # Warning log message indien treshold van 5 seconden overschreden is:
+                            # Warning log message indien treshold van 1 seconde overschreden is:
                             if trein.rit_timestamp <= warn_treshold:
                                 log_level = logging.WARNING
                             else:
