@@ -597,8 +597,14 @@ class Wijziging:
         code 22 (vertrekspoorfixatie) weggefilterd.
         """
 
-        if self.wijziging_type == '10' or self.wijziging_type == '22':
+        if self.wijziging_type == '22':
             return False
+        elif self.wijziging_type == '10':
+            # Filter vertraging alleen indien zonder oorzaak
+            if self.oorzaak_lang == None:
+                return False
+            else:
+                return True
         else:
             return True
 
@@ -695,17 +701,20 @@ class Wijziging:
 
         vertalingen = {
             'geplande werkzaamheden': 'planned engineering work',
+            'grote vertraging': 'large delay',
             'eerdere verstoring': 'an earlier disruption',
             'een eerdere verstoring': 'an earlier disruption',
             'herstelwerkzaamheden': 'reparation works',
-            'seinstoring': 'signalling problems',
-            'een seinstoring': 'signalling problems',
-            'sein- en wisselstoring': 'signalling and switch problems',
-            'een sein- en wisselstoring': 'signalling and switch problems',
+            'seinstoring': 'signal failure',
+            'een seinstoring': 'signal failure',
+            'sein- en wisselstoring': 'signalling and points failure',
+            'een sein- en wisselstoring': 'signalling and points failure',
             'defect materieel': 'a broken down train',
-            'wisselstoring': 'switch failure',
-            'een wisselstoring': 'switch failure',
-            'een wisselstoring': 'switch failure',
+            'defecte trein': 'a broken down train',
+            'wisselstoring': 'points failure',
+            'een wisselstoring': 'points failure',
+            'overwegstoring': 'a level crossing failure',
+            'een overwegstoring': 'level crossing failure',
             'aanrijding met een persoon': 'a person hit by a train',
             'een aanrijding met een persoon': 'a person hit by a train',
             'aanrijding': 'a collision',
@@ -715,10 +724,10 @@ class Wijziging:
             'uitgelopen werkzaamheden': 'over-running engineering works',
             'persoon op het spoor': 'a trespassing incident',
             'een persoon op het spoor': 'a trespassing incident',
-            'defect spoor': 'poor rail conditions',
-            'een defect spoor': 'poor rail conditions',
-            'defect aan het spoor': 'poor rail conditions',
-            'een defect aan het spoor': 'poor rail conditions',
+            'defect spoor': 'a defective rail',
+            'een defect spoor': 'a defective rail',
+            'defect aan het spoor': 'a defective rail',
+            'een defect aan het spoor': 'a defective rail',
             'gladde sporen': 'slippery rail',
             'defecte bovenleiding': 'overhead wire problems',
             'een defecte bovenleiding': 'overhead wire problems',

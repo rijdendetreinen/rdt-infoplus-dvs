@@ -9,10 +9,12 @@ graph_args --base 1000
 graph_scale no
 graph_category rdt-dvs
 graph_info Aantal verwerkte DVS berichten
+graph_period minute
 berichten.label berichten
 berichten.info Aantal berichten
 berichten.type DERIVE
 berichten.min 0
+
 EOM
         exit 0;;
 esac
