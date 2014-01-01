@@ -9,20 +9,11 @@ graph_args --base 1000
 graph_scale no
 graph_category rdt-dvs
 graph_info Aantal verwerkte DVS berichten
+graph_period minute
 berichten.label berichten
 berichten.info Aantal berichten
 berichten.type DERIVE
 berichten.min 0
-berichten_ouder.label verouderd
-berichten_ouder.info Aantal verouderde (niet verwerkte) berichten
-berichten_ouder.type DERIVE
-berichten_ouder.min 0
-berichten_ouder.colour aa1300
-berichten_dubbel.label dubbel
-berichten_dubbel.info Aantal dubbele berichten
-berichten_dubbel.type DERIVE
-berichten_dubbel.min 0
-berichten_dubbel.colour 9300aa
 
 EOM
         exit 0;;
@@ -30,7 +21,3 @@ esac
 
 printf "berichten.value "
 /opt/rdt/infoplus-dvs/dvs-dump.py count/msg -q -l
-printf "berichten_ouder.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/ouder -q -l
-printf "berichten_dubbel.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/dubbel -q -l
