@@ -435,20 +435,26 @@ class Trein:
         """
 
         tips = []
+        opgeheven = self.is_opgeheven()
 
-        for tip in self.reistips:
-            tips.append(tip.to_str(taal))
-        for tip in self.instaptips:
-            tips.append(tip.to_str(taal))
-        for tip in self.overstaptips:
-            tips.append(tip.to_str(taal))
+        if opgeheven != True:
+            # De volgende tips worden alleen gevuld indien
+            # de trein niet opgeheven is
+            for tip in self.reistips:
+                tips.append(tip.to_str(taal))
+            for tip in self.instaptips:
+                tips.append(tip.to_str(taal))
+            for tip in self.overstaptips:
+                tips.append(tip.to_str(taal))
 
-        if self.niet_instappen == True:
-            tips.append(self.niet_instappen_str(taal))
+            if self.niet_instappen == True:
+                tips.append(self.niet_instappen_str(taal))
 
-        if self.achterblijven == True:
-            tips.append(self.achterblijven_str(taal))
+            if self.achterblijven == True:
+                tips.append(self.achterblijven_str(taal))
 
+        # De volgende tips worden altijd gegeven (ook voor opgeheven treinen),
+        # aangezien opgeheven trein hiermee herkenbaar blijft
         if self.speciaal_kaartje == True:
             tips.append(self.speciaal_kaartje_str(taal))
 
