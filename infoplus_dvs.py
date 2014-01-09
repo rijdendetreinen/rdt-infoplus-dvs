@@ -837,7 +837,7 @@ class ReisTip:
             if taal == 'en':
                 return 'First stop at %s' % self.stations_str(taal)
             else:
-                return 'Non-stop tot %s' % self.stations_str(taal)
+                return 'Stopt tot %s niet op tussengelegen stations' % self.stations_str(taal)
         elif self.code == 'STAL':
             if taal == 'en':
                 return 'Calls at all stations'
