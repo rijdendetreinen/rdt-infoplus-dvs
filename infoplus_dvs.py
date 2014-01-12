@@ -771,7 +771,7 @@ class Wijziging:
             'beperkingen op last van de politie': 'restrictions imposed by the police',
             'beperkingen op last van de brandweer': 'restrictions imposed by the fire brigade',
             'politieonderzoek': 'police investigation',
-            'inzet van hulpdiensten': 'emergency call',
+            'inzet van hulpdiensten': 'an emergency call',
             'stroomstoring': 'power disruption',
             'een stroomstoring': 'power disruption',
             'stormschade': 'storm damage',
