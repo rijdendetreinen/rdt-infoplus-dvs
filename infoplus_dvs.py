@@ -42,6 +42,11 @@ def parse_trein(data):
     trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
     trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
     trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
+    
+    # Treinnaam
+    naam_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNaam')
+    if naam_node != None:
+        trein.treinnaam = naam_node.text
 
     # Status:
     trein.status = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinStatus').text
@@ -318,6 +323,7 @@ class Trein:
     eindbestemming = []
     eindbestemming_actueel = []
     vervoerder = None
+    treinnaam = None
 
     status = 0
 
@@ -726,6 +732,8 @@ class Wijziging:
             'defect materieel': 'a broken down train',
             'defecte trein': 'a broken down train',
             'een defecte trein': 'a broken down train',
+            'ontspoorde trein': 'a derailed train',
+            'een ontspoorde trein': 'a derailed train',
             'gestrande trein': 'a stranded train',
             'een gestrande trein': 'a stranded train',
             'defecte spoorbrug': 'a defective railway bridge',
@@ -771,7 +779,7 @@ class Wijziging:
             'beperkingen op last van de politie': 'restrictions imposed by the police',
             'beperkingen op last van de brandweer': 'restrictions imposed by the fire brigade',
             'politieonderzoek': 'police investigation',
-            'inzet van hulpdiensten': 'emergency call',
+            'inzet van hulpdiensten': 'an emergency call',
             'stroomstoring': 'power disruption',
             'een stroomstoring': 'power disruption',
             'stormschade': 'storm damage',
@@ -837,7 +845,7 @@ class ReisTip:
             if taal == 'en':
                 return 'First stop at %s' % self.stations_str(taal)
             else:
-                return 'Non-stop tot %s' % self.stations_str(taal)
+                return 'Stopt tot %s niet op tussengelegen stations' % self.stations_str(taal)
         elif self.code == 'STAL':
             if taal == 'en':
                 return 'Calls at all stations'
