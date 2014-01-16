@@ -34,6 +34,10 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
         trein_dict['sprWijziging'] = False
 
     trein_dict['opmerkingen'] = trein.wijzigingen_str(taal, True, trein)
+
+    if trein.treinnaam != None:
+        trein_dict['opmerkingen'].append(trein.treinnaam)
+
     trein_dict['tips'] = trein.tips(taal)
     trein_dict['opgeheven'] = False
     trein_dict['status'] = trein.status
