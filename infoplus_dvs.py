@@ -726,6 +726,8 @@ class Wijziging:
             'defect materieel': 'a broken down train',
             'defecte trein': 'a broken down train',
             'een defecte trein': 'a broken down train',
+            'ontspoorde trein': 'a derailed train',
+            'een ontspoorde trein': 'a derailed train',
             'gestrande trein': 'a stranded train',
             'een gestrande trein': 'a stranded train',
             'defecte spoorbrug': 'a defective railway bridge',
