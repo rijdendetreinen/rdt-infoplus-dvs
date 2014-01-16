@@ -42,6 +42,11 @@ def parse_trein(data):
     trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
     trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
     trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
+    
+    # Treinnaam
+    naam_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNaam')
+    if naam_node != None:
+        trein.treinnaam = naam_node.text
 
     # Status:
     trein.status = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinStatus').text
@@ -318,6 +323,7 @@ class Trein:
     eindbestemming = []
     eindbestemming_actueel = []
     vervoerder = None
+    treinnaam = None
 
     status = 0
 
