@@ -32,14 +32,14 @@ if treinen != None:
 	for treinNr in treinenSorted:
 		trein = treinen[treinNr]
 
-		print "%s (%s)  +%s  %-10s %6s  naar " % (trein.lokaalVertrek().strftime("%H:%M"), trein.lokaalVertrekActueel().strftime("%H:%M"), trein.vertraging, trein.soort, trein.treinNr),
-		print '/'.join(bestemming.langeNaam for bestemming in trein.eindbestemming)
+		print "%s (%s)  +%s  %-10s %6s  naar " % (trein.lokaal_vertrek().strftime("%H:%M"), trein.lokaal_vertrek_actueel().strftime("%H:%M"), trein.vertraging, trein.soort, trein.treinnr),
+		print '/'.join(bestemming.lange_naam for bestemming in trein.eindbestemming)
 
 		for vleugel in trein.vleugels:
 			if (len(trein.vleugels) > 1):
-				print "                         * %s" % vleugel.eindbestemming.langeNaam
+				print "                         * %s" % vleugel.eindbestemming.lange_naam
 			print "                           via: ",
-			print ', '.join(station.langeNaam for station in vleugel.stopstations)
+			print ', '.join(station.lange_naam for station in vleugel.stopstations)
 
 			print "                           mat: ",
 			print ', '.join(mat.soort + ' ' + mat.aanduiding for mat in vleugel.materieel)
