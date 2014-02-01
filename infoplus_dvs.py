@@ -269,7 +269,7 @@ def parse_boolean(value):
     else:
         return False
 
-class Station:
+class Station(object):
     """
     Class om informatie over een station in te bewaren.
     """
@@ -289,7 +289,7 @@ class Station:
         return '<station %s %s>' % (self.code, self.lange_naam)
 
 
-class Spoor:
+class Spoor(object):
     """
     Class om spoornummers te bewaren. Een spoor bestaat uit een nummer
     en optioneel een fase (a, b, ...)
@@ -309,7 +309,7 @@ class Spoor:
             return self.nummer
 
 
-class Trein:
+class Trein(object):
     """
     Class om treinen in te bewaren, inclusief metadata.
     """
@@ -536,7 +536,7 @@ class Trein:
             self.eindbestemming_actueel)
 
 
-class TreinVleugel: 
+class TreinVleugel(object):
     """
     Een treinvleugel is een deel van de trein met een bepaalde eindbestemming,
     materieel en wijzigingen. Een trein kan uit meerdere vleugels bestaan met
@@ -557,7 +557,7 @@ class TreinVleugel:
         self.eindbestemming_actueel = eindbestemming
 
 
-class Materieel:
+class Materieel(object):
     """
     Class om treinmaterieel bij te houden.
     Elk materieeldeel heeft een eindbestemming en is
@@ -585,7 +585,7 @@ class Materieel:
         else:
             return self.soort
 
-class Wijziging:
+class Wijziging(object):
     """
     Class om wijzigingsberichten bij te houden.
     Iedere wijziging wordt geidentificeerd met een code (wijziging_type),
@@ -797,7 +797,7 @@ class Wijziging:
         else:
             return None
 
-class ReisTip:
+class ReisTip(object):
     """
     Class om reistips in te bewaren. Een reistip is voor reizigers belangrijke
     informatie zoals stations die worden overgeslagen. De variabele code
@@ -875,7 +875,7 @@ class ReisTip:
             else:
                 return ', '.join(station.lange_naam for station in self.stations[:-1]) + ' en ' + self.stations[-1].lange_naam
 
-class InstapTip:
+class InstapTip(object):
     """
     Class om instaptips te bewaren. Een instaptip is een tip voor reizigers
     dat een alternatieve trein eerder op een bepaald station is (bijvoorbeeld
@@ -909,7 +909,7 @@ class InstapTip:
                 self.instap_vertrek.astimezone(tijdzone).strftime('%H:%M'),
                 self.eindbestemming.lange_naam, self.uitstap_station.lange_naam)
 
-class OverstapTip:
+class OverstapTip(object):
     """
     Class om overstaptips te bewaren. Een overstaptip is een tip dat om een
     bepaalde bestemming te bereiken op een overstapstation moet worden
