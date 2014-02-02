@@ -22,6 +22,8 @@ from threading import Thread, Event
 
 import infoplus_dvs
 
+import time
+
 def setup_logging(default_path='logging.yaml',
     default_level=logging.INFO, env_key='LOG_CFG'):
     """
@@ -390,7 +392,12 @@ class GarbageThread(Thread):
 
         global station_store, trein_store, counters
 
+        # Bereken treshold:
         treshold = datetime.now(pytz.utc) - timedelta(minutes=10)
+
+        # Performance controle; start:
+        start = datetime.now()
+        verwerkte_items = 0
 
         # Check alle treinen in station_store:
         for station in station_store:
@@ -399,6 +406,7 @@ class GarbageThread(Thread):
                     if trein.vertrek_actueel < treshold:
                         try:
                             del(station_store[station][trein_rit])
+                            verwerkte_items += 1
 
                             if trein.is_opgeheven():
                                 # Voor opgeheven treinen komt geen wisbericht,
@@ -416,6 +424,15 @@ class GarbageThread(Thread):
             except KeyError:
                 self.logger.warn('GC [SS] Station verwijderd %s', station)
 
+        # Bereken duur voor GC en duur per item
+        if verwerkte_items > 0:
+            duur = datetime.now() - start
+            self.logger.info("GC [SS] * %s items verwerkt in %s (%s per verwerking)", verwerkte_items, duur, (duur / verwerkte_items))
+
+        # Performance controle; start:
+        start = datetime.now()
+        verwerkte_items = 0
+
         # Check alle treinen in trein_store:
         for trein_rit in trein_store.keys():
             try:
@@ -423,6 +440,7 @@ class GarbageThread(Thread):
                     if trein.vertrek_actueel < treshold:
                         try:
                             del(trein_store[trein_rit][station])
+                            verwerkte_items += 1
 
                             if trein.is_opgeheven():
                                 # Voor opgeheven treinen komt geen wisbericht,
@@ -444,6 +462,11 @@ class GarbageThread(Thread):
             # indien geen informatie meer:
             if len(trein_store[trein_rit]) == 0:
                 del(trein_store[trein_rit])
+
+        # Bereken duur voor GC en duur per item
+        if verwerkte_items > 0:
+            duur = datetime.now() - start
+            self.logger.info("GC [TS] * %s items verwerkt in %s (%s per verwerking)", verwerkte_items, duur, (duur / verwerkte_items))
 
         # Trigger Python GC na deze opruimronde:
         gc.collect()
