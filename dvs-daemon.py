@@ -103,6 +103,7 @@ def main():
 
     # Start een nieuwe thread om client requests uit te lezen
     client_thread = ClientThread(dvs_client_bind)
+    client_thread.daemon = True
     client_thread.start()
 
     # Stel ZeroMQ in:
@@ -119,6 +120,7 @@ def main():
     # Start nieuwe thread voor garbage collecting:
     gc_stopped = Event()
     gc_thread = GarbageThread(gc_stopped)
+    gc_thread.daemon = True
     gc_thread.start()
 
     #socks = dict(poller.poll())
