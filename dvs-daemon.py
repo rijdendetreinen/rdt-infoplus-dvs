@@ -17,8 +17,7 @@ import gc
 import logging
 import logging.config
 import yaml
-
-from threading import Thread, Event
+import threading
 
 import infoplus_dvs
 
@@ -46,7 +45,7 @@ def main():
     Main loop
     """
 
-    global station_store, trein_store, counters
+    global station_store, trein_store, counters, locks
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -75,6 +74,11 @@ def main():
     # Datastores:
     station_store = { }
     trein_store = { }
+
+    # Store locks
+    locks = { }
+    locks['trein'] = threading.Lock()
+    locks['station'] = threading.Lock()
 
     # Initialiseer counters voor aantal verwerkte berichten,
     # aantal dubbele berichten, aantal verouderde berichten,
@@ -118,7 +122,7 @@ def main():
     starttime = datetime.now()
 
     # Start nieuwe thread voor garbage collecting:
-    gc_stopped = Event()
+    gc_stopped = threading.Event()
     gc_thread = GarbageThread(gc_stopped)
     gc_thread.daemon = True
     gc_thread.start()
@@ -145,22 +149,26 @@ def main():
                     # Verwijder uit station_store
                     if rit_station_code in station_store \
                     and trein.treinnr in station_store[rit_station_code]:
-                        del(station_store[rit_station_code][trein.treinnr])
+                        with locks['station']:
+                            del(station_store[rit_station_code][trein.treinnr])
 
                     # Verwijder uit trein_store
                     if trein.treinnr in trein_store \
                     and rit_station_code in trein_store[trein.treinnr]:
                         del(trein_store[trein.treinnr][rit_station_code])
                         if len(trein_store[trein.treinnr]) == 0:
-                            del(trein_store[trein.treinnr])
+                            with locks['trein']:
+                                del(trein_store[trein.treinnr])
                 else:
                     # Maak item in trein_store indien niet aanwezig
                     if trein.treinnr not in trein_store:
-                        trein_store[trein.treinnr] = {}
+                        with locks['trein']:
+                            trein_store[trein.treinnr] = {}
 
                     # Maak item in station_store indien niet aanwezig:
                     if rit_station_code not in station_store:
-                        station_store[rit_station_code] = {}
+                        with locks['station']:
+                            station_store[rit_station_code] = {}
 
                     # Update of insert trein aan station store:
                     if trein.treinnr in station_store[rit_station_code]:
@@ -266,7 +274,7 @@ def laad_treinen():
 
     return store
 
-class ClientThread(Thread):
+class ClientThread(threading.Thread):
     """
     Client thread voor verwerken requests van clients
     """
@@ -276,9 +284,9 @@ class ClientThread(Thread):
 
     def __init__ (self, dvs_client_bind):
         self.dvs_client_bind = dvs_client_bind
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = logging.getLogger(__name__)
         self.logger.info('Initializing client thread')
-        Thread.__init__(self)
+        threading.Thread.__init__(self, name='ClientThread')
 
     def run(self):
         self.logger.info('Running client thread')
@@ -356,7 +364,7 @@ class ClientThread(Thread):
 
 
 # Garbage collection thread:
-class GarbageThread(Thread):
+class GarbageThread(threading.Thread):
     """
     Thread die verantwoordelijk is voor garbage collection
     """
@@ -365,8 +373,8 @@ class GarbageThread(Thread):
     logger = None
 
     def __init__(self, event):
-        Thread.__init__(self)
-        self.logger = logging.getLogger(self.__class__.__name__)
+        threading.Thread.__init__(self, name='GarbageThread')
+        self.logger = logging.getLogger(__name__)
         self.logger.info("GC thread geinitialiseerd")
         self.stopped = event
 
@@ -407,7 +415,9 @@ class GarbageThread(Thread):
                 for trein_rit, trein in station_store[station].items():
                     if trein.vertrek_actueel < treshold:
                         try:
-                            del(station_store[station][trein_rit])
+                            with locks['station']:
+                                del(station_store[station][trein_rit])
+
                             verwerkte_items += 1
 
                             if trein.is_opgeheven():
@@ -441,7 +451,9 @@ class GarbageThread(Thread):
                 for station, trein in trein_store[trein_rit].items():
                     if trein.vertrek_actueel < treshold:
                         try:
-                            del(trein_store[trein_rit][station])
+                            with locks['trein']:
+                                del(trein_store[trein_rit][station])
+
                             verwerkte_items += 1
 
                             if trein.is_opgeheven():
