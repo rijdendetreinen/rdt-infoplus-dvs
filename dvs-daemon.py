@@ -40,12 +40,30 @@ def setup_logging(default_path='logging.yaml',
     else:
         logging.basicConfig(level=default_level)
 
+def load_config(config_file_path='config/dvs-server.yaml'):
+    """
+    Setup logging configuration
+    """
+
+    global config
+
+    if os.path.exists(config_file_path):
+        try:
+            with open(config_file_path, 'rt') as config_file:
+                config = yaml.load(config_file.read())
+        except Exception as e:
+            print "Fout in configuratiebestand. Foutmelding: %s" % e
+            sys.exit(1)
+    else:
+        print "Configuratiebestand niet aanwezig"
+        sys.exit(1)
+
 def main():
     """
     Main loop
     """
 
-    global station_store, trein_store, counters, locks
+    global station_store, trein_store, counters, locks, config
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -54,28 +72,51 @@ def main():
     gc.set_debug(gc.DEBUG_UNCOLLECTABLE | gc.DEBUG_INSTANCES | gc.DEBUG_OBJECTS)
 
     # Default config (nog naar losse configfile):
-    dvs_server = "tcp://46.19.34.170:8100"
+    dvs_server = "tcp://127.0.0.1:8100"
     dvs_client_bind = "tcp://0.0.0.0:8120"
 
     # Initialiseer argparse
     parser = argparse.ArgumentParser(description='RDT InfoPlus DVS daemon')
 
+    parser.add_argument('-c', '--config', dest='configFile', default='config/dvs-server.yaml',
+        action='store', help='Configuratiebestand')
     parser.add_argument('-ls', '--laad-stations', dest='laadStations',
         action='store_true', help='Laad station_store')
     parser.add_argument('-lt', '--laad-treinen', dest='laadTreinen',
         action='store_true', help='Laad trein_store')
-    parser.add_argument('-d', '--debug', dest='debug',
-        action='store_true', help='Debug modus')
-    parser.add_argument('-l', '--log-file', dest='logfile',
-        action='store', help='File to which we should log')
 
     args = parser.parse_args()
 
-    # Datastores:
+    # Laad configuratie:
+    load_config(args.configFile)
+
+    # Stel logging in:
+    log_config_file = None
+
+    # Check of er een logger configuratie is opgegeven:
+    if 'logging' in config and 'log_config' in config['logging']:
+        log_config_file = config['logging']['log_config']
+    
+    # Stel logger in adhv config:
+    setup_logging(log_config_file)
+
+    # Geef logger instance:
+    logger = logging.getLogger(__name__)
+    logger.info('Server start op')
+
+    # Verwerk configuratie:
+    try:
+        dvs_server = config['bindings']['dvs_server']
+        dvs_client_bind = config['bindings']['client_server']
+    except:
+        logger.exception("Configuratiefout, server wordt afgesloten")
+        sys.exit(1)
+
+    # Initialiseer datastores:
     station_store = { }
     trein_store = { }
 
-    # Store locks
+    # Initialiseer datastore locks
     locks = { }
     locks['trein'] = threading.Lock()
     locks['station'] = threading.Lock()
@@ -89,11 +130,6 @@ def main():
     counters['msg_ouder_nr'] = 0
     counters['gc_station'] = 0
     counters['gc_trein'] = 0
-
-    # Stel logging in:
-    setup_logging()
-    logger = logging.getLogger(__name__)
-    logger.info('Starting up')
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
@@ -130,7 +166,7 @@ def main():
     #socks = dict(poller.poll())
     #print socks
 
-    logger.info("Collecting updates from DVS server...")
+    logger.info("Gereed voor ontvangen DVS berichten (van server %s)", dvs_server)
 
     try:
         while True:
@@ -285,15 +321,16 @@ class ClientThread(threading.Thread):
     def __init__ (self, dvs_client_bind):
         self.dvs_client_bind = dvs_client_bind
         self.logger = logging.getLogger(__name__)
-        self.logger.info('Initializing client thread')
         threading.Thread.__init__(self, name='ClientThread')
 
     def run(self):
-        self.logger.info('Running client thread')
+        self.logger.info('Client thread gestart')
         
         context = zmq.Context()
         client_socket = context.socket(zmq.REP)
         client_socket.bind(self.dvs_client_bind)
+
+        self.logger.info('Client thread gereed voor verbindingen (%s)', self.dvs_client_bind)
         
         while True:
             url = client_socket.recv()
