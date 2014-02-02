@@ -44,188 +44,7 @@ def main():
     Main loop
     """
 
-    class ClientThread(Thread):
-        """
-        Client thread voor verwerken requests van clients
-        """
-
-        def __init__ (self):
-            logger.info('Initializing client thread')
-            Thread.__init__(self)
-
-        def run(self):
-            logger.info('Running client thread')
-            client_socket = context.socket(zmq.REP)
-            client_socket.bind(dvs_client_bind)
-            while True:
-                url = client_socket.recv()
-
-                try:
-                    arguments = url.split('/')
-
-                    if arguments[0] == 'station' and len(arguments) == 2:
-                        # Haal alle treinen op voor gegeven station
-                        station_code = arguments[1].upper()
-                        if station_code in station_store:
-                            client_socket.send_pyobj(
-                                station_store[station_code])
-                        else:
-                            client_socket.send_pyobj({})
-
-                    elif arguments[0] == 'trein' and len(arguments) == 2:
-                        # Haal alle stations op voor gegeven trein
-                        trein_nr = arguments[1]
-                        if trein_nr in trein_store:
-                            client_socket.send_pyobj(trein_store[trein_nr])
-                        else:
-                            client_socket.send_pyobj({})
-
-                    elif arguments[0] == 'store' and len(arguments) == 2:
-                        # Haal de volledige datastore op...
-                        if arguments[1] == 'trein':
-                            # Volledige trein store:
-                            client_socket.send_pyobj(trein_store)
-                        elif arguments[1] == 'station':
-                            # Volledige station store:
-                            client_socket.send_pyobj(station_store)
-                        else:
-                            client_socket.send_pyobj(None)
-
-                    elif arguments[0] == 'count' and len(arguments) == 2:
-                        # Haal de grootte van de store op:
-                        if arguments[1] == 'trein':
-                            # Grootte van trein store:
-                            client_socket.send_pyobj(len(trein_store))
-                        elif arguments[1] == 'station':
-                            # Grootte van station store:
-                            client_socket.send_pyobj(len(station_store))
-                        elif arguments[1] == 'msg':
-                            # Aantal verwerkte messages:
-                            client_socket.send_pyobj(msg_nr)
-                        elif arguments[1] == 'dubbel':
-                            # Aantal gedetecteerde dubbele berichten:
-                            client_socket.send_pyobj(msg_dubbel_nr)
-                        elif arguments[1] == 'ouder':
-                            # Aantal gedetecteerde oudere berichten:
-                            client_socket.send_pyobj(msg_ouder_nr)
-                        else:
-                            client_socket.send_pyobj(None)
-
-                    else:
-                        client_socket.send_pyobj(None)
-                except Exception:
-                    client_socket.send_pyobj(None)
-                    logger.e('Fout bij sturen client respone', exc_info=True)
-            Thread.__init__(self)
-
-    # Garbage collection thread:
-    class GarbageThread(Thread):
-        """
-        Thread die verantwoordelijk is voor garbage collection
-        """
-
-        def __init__(self, event):
-            Thread.__init__(self)
-            logger.info("GC thread initialized")
-            self.stopped = event
-
-        def run(self):
-            while not self.stopped.wait(60):
-                try:
-                    logger.info("Garbage collecting")
-                    garbage_collect()
-
-                    logger.info(
-                        "Statistieken: station_store=%s, trein_store=%s"
-                        % (len(station_store), len(trein_store)))
-                except Exception:
-                    logger.error('Fout in GC thread', exc_info=True)
-
-    def garbage_collect():
-        """
-        Garbage collecting.
-        Ruimt alle treinen op welke nog niet vertrokken zijn, maar welke
-        al wel 10 minuten weg hadden moeten zijn (volgens actuele vertrektijd)
-        """
-        treshold = datetime.now(pytz.utc) - timedelta(minutes=10)
-
-        # Check alle treinen in station_store:
-        for station in station_store:
-            try:
-                for trein_rit, trein in station_store[station].items():
-                    if trein.vertrek_actueel < treshold:
-                        try:
-                            del(station_store[station][trein_rit])
-
-                            if trein.is_opgeheven():
-                                # Voor opgeheven treinen komt geen wisbericht,
-                                # daarom is het te verwachten dat deze GC'd worden
-                                # Log alleen debug melding
-                                logger.debug('GC [SS] Del %s/%s, opgeheven' % (trein_rit, station))
-                            else:
-                                # Waarschuwing indien trein niet opgeheven, maar
-                                # wel 10-minuten window overschreden:
-                                logger.warn('GC [SS] Del %s/%s' % (trein_rit, station))
-                        except KeyError:
-                            logger.debug('GC [SS] Al verwijderd %s/%s', trein_rit, station)
-            except KeyError:
-                logger.warn('GC [SS] Station verwijderd %s', station)
-
-        # Check alle treinen in trein_store:
-        for trein_rit in trein_store.keys():
-            try:
-                for station, trein in trein_store[trein_rit].items():
-                    if trein.vertrek_actueel < treshold:
-                        try:
-                            del(trein_store[trein_rit][station])
-
-                            if trein.is_opgeheven():
-                                # Voor opgeheven treinen komt geen wisbericht,
-                                # daarom is het te verwachten dat deze GC'd worden
-                                # Log alleen debug melding
-                                logger.debug('GC [TS] Del %s/%s, opgeheven' % (trein_rit, station))
-                            else:
-                                # Waarschuwing indien trein niet opgeheven, maar
-                                # wel 10-minuten window overschreden:
-                                logger.warn('GC [TS] Del %s/%s' % (trein_rit, station))
-                        except KeyError:
-                            logger.debug('GC [TS] Al verwijderd %s/%s', trein_rit, station)
-            except KeyError:
-                logger.debug('GC [TS] Al verwijderd %s', trein_rit)
-
-            # Verwijder treinen uit trein_store dict
-            # indien geen informatie meer:
-            if len(trein_store[trein_rit]) == 0:
-                del(trein_store[trein_rit])
-
-        # Trigger Python GC na deze opruimronde:
-        gc.collect()
-
-        return
-
-    def laad_stations():
-        """
-        Laad stations uit pickle dump
-        """
-        logger.info('Inladen station_store...')
-        station_store_file = open('datadump/station.store', 'rb')
-        store = pickle.load(station_store_file)
-        station_store_file.close()
-
-        return store
-
-    def laad_treinen():
-        """
-        Laad treinen uit pickle dump
-        """
-        logger.info('Inladen trein_store...')
-        trein_store_file = open('datadump/trein.store', 'rb')
-        store = pickle.load(trein_store_file)
-        trein_store_file.close()
-
-        return store
-
-
+    global station_store, trein_store, counters
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -234,7 +53,6 @@ def main():
     gc.set_debug(gc.DEBUG_UNCOLLECTABLE | gc.DEBUG_INSTANCES | gc.DEBUG_OBJECTS)
 
     # Default config (nog naar losse configfile):
-    #dvs_server = "tcp://post.ndovloket.nl:7660"
     dvs_server = "tcp://46.19.34.170:8100"
     dvs_client_bind = "tcp://0.0.0.0:8120"
 
@@ -259,9 +77,12 @@ def main():
     # Initialiseer counters voor aantal verwerkte berichten,
     # aantal dubbele berichten, aantal verouderde berichten,
     # aantal keren GC op trein- en station store
-    msg_nr = 0
-    msg_dubbel_nr = 0
-    msg_ouder_nr = 0
+    counters = {}
+    counters['msg_nr'] = 0
+    counters['msg_dubbel_nr'] = 0
+    counters['msg_ouder_nr'] = 0
+    counters['gc_station'] = 0
+    counters['gc_trein'] = 0
 
     # Stel logging in:
     setup_logging()
@@ -275,15 +96,11 @@ def main():
     if args.laadTreinen == True:
         trein_store = laad_treinen()
 
-    # Initiele GC:
-    logger.debug('Initial GC')
-    garbage_collect()
-
     # Socket to talk to server
     context = zmq.Context()
 
     # Start een nieuwe thread om client requests uit te lezen
-    client_thread = ClientThread()
+    client_thread = ClientThread(dvs_client_bind)
     client_thread.start()
 
     # Stel ZeroMQ in:
@@ -354,7 +171,7 @@ def main():
                                 trein.treinnr, trein.rit_station.code)
 
                             # Update counter voor dubbele berichten:
-                            msg_dubbel_nr = msg_dubbel_nr + 1
+                            counters['msg_dubbel_nr'] = counters['msg_dubbel_nr'] + 1
                         else:
                             # Bepaal 1 seconde treshold:
                             warn_treshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
@@ -370,7 +187,7 @@ def main():
                                 trein.treinnr, trein.rit_station.code)
 
                             # Update counter voor verouderde berichten:
-                            msg_ouder_nr = msg_ouder_nr + 1
+                            counters['msg_ouder_nr'] = counters['msg_ouder_nr'] + 1
                     else:
                         # Trein kwam op dit station nog niet voor, voeg toe:
                         station_store[rit_station_code][trein.treinnr] = trein
@@ -393,7 +210,7 @@ def main():
                     'Fout tijdens DVS bericht verwerken', exc_info=True)
                 logger.error('DVS crash bericht: %s', content)
                 
-            msg_nr = msg_nr + 1
+            counters['msg_nr'] = counters['msg_nr'] + 1
 
 
     except KeyboardInterrupt:
@@ -411,10 +228,227 @@ def main():
         pickle.dump(trein_store, open('datadump/trein.store', 'wb'), -1)
 
         logger.info(
-            "Statistieken: %s berichten verwerkt sinds %s", msg_nr, starttime)
+            "Statistieken: %s berichten verwerkt sinds %s", counters['msg_nr'], starttime)
 
     except Exception:
         logger.error("Fout in main loop", exc_info=True)
+
+
+def laad_stations():
+    """
+    Laad stations uit pickle dump
+    """
+
+    logger = logging.getLogger(__name__)
+
+    logger.info('Inladen station_store...')
+    station_store_file = open('datadump/station.store', 'rb')
+    store = pickle.load(station_store_file)
+    station_store_file.close()
+
+    return store
+
+def laad_treinen():
+    """
+    Laad treinen uit pickle dump
+    """
+
+    logger = logging.getLogger(__name__)
+
+    logger.info('Inladen trein_store...')
+    trein_store_file = open('datadump/trein.store', 'rb')
+    store = pickle.load(trein_store_file)
+    trein_store_file.close()
+
+    return store
+
+class ClientThread(Thread):
+    """
+    Client thread voor verwerken requests van clients
+    """
+
+    logger = None
+    dvs_client_bind = None
+
+    def __init__ (self, dvs_client_bind):
+        self.dvs_client_bind = dvs_client_bind
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.info('Initializing client thread')
+        Thread.__init__(self)
+
+    def run(self):
+        self.logger.info('Running client thread')
+        
+        context = zmq.Context()
+        client_socket = context.socket(zmq.REP)
+        client_socket.bind(self.dvs_client_bind)
+        
+        while True:
+            url = client_socket.recv()
+
+            try:
+                arguments = url.split('/')
+
+                if arguments[0] == 'station' and len(arguments) == 2:
+                    # Haal alle treinen op voor gegeven station
+                    station_code = arguments[1].upper()
+                    if station_code in station_store:
+                        client_socket.send_pyobj(
+                            station_store[station_code])
+                    else:
+                        client_socket.send_pyobj({})
+
+                elif arguments[0] == 'trein' and len(arguments) == 2:
+                    # Haal alle stations op voor gegeven trein
+                    trein_nr = arguments[1]
+                    if trein_nr in trein_store:
+                        client_socket.send_pyobj(trein_store[trein_nr])
+                    else:
+                        client_socket.send_pyobj({})
+
+                elif arguments[0] == 'store' and len(arguments) == 2:
+                    # Haal de volledige datastore op...
+                    if arguments[1] == 'trein':
+                        # Volledige trein store:
+                        client_socket.send_pyobj(trein_store)
+                    elif arguments[1] == 'station':
+                        # Volledige station store:
+                        client_socket.send_pyobj(station_store)
+                    else:
+                        client_socket.send_pyobj(None)
+
+                elif arguments[0] == 'count' and len(arguments) == 2:
+                    # Haal de grootte van de store op:
+                    if arguments[1] == 'trein':
+                        # Grootte van trein store:
+                        client_socket.send_pyobj(len(trein_store))
+                    elif arguments[1] == 'station':
+                        # Grootte van station store:
+                        client_socket.send_pyobj(len(station_store))
+                    elif arguments[1] == 'msg':
+                        # Aantal verwerkte messages:
+                        client_socket.send_pyobj(counters['msg_nr'])
+                    elif arguments[1] == 'dubbel':
+                        # Aantal gedetecteerde dubbele berichten:
+                        client_socket.send_pyobj(counters['msg_dubbel_nr'])
+                    elif arguments[1] == 'ouder':
+                        # Aantal gedetecteerde oudere berichten:
+                        client_socket.send_pyobj(counters['msg_ouder_nr'])
+                    elif arguments[1] == 'gc_trein':
+                        # GC acties in trein store
+                        client_socket.send_pyobj(counters['gc_trein'])
+                    elif arguments[1] == 'gc_station':
+                        # GC acties in station store
+                        client_socket.send_pyobj(counters['gc_station'])
+                    else:
+                        client_socket.send_pyobj(None)
+
+                else:
+                    client_socket.send_pyobj(None)
+            except Exception:
+                client_socket.send_pyobj(None)
+                self.logger.e('Fout bij sturen client respone', exc_info=True)
+        Thread.__init__(self)
+
+
+# Garbage collection thread:
+class GarbageThread(Thread):
+    """
+    Thread die verantwoordelijk is voor garbage collection
+    """
+
+    stopped = None
+    logger = None
+
+    def __init__(self, event):
+        Thread.__init__(self)
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.info("GC thread geinitialiseerd")
+        self.stopped = event
+
+    def run(self):
+        self.logger.info("Initiele garbage collecting")
+        self.garbage_collect()
+
+        while not self.stopped.wait(60):
+            try:
+                self.logger.info("Periodieke garbage collecting")
+                self.garbage_collect()
+
+                self.logger.info(
+                    "Statistieken: station_store=%s, trein_store=%s"
+                    % (len(station_store), len(trein_store)))
+            except Exception:
+                self.logger.error('Fout in GC thread', exc_info=True)
+
+    def garbage_collect(self):
+        """
+        Garbage collecting.
+        Ruimt alle treinen op welke nog niet vertrokken zijn, maar welke
+        al wel 10 minuten weg hadden moeten zijn (volgens actuele vertrektijd)
+        """
+
+        global station_store, trein_store, counters
+
+        treshold = datetime.now(pytz.utc) - timedelta(minutes=10)
+
+        # Check alle treinen in station_store:
+        for station in station_store:
+            try:
+                for trein_rit, trein in station_store[station].items():
+                    if trein.vertrek_actueel < treshold:
+                        try:
+                            del(station_store[station][trein_rit])
+
+                            if trein.is_opgeheven():
+                                # Voor opgeheven treinen komt geen wisbericht,
+                                # daarom is het te verwachten dat deze GC'd worden
+                                # Log alleen debug melding
+                                self.logger.debug('GC [SS] Del %s/%s, opgeheven' % (trein_rit, station))
+                            else:
+                                # Waarschuwing indien trein niet opgeheven, maar
+                                # wel 10-minuten window overschreden:
+                                self.logger.warn('GC [SS] Del %s/%s' % (trein_rit, station))
+
+                                counters['gc_station'] = counters['gc_station'] + 1
+                        except KeyError:
+                            self.logger.debug('GC [SS] Al verwijderd %s/%s', trein_rit, station)
+            except KeyError:
+                self.logger.warn('GC [SS] Station verwijderd %s', station)
+
+        # Check alle treinen in trein_store:
+        for trein_rit in trein_store.keys():
+            try:
+                for station, trein in trein_store[trein_rit].items():
+                    if trein.vertrek_actueel < treshold:
+                        try:
+                            del(trein_store[trein_rit][station])
+
+                            if trein.is_opgeheven():
+                                # Voor opgeheven treinen komt geen wisbericht,
+                                # daarom is het te verwachten dat deze GC'd worden
+                                # Log alleen debug melding
+                                self.logger.debug('GC [TS] Del %s/%s, opgeheven' % (trein_rit, station))
+                            else:
+                                # Waarschuwing indien trein niet opgeheven, maar
+                                # wel 10-minuten window overschreden:
+                                self.logger.warn('GC [TS] Del %s/%s' % (trein_rit, station))
+
+                                counters['gc_trein'] = counters['gc_trein'] + 1
+                        except KeyError:
+                            self.logger.debug('GC [TS] Al verwijderd %s/%s', trein_rit, station)
+            except KeyError:
+                self.logger.debug('GC [TS] Al verwijderd %s', trein_rit)
+
+            # Verwijder treinen uit trein_store dict
+            # indien geen informatie meer:
+            if len(trein_store[trein_rit]) == 0:
+                del(trein_store[trein_rit])
+
+        # Trigger Python GC na deze opruimronde:
+        gc.collect()
+
+        return
 
 
 if __name__ == "__main__":
