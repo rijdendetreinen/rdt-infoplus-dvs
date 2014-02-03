@@ -554,9 +554,15 @@ class InjectorThread(threading.Thread):
         self.logger.info('Injector thread gereed (%s)', self.injector_bind)
         
         while True:
-            command = client_socket.recv_json()
-            client_socket.send_json(None)
-            self.logger.info(command)
+            try:
+                trein_dict = client_socket.recv_pyobj()
+                client_socket.send_pyobj(True)
+                self.logger.info(trein_dict)
+
+                trein = infoplus_dvs.parse_trein_dict(trein_dict)
+                self.logger.info(trein)
+            except:
+                self.logger.exception("Ongeldige injectie ontvangen")
 
 if __name__ == "__main__":
     main()

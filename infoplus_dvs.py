@@ -4,6 +4,7 @@ Module om DVS berichten uit InfoPlus te kunnen verwerken.
 
 import xml.etree.cElementTree as ET
 import isodate
+import datetime
 import pytz
 import logging
 
@@ -168,6 +169,53 @@ def parse_trein(data):
         trein.vleugels.append(vleugel)
 
     return trein
+
+
+def parse_trein_dict(trein_dict):
+    """
+    Vertaal een dict over een trein (uit de injectiefeed)
+    naar een Trein object.
+    """
+
+    # Maak trein object:
+    trein = Trein()
+    
+    # Metadata over rit:
+    trein.rit_id = trein_dict['rit_id']
+    trein.rit_datum = trein_dict['vertrek'].date()
+    trein.rit_station = Station(trein_dict['rit_station'].upper(), None)
+    trein.rit_timestamp = datetime.datetime.now()
+    
+    # Treinnummer, soort/formule, etc:
+    trein.treinnr = trein_dict['treinnr']
+    trein.soort = trein_dict['soort']
+    trein.soort_code = trein_dict['soort_code']
+    trein.vervoerder = trein_dict['vervoerder_naam']
+    
+    # Status:
+    trein.status = 0
+
+    # Vertrektijd en vertraging:
+    trein.vertrek = trein_dict['vertrek']
+    trein.vertrek_actueel = trein.vertrek
+
+    trein.vertraging = 0
+    trein.vertraging_gedempt = 0
+
+    # Gepland en actueel vertrekspoor:
+    trein.vertrekspoor = Spoor(trein_dict['spoor'])
+    trein.vertrekspoor_actueel = trein.vertrekspoor
+
+    # Geplande en actuele bestemming:
+    trein.eindbestemming = Station(trein_dict['bestemming_code'], trein_dict['bestemming_naam'])
+    trein.eindbestemming_actueel = trein.eindbestemming
+
+    # Verkorte route
+    trein.verkorte_route = []
+    trein.verkorte_route_actueel = []
+
+    return trein
+
 
 
 def parse_stations(station_nodes):
