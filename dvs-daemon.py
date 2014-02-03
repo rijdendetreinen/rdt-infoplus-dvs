@@ -55,7 +55,7 @@ def load_config(config_file_path='config/dvs-server.yaml'):
             print "Fout in configuratiebestand. Foutmelding: %s" % e
             sys.exit(1)
     else:
-        print "Configuratiebestand niet aanwezig"
+        print "Configuratiebestand '%s' niet aanwezig" % config_file_path
         sys.exit(1)
 
 def main():
