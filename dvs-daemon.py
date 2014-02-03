@@ -554,7 +554,7 @@ class InjectorThread(threading.Thread):
         self.logger.info('Injector thread gereed (%s)', self.injector_bind)
         
         while True:
-            command = client_socket.recv()
+            command = client_socket.recv_json()
             client_socket.send_json(None)
             self.logger.info(command)
 
