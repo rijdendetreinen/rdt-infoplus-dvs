@@ -108,6 +108,7 @@ def main():
     try:
         dvs_server = config['bindings']['dvs_server']
         dvs_client_bind = config['bindings']['client_server']
+        injector_bind = config['bindings']['injector_server']
     except:
         logger.exception("Configuratiefout, server wordt afgesloten")
         sys.exit(1)
@@ -145,6 +146,11 @@ def main():
     client_thread = ClientThread(dvs_client_bind)
     client_thread.daemon = True
     client_thread.start()
+
+    # Start een nieuwe injector thread om client requests uit te lezen
+    injector_thread = InjectorThread(injector_bind)
+    injector_thread.daemon = True
+    injector_thread.start()
 
     # Stel ZeroMQ in:
     server_socket = context.socket(zmq.SUB)
@@ -524,6 +530,33 @@ class GarbageThread(threading.Thread):
 
         return
 
+
+# Injector thread:
+class InjectorThread(threading.Thread):
+    """
+    Thread die verantwoordelijk is voor garbage collection
+    """
+
+    logger = None
+    injector_bind = None
+
+    def __init__(self, injector_bind):
+        threading.Thread.__init__(self, name='InjectorThread')
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Injector geinitialiseerd")
+        self.injector_bind = injector_bind
+
+    def run(self):
+        context = zmq.Context()
+        client_socket = context.socket(zmq.REP)
+        client_socket.bind(self.injector_bind)
+
+        self.logger.info('Injector thread gereed (%s)', self.injector_bind)
+        
+        while True:
+            command = client_socket.recv()
+            client_socket.send_json(None)
+            self.logger.info(command)
 
 if __name__ == "__main__":
     main()
