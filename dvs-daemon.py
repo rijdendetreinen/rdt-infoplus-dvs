@@ -21,8 +21,6 @@ import threading
 
 import infoplus_dvs
 
-import time
-
 def setup_logging(default_path='logging.yaml',
     default_level=logging.INFO, env_key='LOG_CFG'):
     """
@@ -547,6 +545,7 @@ class InjectorThread(threading.Thread):
         self.injector_bind = injector_bind
 
     def run(self):
+        # Bereid ZeroMQ voor:
         context = zmq.Context()
         client_socket = context.socket(zmq.REP)
         client_socket.bind(self.injector_bind)
@@ -555,32 +554,37 @@ class InjectorThread(threading.Thread):
         
         while True:
             try:
+                # Ontvang injection dict
                 trein_dict = client_socket.recv_pyobj()
+                
+                self.logger.debug("Nieuwe injectie: %s", trein_dict)
+
+                # Stuur response naar injector
                 client_socket.send_pyobj(True)
-                self.logger.info(trein_dict)
 
+                # Converteer ontvangen dict naar 
                 trein = infoplus_dvs.parse_trein_dict(trein_dict)
-                self.logger.info(trein)
 
-                print trein.rit_id
-
+                # Bepaal rit ID. Prefix 'i' om overlap met InfoPlus
+                # DVS ID's te voorkomen.
                 rit_id = 'i%s' % trein.rit_id
 
                 # Voeg trein toe aan stores:
-                if rit_id not in trein_store:
-                    with locks['trein']:
+                with locks['trein']:
+                    if rit_id not in trein_store:
                         trein_store[rit_id] = {}
 
                 # Maak item in station_store indien niet aanwezig:
-                if trein.rit_station.code not in station_store:
-                    with locks['station']:
+                with locks['station']:
+                    if trein.rit_station.code not in station_store:
                         station_store[trein.rit_station.code] = {}
 
+                # Voeg geinjecteerde trein toe aan station en trein stores:
                 station_store[trein.rit_station.code][rit_id] = trein
                 trein_store[rit_id][trein.rit_station.code] = trein
 
-            except:
-                self.logger.exception("Ongeldige injectie ontvangen")
+            except Exception:
+                self.logger.exception("Fout tijdens verwerken injectie")
 
 if __name__ == "__main__":
     main()
