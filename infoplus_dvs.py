@@ -199,15 +199,15 @@ def parse_trein_dict(trein_dict):
     trein.vertrek = trein_dict['vertrek']
     trein.vertrek_actueel = trein.vertrek
 
-    trein.vertraging = 0
-    trein.vertraging_gedempt = 0
+    trein.vertraging = datetime.timedelta(0)
+    trein.vertraging_gedempt = datetime.timedelta(0)
 
     # Gepland en actueel vertrekspoor:
-    trein.vertrekspoor = Spoor(trein_dict['spoor'])
+    trein.vertrekspoor = [Spoor(trein_dict['spoor'])]
     trein.vertrekspoor_actueel = trein.vertrekspoor
 
     # Geplande en actuele bestemming:
-    trein.eindbestemming = Station(trein_dict['bestemming_code'], trein_dict['bestemming_naam'])
+    trein.eindbestemming = [Station(trein_dict['bestemming_code'], trein_dict['bestemming_naam'])]
     trein.eindbestemming_actueel = trein.eindbestemming
 
     # Verkorte route
