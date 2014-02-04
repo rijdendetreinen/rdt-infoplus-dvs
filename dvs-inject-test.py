@@ -58,7 +58,7 @@ def main():
     trein['rit_id'] = 412345
     trein['rit_station'] = 'RTD'
     trein['vertrek'] = datetime.now(pytz.utc) + timedelta(minutes=30)
-    trein['bestemming_naam'] = 'Den Haag Laan van NOI'
+    trein['bestemming_naam'] = 'Den HaagGGG Laan van NOI'
     trein['bestemming_code'] = 'LAA'
     trein['soort_code'] = 'SPC'
     trein['soort'] = 'Sprintercity'

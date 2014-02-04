@@ -203,7 +203,9 @@ def parse_trein_dict(trein_dict):
     trein.vertraging_gedempt = datetime.timedelta(0)
 
     # Gepland en actueel vertrekspoor:
-    trein.vertrekspoor = [Spoor(trein_dict['spoor'])]
+    trein.vertrekspoor = []
+    if trein_dict['spoor'] != None:
+        trein.vertrekspoor.append(Spoor(trein_dict['spoor']))
     trein.vertrekspoor_actueel = trein.vertrekspoor
 
     # Geplande en actuele bestemming:
