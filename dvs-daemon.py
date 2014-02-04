@@ -33,8 +33,8 @@ def setup_logging(default_path='logging.yaml',
         path = value
     if os.path.exists(path):
         with open(path, 'rt') as config_file:
-            config = yaml.load(config_file.read())
-        logging.config.dictConfig(config)
+            log_config = yaml.load(config_file.read())
+        logging.config.dictConfig(log_config)
     else:
         logging.basicConfig(level=default_level)
 
@@ -124,9 +124,9 @@ def main():
     # aantal dubbele berichten, aantal verouderde berichten,
     # aantal keren GC op trein- en station store
     counters = {}
-    counters['msg_nr'] = 0
-    counters['msg_dubbel_nr'] = 0
-    counters['msg_ouder_nr'] = 0
+    counters['msg'] = 0
+    counters['dubbel'] = 0
+    counters['ouder'] = 0
     counters['gc_station'] = 0
     counters['gc_trein'] = 0
 
@@ -223,7 +223,7 @@ def main():
                                 trein.treinnr, trein.rit_station.code)
 
                             # Update counter voor dubbele berichten:
-                            counters['msg_dubbel_nr'] = counters['msg_dubbel_nr'] + 1
+                            counters['dubbel'] += 1
                         else:
                             # Bepaal 1 seconde treshold:
                             warn_treshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
@@ -239,7 +239,7 @@ def main():
                                 trein.treinnr, trein.rit_station.code)
 
                             # Update counter voor verouderde berichten:
-                            counters['msg_ouder_nr'] = counters['msg_ouder_nr'] + 1
+                            counters['ouder'] += 1
                     else:
                         # Trein kwam op dit station nog niet voor, voeg toe:
                         station_store[rit_station_code][trein.treinnr] = trein
@@ -262,7 +262,7 @@ def main():
                     'Fout tijdens DVS bericht verwerken', exc_info=True)
                 logger.error('DVS crash bericht: %s', content)
                 
-            counters['msg_nr'] = counters['msg_nr'] + 1
+            counters['msg'] += + 1
 
 
     except KeyboardInterrupt:
@@ -280,7 +280,7 @@ def main():
         pickle.dump(trein_store, open('datadump/trein.store', 'wb'), -1)
 
         logger.info(
-            "Statistieken: %s berichten verwerkt sinds %s", counters['msg_nr'], starttime)
+            "Statistieken: %s berichten verwerkt sinds %s", counters['msg'], starttime)
 
     except Exception:
         logger.error("Fout in main loop", exc_info=True)
@@ -378,30 +378,19 @@ class ClientThread(threading.Thread):
                     elif arguments[1] == 'station':
                         # Grootte van station store:
                         client_socket.send_pyobj(len(station_store))
-                    elif arguments[1] == 'msg':
-                        # Aantal verwerkte messages:
-                        client_socket.send_pyobj(counters['msg_nr'])
-                    elif arguments[1] == 'dubbel':
-                        # Aantal gedetecteerde dubbele berichten:
-                        client_socket.send_pyobj(counters['msg_dubbel_nr'])
-                    elif arguments[1] == 'ouder':
-                        # Aantal gedetecteerde oudere berichten:
-                        client_socket.send_pyobj(counters['msg_ouder_nr'])
-                    elif arguments[1] == 'gc_trein':
-                        # GC acties in trein store
-                        client_socket.send_pyobj(counters['gc_trein'])
-                    elif arguments[1] == 'gc_station':
-                        # GC acties in station store
-                        client_socket.send_pyobj(counters['gc_station'])
+                    elif arguments[1] in counters:
+                        # Standaard counter:
+                        client_socket.send_pyobj(counters[arguments[1]])
                     else:
+                        # Onbekend type:
                         client_socket.send_pyobj(None)
 
                 else:
+                    # Standaard antwoord
                     client_socket.send_pyobj(None)
             except Exception:
                 client_socket.send_pyobj(None)
-                self.logger.e('Fout bij sturen client respone', exc_info=True)
-        Thread.__init__(self)
+                self.logger.exception('Fout bij sturen client respone')
 
 
 # Garbage collection thread:
