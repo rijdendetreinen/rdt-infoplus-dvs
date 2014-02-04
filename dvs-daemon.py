@@ -562,18 +562,22 @@ class InjectorThread(threading.Thread):
                 trein = infoplus_dvs.parse_trein_dict(trein_dict)
                 self.logger.info(trein)
 
+                print trein.rit_id
+
+                rit_id = 'i%s' % trein.rit_id
+
                 # Voeg trein toe aan stores:
-                if trein.treinnr not in trein_store:
+                if rit_id not in trein_store:
                     with locks['trein']:
-                        trein_store[trein.treinnr] = {}
+                        trein_store[rit_id] = {}
 
                 # Maak item in station_store indien niet aanwezig:
                 if trein.rit_station.code not in station_store:
                     with locks['station']:
                         station_store[trein.rit_station.code] = {}
 
-                station_store[trein.rit_station.code][trein.treinnr] = trein
-                trein_store[trein.treinnr][trein.rit_station.code] = trein
+                station_store[trein.rit_station.code][rit_id] = trein
+                trein_store[rit_id][trein.rit_station.code] = trein
 
             except:
                 self.logger.exception("Ongeldige injectie ontvangen")
