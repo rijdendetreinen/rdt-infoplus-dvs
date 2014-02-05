@@ -215,7 +215,10 @@ def parse_trein_dict(trein_dict, statisch=False):
 
     # Verkorte route
     trein.verkorte_route = []
-    trein.verkorte_route_actueel = []
+    if 'via' in trein_dict:
+        for via_station in trein_dict['via']:
+            trein.verkorte_route.append(Station(via_station[0], via_station[1]))
+    trein.verkorte_route_actueel = trein.verkorte_route
 
     return trein
 
@@ -335,6 +338,8 @@ class Station(object):
     def __init__(self, code, lange_naam):
         self.code = code
         self.lange_naam = lange_naam
+        self.middel_naam = lange_naam
+        self.korte_naam = lange_naam
 
     def __repr__(self):
         return '<station %s %s>' % (self.code, self.lange_naam)
