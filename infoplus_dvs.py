@@ -171,7 +171,7 @@ def parse_trein(data):
     return trein
 
 
-def parse_trein_dict(trein_dict):
+def parse_trein_dict(trein_dict, statisch=False):
     """
     Vertaal een dict over een trein (uit de injectiefeed)
     naar een Trein object.
@@ -179,6 +179,7 @@ def parse_trein_dict(trein_dict):
 
     # Maak trein object:
     trein = Trein()
+    trein.statisch = statisch
     
     # Metadata over rit:
     trein.rit_id = trein_dict['rit_id']
@@ -404,6 +405,8 @@ class Trein(object):
     reistips = []
     instaptips = []
     overstaptips = []
+
+    statisch = False
 
     def lokaal_vertrek(self):
         """

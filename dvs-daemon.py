@@ -554,7 +554,7 @@ class InjectorThread(threading.Thread):
                 client_socket.send_pyobj(True)
 
                 # Converteer ontvangen dict naar 
-                trein = infoplus_dvs.parse_trein_dict(trein_dict)
+                trein = infoplus_dvs.parse_trein_dict(trein_dict, True)
 
                 # Bepaal rit ID. Prefix 'i' om overlap met InfoPlus
                 # DVS ID's te voorkomen.
