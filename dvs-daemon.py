@@ -129,6 +129,7 @@ def main():
     counters['ouder'] = 0
     counters['gc_station'] = 0
     counters['gc_trein'] = 0
+    counters['injecties'] = 0
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
@@ -547,6 +548,7 @@ class InjectorThread(threading.Thread):
                 trein_dict = client_socket.recv_pyobj()
                 
                 self.logger.debug("Nieuwe injectie: %s", trein_dict)
+                counters['injecties'] += 1
 
                 # Stuur response naar injector
                 client_socket.send_pyobj(True)
