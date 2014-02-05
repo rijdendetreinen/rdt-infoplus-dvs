@@ -435,6 +435,7 @@ class GarbageThread(threading.Thread):
 
         # Bereken treshold:
         treshold = datetime.now(pytz.utc) - timedelta(minutes=10)
+        treshold_statisch = datetime.now(pytz.utc)
 
         # Performance controle; start:
         start = datetime.now()
@@ -444,7 +445,8 @@ class GarbageThread(threading.Thread):
         for station in station_store:
             try:
                 for trein_rit, trein in station_store[station].items():
-                    if trein.vertrek_actueel < treshold:
+                    if (trein.statisch == False and trein.vertrek_actueel < treshold) \
+                    or (trein.statisch == True and trein.vertrek_actueel < treshold_statisch):
                         try:
                             with locks['station']:
                                 del(station_store[station][trein_rit])
@@ -456,6 +458,8 @@ class GarbageThread(threading.Thread):
                                 # daarom is het te verwachten dat deze GC'd worden
                                 # Log alleen debug melding
                                 self.logger.debug('GC [SS] Del %s/%s, opgeheven' % (trein_rit, station))
+                            elif trein.statisch == True:
+                                self.logger.debug('GC [SS] Del %s/%s, statisch' % (trein_rit, station))
                             else:
                                 # Waarschuwing indien trein niet opgeheven, maar
                                 # wel 10-minuten window overschreden:
@@ -480,7 +484,8 @@ class GarbageThread(threading.Thread):
         for trein_rit in trein_store.keys():
             try:
                 for station, trein in trein_store[trein_rit].items():
-                    if trein.vertrek_actueel < treshold:
+                    if (trein.statisch == False and trein.vertrek_actueel < treshold) \
+                    or (trein.statisch == True and trein.vertrek_actueel < treshold_statisch):
                         try:
                             with locks['trein']:
                                 del(trein_store[trein_rit][station])
@@ -492,6 +497,8 @@ class GarbageThread(threading.Thread):
                                 # daarom is het te verwachten dat deze GC'd worden
                                 # Log alleen debug melding
                                 self.logger.debug('GC [TS] Del %s/%s, opgeheven' % (trein_rit, station))
+                            elif trein.statisch == True:
+                                self.logger.debug('GC [TS] Del %s/%s, statisch' % (trein_rit, station))
                             else:
                                 # Waarschuwing indien trein niet opgeheven, maar
                                 # wel 10-minuten window overschreden:
