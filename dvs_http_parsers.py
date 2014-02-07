@@ -40,7 +40,7 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
 
     if trein.statisch == True:
         if taal == 'en':
-            trein_dict['opmerkingen'].append("No live information")
+            trein_dict['opmerkingen'].append("No real-time information")
         else:
             trein_dict['opmerkingen'].append("Geen actuele informatie")
 
