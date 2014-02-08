@@ -4,6 +4,7 @@ Module om DVS berichten uit InfoPlus te kunnen verwerken.
 
 import xml.etree.cElementTree as ET
 import isodate
+import datetime
 import pytz
 import logging
 
@@ -170,6 +171,59 @@ def parse_trein(data):
     return trein
 
 
+def parse_trein_dict(trein_dict, statisch=False):
+    """
+    Vertaal een dict over een trein (uit de injectiefeed)
+    naar een Trein object.
+    """
+
+    # Maak trein object:
+    trein = Trein()
+    trein.statisch = statisch
+    
+    # Metadata over rit:
+    trein.rit_id = trein_dict['rit_id']
+    trein.rit_datum = trein_dict['vertrek'].date()
+    trein.rit_station = Station(trein_dict['rit_station'].upper(), None)
+    trein.rit_timestamp = datetime.datetime.now()
+    
+    # Treinnummer, soort/formule, etc:
+    trein.treinnr = trein_dict['treinnr']
+    trein.soort = trein_dict['soort']
+    trein.soort_code = trein_dict['soort_code']
+    trein.vervoerder = trein_dict['vervoerder_naam']
+    
+    # Status:
+    trein.status = 0
+
+    # Vertrektijd en vertraging:
+    trein.vertrek = trein_dict['vertrek']
+    trein.vertrek_actueel = trein.vertrek
+
+    trein.vertraging = datetime.timedelta(0)
+    trein.vertraging_gedempt = datetime.timedelta(0)
+
+    # Gepland en actueel vertrekspoor:
+    trein.vertrekspoor = []
+    if trein_dict['spoor'] != None:
+        trein.vertrekspoor.append(Spoor(trein_dict['spoor']))
+    trein.vertrekspoor_actueel = trein.vertrekspoor
+
+    # Geplande en actuele bestemming:
+    trein.eindbestemming = [Station(trein_dict['bestemming_code'], trein_dict['bestemming_naam'])]
+    trein.eindbestemming_actueel = trein.eindbestemming
+
+    # Verkorte route
+    trein.verkorte_route = []
+    if 'via' in trein_dict:
+        for via_station in trein_dict['via']:
+            trein.verkorte_route.append(Station(via_station[0], via_station[1]))
+    trein.verkorte_route_actueel = trein.verkorte_route
+
+    return trein
+
+
+
 def parse_stations(station_nodes):
     """
     Vertaal een node met stations naar een list van Station objecten.
@@ -284,6 +338,8 @@ class Station(object):
     def __init__(self, code, lange_naam):
         self.code = code
         self.lange_naam = lange_naam
+        self.middel_naam = lange_naam
+        self.korte_naam = lange_naam
 
     def __repr__(self):
         return '<station %s %s>' % (self.code, self.lange_naam)
@@ -354,6 +410,8 @@ class Trein(object):
     reistips = []
     instaptips = []
     overstaptips = []
+
+    statisch = False
 
     def lokaal_vertrek(self):
         """
