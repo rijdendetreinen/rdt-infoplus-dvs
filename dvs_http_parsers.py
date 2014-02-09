@@ -38,6 +38,12 @@ def trein_to_dict(trein, taal, tijd_nu, verbose=False):
     if trein.treinnaam != None:
         trein_dict['opmerkingen'].append(trein.treinnaam)
 
+    if trein.statisch == True:
+        if taal == 'en':
+            trein_dict['opmerkingen'].append("No real-time information")
+        else:
+            trein_dict['opmerkingen'].append("Geen actuele informatie")
+
     trein_dict['tips'] = trein.tips(taal)
     trein_dict['opgeheven'] = False
     trein_dict['status'] = trein.status

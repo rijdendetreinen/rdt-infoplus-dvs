@@ -4,6 +4,7 @@ Module om DVS berichten uit InfoPlus te kunnen verwerken.
 
 import xml.etree.cElementTree as ET
 import isodate
+import datetime
 import pytz
 import logging
 
@@ -170,6 +171,62 @@ def parse_trein(data):
     return trein
 
 
+def parse_trein_dict(trein_dict, statisch=False):
+    """
+    Vertaal een dict over een trein (uit de injectiefeed)
+    naar een Trein object.
+    """
+
+    # Maak trein object:
+    trein = Trein()
+    trein.statisch = statisch
+    
+    # Metadata over rit:
+    trein.rit_id = trein_dict['rit_id']
+    trein.rit_datum = trein_dict['vertrek'].date()
+    trein.rit_station = Station(trein_dict['rit_station'].upper(), None)
+    trein.rit_timestamp = datetime.datetime.now()
+    
+    # Treinnummer, soort/formule, etc:
+    trein.treinnr = trein_dict['treinnr']
+    trein.soort = trein_dict['soort']
+    trein.soort_code = trein_dict['soort_code']
+    trein.vervoerder = trein_dict['vervoerder_naam']
+    
+    # Status:
+    trein.status = 0
+
+    # Vertrektijd en vertraging:
+    trein.vertrek = trein_dict['vertrek']
+    trein.vertrek_actueel = trein.vertrek
+
+    trein.vertraging = datetime.timedelta(0)
+    trein.vertraging_gedempt = datetime.timedelta(0)
+
+    # Gepland en actueel vertrekspoor:
+    trein.vertrekspoor = []
+    if trein_dict['spoor'] != None:
+        trein.vertrekspoor.append(Spoor(trein_dict['spoor']))
+    trein.vertrekspoor_actueel = trein.vertrekspoor
+
+    # Geplande en actuele bestemming:
+    trein.eindbestemming = [Station(trein_dict['bestemming_code'], trein_dict['bestemming_naam'])]
+    trein.eindbestemming_actueel = trein.eindbestemming
+
+    if 'niet_instappen' in trein_dict:
+        trein.niet_instappen = trein_dict['niet_instappen']
+
+    # Verkorte route
+    trein.verkorte_route = []
+    if 'via' in trein_dict:
+        for via_station in trein_dict['via']:
+            trein.verkorte_route.append(Station(via_station[0], via_station[1]))
+    trein.verkorte_route_actueel = trein.verkorte_route
+
+    return trein
+
+
+
 def parse_stations(station_nodes):
     """
     Vertaal een node met stations naar een list van Station objecten.
@@ -269,7 +326,7 @@ def parse_boolean(value):
     else:
         return False
 
-class Station:
+class Station(object):
     """
     Class om informatie over een station in te bewaren.
     """
@@ -284,12 +341,14 @@ class Station:
     def __init__(self, code, lange_naam):
         self.code = code
         self.lange_naam = lange_naam
+        self.middel_naam = lange_naam
+        self.korte_naam = lange_naam
 
     def __repr__(self):
         return '<station %s %s>' % (self.code, self.lange_naam)
 
 
-class Spoor:
+class Spoor(object):
     """
     Class om spoornummers te bewaren. Een spoor bestaat uit een nummer
     en optioneel een fase (a, b, ...)
@@ -309,7 +368,7 @@ class Spoor:
             return self.nummer
 
 
-class Trein:
+class Trein(object):
     """
     Class om treinen in te bewaren, inclusief metadata.
     """
@@ -354,6 +413,8 @@ class Trein:
     reistips = []
     instaptips = []
     overstaptips = []
+
+    statisch = False
 
     def lokaal_vertrek(self):
         """
@@ -536,7 +597,7 @@ class Trein:
             self.eindbestemming_actueel)
 
 
-class TreinVleugel: 
+class TreinVleugel(object):
     """
     Een treinvleugel is een deel van de trein met een bepaalde eindbestemming,
     materieel en wijzigingen. Een trein kan uit meerdere vleugels bestaan met
@@ -557,7 +618,7 @@ class TreinVleugel:
         self.eindbestemming_actueel = eindbestemming
 
 
-class Materieel:
+class Materieel(object):
     """
     Class om treinmaterieel bij te houden.
     Elk materieeldeel heeft een eindbestemming en is
@@ -585,7 +646,7 @@ class Materieel:
         else:
             return self.soort
 
-class Wijziging:
+class Wijziging(object):
     """
     Class om wijzigingsberichten bij te houden.
     Iedere wijziging wordt geidentificeerd met een code (wijziging_type),
@@ -797,7 +858,7 @@ class Wijziging:
         else:
             return None
 
-class ReisTip:
+class ReisTip(object):
     """
     Class om reistips in te bewaren. Een reistip is voor reizigers belangrijke
     informatie zoals stations die worden overgeslagen. De variabele code
@@ -875,7 +936,7 @@ class ReisTip:
             else:
                 return ', '.join(station.lange_naam for station in self.stations[:-1]) + ' en ' + self.stations[-1].lange_naam
 
-class InstapTip:
+class InstapTip(object):
     """
     Class om instaptips te bewaren. Een instaptip is een tip voor reizigers
     dat een alternatieve trein eerder op een bepaald station is (bijvoorbeeld
@@ -909,7 +970,7 @@ class InstapTip:
                 self.instap_vertrek.astimezone(tijdzone).strftime('%H:%M'),
                 self.eindbestemming.lange_naam, self.uitstap_station.lange_naam)
 
-class OverstapTip:
+class OverstapTip(object):
     """
     Class om overstaptips te bewaren. Een overstaptip is een tip dat om een
     bepaalde bestemming te bereiken op een overstapstation moet worden
