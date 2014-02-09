@@ -213,6 +213,9 @@ def parse_trein_dict(trein_dict, statisch=False):
     trein.eindbestemming = [Station(trein_dict['bestemming_code'], trein_dict['bestemming_naam'])]
     trein.eindbestemming_actueel = trein.eindbestemming
 
+    if 'niet_instappen' in trein_dict:
+        trein.niet_instappen = trein_dict['niet_instappen']
+
     # Verkorte route
     trein.verkorte_route = []
     if 'via' in trein_dict:
