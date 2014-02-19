@@ -9,6 +9,8 @@ import argparse
 import pprint
 import sys
 
+SERVER_TIMEOUT = 4
+
 def main():
     """
     Main functie
@@ -49,12 +51,19 @@ def main():
     client.connect(dvs_client_server)
 
     # Stuur opdracht:
+    client.setsockopt(zmq.LINGER, 0)
     client.send(opdracht)
-    treinen = client.recv_pyobj()
-
-    pretty = pprint.PrettyPrinter(indent=4)
-
-    pretty.pprint(treinen)
+    
+    poller = zmq.Poller()
+    poller.register(client, zmq.POLLIN)
+    
+    if poller.poll(SERVER_TIMEOUT * 1000):
+        treinen = client.recv_pyobj()
+        pretty = pprint.PrettyPrinter(indent=4)
+        pretty.pprint(treinen)
+    else:
+        print "Timeout: server did not respond within %ss" % SERVER_TIMEOUT
+        treinen = {}
 
 if __name__ == "__main__":
     main()
