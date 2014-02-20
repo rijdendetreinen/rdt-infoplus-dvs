@@ -11,19 +11,36 @@ import bottle
 
 import dvs_http_parsers
 
+SERVER_TIMEOUT = 4
+
 @bottle.route('/station/<station>')
 @bottle.route('/station/<station>/<taal>')
 def index(station, taal='nl'):
     tijd_nu = datetime.now(pytz.utc)
+    print "1"
 
     # Maak verbinding
     context = zmq.Context()
     client = context.socket(zmq.REQ)
     client.connect(dvs_client_server)
+    client.setsockopt(zmq.LINGER, 0)
 
     # Stuur opdracht:
     client.send('station/%s' % station)
-    treinen = client.recv_pyobj()
+
+    # Ontvang response:
+    poller = zmq.Poller()
+    poller.register(client, zmq.POLLIN)
+
+    if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
+        treinen = client.recv_pyobj()
+        client.close()
+        client.close()
+        context.term()
+    else:
+        client.close()
+        context.term()
+        return { 'result': 'ERR', 'status': 'DVS server timeout' }
 
     # Lees trein array uit:
     if treinen != None:
@@ -68,10 +85,24 @@ def index(trein, station, taal='nl'):
     context = zmq.Context()
     client = context.socket(zmq.REQ)
     client.connect(dvs_client_server)
+    client.setsockopt(zmq.LINGER, 0)
 
     # Stuur opdracht: haal alle informatie op voor dit treinnummer
     client.send('trein/%s' % trein)
-    vertrekken = client.recv_pyobj()
+
+    # Ontvang response:
+    poller = zmq.Poller()
+    poller.register(client, zmq.POLLIN)
+
+    if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
+        vertrekken = client.recv_pyobj()
+        client.close()
+        client.close()
+        context.term()
+    else:
+        client.close()
+        context.term()
+        return { 'result': 'ERR', 'status': 'DVS server timeout' }
 
     # Lees trein array uit:
     if vertrekken != None and station.upper() in vertrekken:
