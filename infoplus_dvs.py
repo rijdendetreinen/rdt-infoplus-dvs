@@ -782,6 +782,7 @@ class Wijziging(object):
             'grote vertraging': 'large delay',
             'te hoog opgelopen vertraging': 'excessive delay',
             'eerdere verstoring': 'an earlier disruption',
+            'te hoog opgelopen vertraging in het buitenland': 'excessive delay abroad',
             'een eerdere verstoring': 'an earlier disruption',
             'herstelwerkzaamheden': 'reparation works',
             'seinstoring': 'signal failure',
