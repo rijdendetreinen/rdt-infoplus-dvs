@@ -17,7 +17,6 @@ SERVER_TIMEOUT = 4
 @bottle.route('/station/<station>/<taal>')
 def index(station, taal='nl'):
     tijd_nu = datetime.now(pytz.utc)
-    print "1"
 
     # Maak verbinding
     context = zmq.Context()
