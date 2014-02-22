@@ -821,8 +821,6 @@ class Wijziging(object):
             'auto op het spoor': 'a car on the track',
             'een auto op het spoor': 'a car on the track',
             'mensen op het spoor': 'persons on the track',
-            'persoon op het spoor': 'a person on the track',
-            'een persoon op het spoor': 'a person on the track',
             'dier op het spoor': 'an animal on the track',
             'een dier op het spoor': 'an animal on the track',
             'verstoring elders': 'a disruption elsewhere',
