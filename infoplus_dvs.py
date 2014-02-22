@@ -855,6 +855,7 @@ class Wijziging(object):
         if self.oorzaak_lang in vertalingen:
             return vertalingen[self.oorzaak_lang]
         else:
+            __logger__.warn("Geen Engelse vertaling voor '%s'", self.oorzaak_lang)
             return None
 
 class ReisTip(object):
