@@ -57,12 +57,17 @@ def index(station, taal='nl'):
             treinen_sorted = sorted(treinen,
                 key=lambda trein: treinen[trein].vertrek)
 
+        if bottle.request.query.get('verbose') == 'true':
+            verbose = True
+        else:
+            verbose = False
+
         vertrektijden = []
 
         for trein_nr in treinen_sorted:
             trein = treinen[trein_nr]
 
-            trein_dict = dvs_http_parsers.trein_to_dict(trein, taal, tijd_nu)
+            trein_dict = dvs_http_parsers.trein_to_dict(trein, taal, tijd_nu, materieel=verbose)
 
             if trein_dict != None:
                 vertrektijden.append(trein_dict)
@@ -109,7 +114,7 @@ def index(trein, station, taal='nl'):
 
         # Parse basis informatie:
         trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
-            taal, tijd_nu, True)
+            taal, tijd_nu, materieel=True, stopstations=True)
 
         return { 'result': 'OK', 'trein': trein_dict }
     else:
