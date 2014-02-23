@@ -50,7 +50,7 @@ def index(station, taal='nl'):
             if bottle.request.query.get('sorteer') == 'actueel':
                 # Sorteer op geplande vertrektijd
                 treinen_sorted = sorted(treinen,
-                    key=lambda trein: treinen[trein].vertrekActueel)
+                    key=lambda trein: treinen[trein].vertrek_actueel)
             elif bottle.request.query.get('sorteer') == 'vertraging':
                 # Sorteer op vertraging (hoog naar laag)
                 treinen_sorted = sorted(treinen,
