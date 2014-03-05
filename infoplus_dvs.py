@@ -810,6 +810,8 @@ class Wijziging(object):
             'acties in het buitenland': 'staff strike abroad',
             'wisselstoring': 'points failure',
             'een wisselstoring': 'points failure',
+            'een defect wissel': 'a defective switch',
+            'veel defect materieel': 'numerous broken down trains',
             'overwegstoring': 'a level crossing failure',
             'een overwegstoring': 'level crossing failure',
             'aanrijding met een persoon': 'a person hit by a train',
