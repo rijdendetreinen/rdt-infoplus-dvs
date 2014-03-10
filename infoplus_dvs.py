@@ -782,6 +782,7 @@ class Wijziging(object):
             'grote vertraging': 'large delay',
             'te hoog opgelopen vertraging': 'excessive delay',
             'eerdere verstoring': 'an earlier disruption',
+            'te hoog opgelopen vertraging in het buitenland': 'excessive delay abroad',
             'een eerdere verstoring': 'an earlier disruption',
             'herstelwerkzaamheden': 'reparation works',
             'seinstoring': 'signal failure',
@@ -809,6 +810,8 @@ class Wijziging(object):
             'acties in het buitenland': 'staff strike abroad',
             'wisselstoring': 'points failure',
             'een wisselstoring': 'points failure',
+            'een defect wissel': 'a defective switch',
+            'veel defect materieel': 'numerous broken down trains',
             'overwegstoring': 'a level crossing failure',
             'een overwegstoring': 'level crossing failure',
             'aanrijding met een persoon': 'a person hit by a train',
@@ -820,8 +823,6 @@ class Wijziging(object):
             'auto op het spoor': 'a car on the track',
             'een auto op het spoor': 'a car on the track',
             'mensen op het spoor': 'persons on the track',
-            'persoon op het spoor': 'a person on the track',
-            'een persoon op het spoor': 'a person on the track',
             'dier op het spoor': 'an animal on the track',
             'een dier op het spoor': 'an animal on the track',
             'verstoring elders': 'a disruption elsewhere',
@@ -856,6 +857,7 @@ class Wijziging(object):
         if self.oorzaak_lang in vertalingen:
             return vertalingen[self.oorzaak_lang]
         else:
+            __logger__.warn("Geen Engelse vertaling voor '%s'", self.oorzaak_lang)
             return None
 
 class ReisTip(object):
