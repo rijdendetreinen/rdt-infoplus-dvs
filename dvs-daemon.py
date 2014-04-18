@@ -62,7 +62,7 @@ def main():
     Main loop
     """
 
-    global station_store, trein_store, counters, locks, config
+    global station_store, trein_store, counters, locks, configs, downtime
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -132,6 +132,12 @@ def main():
     counters['gc_trein'] = 0
     counters['injecties'] = 0
     counters['msg_time'] = {}
+
+    # Initialiseer downtime statusinfo
+    downtime = {}
+    downtime['status'] = 'UNKNOWN' # of DOWN of UP of RECOVERING
+    downtime['down_since'] = None
+    downtime['recovering_since'] = None
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
@@ -405,8 +411,10 @@ class GarbageThread(threading.Thread):
     stopped = None
     logger = None
     msg_count_queue = None
-    count_time_window = 10
-    count_treshold = 1
+
+    count_time_window = 10      # 10 minuten
+    count_treshold = 1          # minimaal 1 bericht in 10m
+    recovery_time = 70          # 70 minuten voor volledig herstel
 
     def __init__(self, event):
         threading.Thread.__init__(self, name='GarbageThread')
@@ -422,7 +430,8 @@ class GarbageThread(threading.Thread):
         self.logger.info("Initiele garbage collecting")
         self.garbage_collect()
 
-        while not self.stopped.wait(2):
+        # Loop over garbage collecting iedere 1m:
+        while not self.stopped.wait(60):
             try:
                 self.logger.info("Periodieke garbage collecting")
                 self.garbage_collect()
@@ -435,11 +444,13 @@ class GarbageThread(threading.Thread):
                 total_msg_now = counters['msg']
                 self.msg_count_queue.append(total_msg_now)
 
+                # Controleer aantal meetpunten:
                 if len(self.msg_count_queue) >= self.count_time_window:
                     # Bereken aantal ontvangen berichten:
                     total_msg_ago = self.msg_count_queue.popleft()
                     msg_received = total_msg_now - total_msg_ago
 
+                    # Log aantal ontvangen berichten binnen tijdwindow:
                     self.logger.info('Ontvangen berichten (%sm window): %s (%.2f/m)',
                         self.count_time_window,
                         msg_received,
@@ -447,13 +458,57 @@ class GarbageThread(threading.Thread):
 
                     # Bepaal eventuele downtime:
                     if msg_received < self.count_treshold:
-                        self.logger.warn('Downtime gedetecteerd, %s berichten ontvangen (%sm window)',
+                        self.logger.warning('Downtime gedetecteerd, %s berichten ontvangen (%sm window)',
                             msg_received, self.count_time_window)
-                        
+
+                        # Registreer downtime status, en eventueel tijdstip van downtime
+                        # (indien nog niet bekend)
+                        downtime['status'] = 'DOWN'
+                        if downtime['down_since'] == None:
+                            # Downtime start nu
+                            downtime['down_since'] = datetime.now()
+                            downtime['recovering_since'] = None
+
                     else:
                         self.logger.debug('Geen downtime gedetecteerd')
+
+                        # Controleer status voor juiste actie:
+                        if downtime['status'] == 'UNKNOWN' or \
+                            downtime['status'] == 'DOWN':
+                            # Systeem was down of past gestart. Nu komt betrouwbaar
+                            # data binnen, zet status naar RECOVERING
+                            self.logger.warning('Systeem is RECOVERING na downtime (gestart om %s)',
+                                downtime['down_since'])
+                            downtime['status'] = 'RECOVERING'
+                            downtime['recovering_since'] = datetime.now()
+
+                        elif downtime['status'] == 'RECOVERING':
+                            # Systeem is aan het recoveren na downtime. Indien recovery-
+                            # tijd voorbij is kan systeem weer naar UP
+
+                            # Controleer recovery tijd:
+                            recover_treshold_time = downtime['recovering_since'] + \
+                                timedelta(minutes = self.recovery_time)
+
+                            # Ook recovery tijd voorbij, systeemstatus is OK:
+                            if datetime.now() >= recover_treshold_time:
+                                downtime['status'] = 'UP'
+                                self.logger.warning('Systeem weer UP na downtime (%s t/m %s) en recovery. Duur downtime %s',
+                                    downtime['down_since'], downtime['recovering_since'],
+                                    (downtime['recovering_since'] - downtime['down_since']))
+                                downtime['down_since'] = None
+                                downtime['recovering_since'] = None
+
                 else:
                     self.logger.info('Onvoldoende data voor downtime-detectie')
+
+                    # Stel downtime status in op UNKOWN en behandel verder als normale
+                    # downtime (log starttijd, etc.)
+                    downtime['status'] = 'UNKNOWN'
+                    downtime['recovering_since'] = None
+                    if downtime['down_since'] == None:
+                        downtime['down_since'] = datetime.now()
+
             except Exception:
                 self.logger.error('Fout in GC thread', exc_info=True)
 
