@@ -437,8 +437,10 @@ class GarbageThread(threading.Thread):
                 self.garbage_collect()
 
                 self.logger.info(
-                    "Statistieken: station_store=%s, trein_store=%s"
-                    % (len(station_store), len(trein_store)))
+                    "Statistieken: station_store=%s, trein_store=%s, status=%s",
+                    len(station_store),
+                    len(trein_store),
+                    downtime['status'])
 
                 # Voeg nieuwe meting toe aan self.msg_count_queue
                 total_msg_now = counters['msg']
@@ -500,7 +502,7 @@ class GarbageThread(threading.Thread):
                                 downtime['recovering_since'] = None
 
                 else:
-                    self.logger.info('Onvoldoende data voor downtime-detectie')
+                    self.logger.debug('Onvoldoende data voor downtime-detectie')
 
                     # Stel downtime status in op UNKOWN en behandel verder als normale
                     # downtime (log starttijd, etc.)
