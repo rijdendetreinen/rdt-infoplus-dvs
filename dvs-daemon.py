@@ -18,6 +18,7 @@ import logging
 import logging.config
 import yaml
 import threading
+from collections import deque
 
 import infoplus_dvs
 
@@ -130,6 +131,7 @@ def main():
     counters['gc_station'] = 0
     counters['gc_trein'] = 0
     counters['injecties'] = 0
+    counters['msg_time'] = {}
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
@@ -402,10 +404,17 @@ class GarbageThread(threading.Thread):
 
     stopped = None
     logger = None
+    msg_count_queue = None
+    count_time_window = 10
+    count_treshold = 1
 
     def __init__(self, event):
         threading.Thread.__init__(self, name='GarbageThread')
         self.logger = logging.getLogger(__name__)
+
+        # Initialiseer downtime detectie queue
+        self.msg_count_queue = deque()
+
         self.logger.info("GC thread geinitialiseerd")
         self.stopped = event
 
@@ -413,7 +422,7 @@ class GarbageThread(threading.Thread):
         self.logger.info("Initiele garbage collecting")
         self.garbage_collect()
 
-        while not self.stopped.wait(60):
+        while not self.stopped.wait(2):
             try:
                 self.logger.info("Periodieke garbage collecting")
                 self.garbage_collect()
@@ -421,6 +430,30 @@ class GarbageThread(threading.Thread):
                 self.logger.info(
                     "Statistieken: station_store=%s, trein_store=%s"
                     % (len(station_store), len(trein_store)))
+
+                # Voeg nieuwe meting toe aan self.msg_count_queue
+                total_msg_now = counters['msg']
+                self.msg_count_queue.append(total_msg_now)
+
+                if len(self.msg_count_queue) >= self.count_time_window:
+                    # Bereken aantal ontvangen berichten:
+                    total_msg_ago = self.msg_count_queue.popleft()
+                    msg_received = total_msg_now - total_msg_ago
+
+                    self.logger.info('Ontvangen berichten (%sm window): %s (%.2f/m)',
+                        self.count_time_window,
+                        msg_received,
+                        (msg_received / self.count_time_window))
+
+                    # Bepaal eventuele downtime:
+                    if msg_received < self.count_treshold:
+                        self.logger.warn('Downtime gedetecteerd, %s berichten ontvangen (%sm window)',
+                            msg_received, self.count_time_window)
+                        
+                    else:
+                        self.logger.debug('Geen downtime gedetecteerd')
+                else:
+                    self.logger.info('Onvoldoende data voor downtime-detectie')
             except Exception:
                 self.logger.error('Fout in GC thread', exc_info=True)
 
