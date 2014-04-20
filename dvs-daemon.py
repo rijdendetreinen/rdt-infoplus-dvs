@@ -356,7 +356,9 @@ class ClientThread(threading.Thread):
                     station_code = arguments[1].upper()
                     if station_code in station_store:
                         client_socket.send_pyobj(
-                            station_store[station_code], zmq.NOBLOCK)
+                            {'status': downtime,
+                            'data': station_store[station_code]},
+                            zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -364,7 +366,9 @@ class ClientThread(threading.Thread):
                     # Haal alle stations op voor gegeven trein
                     trein_nr = arguments[1]
                     if trein_nr in trein_store:
-                        client_socket.send_pyobj(trein_store[trein_nr], zmq.NOBLOCK)
+                        client_socket.send_pyobj(
+                            {'status': downtime,
+                            'data': trein_store[trein_nr]}, zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -393,6 +397,10 @@ class ClientThread(threading.Thread):
                     else:
                         # Onbekend type:
                         client_socket.send_pyobj(None)
+
+                elif arguments[0] == 'status':
+                    # Stuur statusinformatie terug:
+                    client_socket.send_pyobj(downtime)
 
                 else:
                     # Standaard antwoord
