@@ -163,3 +163,46 @@ def index(trein, station, taal='nl'):
         finally:
             response.status = 500
             return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
+
+@bottle.route('/status')
+def index():
+    try:
+        # Maak verbinding
+        context = zmq.Context()
+        client = context.socket(zmq.REQ)
+        client.connect(dvs_client_server)
+        client.setsockopt(zmq.LINGER, 0)
+
+        # Stuur opdracht:
+        client.send('status')
+
+        # Ontvang response:
+        poller = zmq.Poller()
+        poller.register(client, zmq.POLLIN)
+
+        if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
+            data = client.recv_pyobj()
+            client.close()
+            client.close()
+            context.term()
+        else:
+            client.close()
+            context.term()
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': 'DVS server timeout' }
+
+        if data['down_since'] != None:
+            data['down_since'] = str(data['down_since'])
+
+        if data['recovering_since'] != None:
+            data['recovering_since'] = str(data['recovering_since'])
+
+        return { 'result': 'OK', 'data': data }
+    except Exception as e:
+        client.close()
+        context.term()
+        try:
+            logger = logging.getLogger(__name__)
+            logger.exception("ERROR")
+        finally:
+            response.status = 500
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
