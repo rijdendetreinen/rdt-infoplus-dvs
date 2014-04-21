@@ -9,8 +9,6 @@ import argparse
 import pprint
 import sys
 
-SERVER_TIMEOUT = 4
-
 def main():
     """
     Main functie
@@ -24,20 +22,18 @@ def main():
     parser = argparse.ArgumentParser(
         description='DVS test tool. Stuur opdracht naar DVS daemon')
 
-    parser.add_argument('-l', '--lokaal', dest='lokaal',
-        action='store_true', help='Test met lokale server 127.0.0.1:8120')
     parser.add_argument('-q', '--quiet', dest='quiet',
-        action='store_true', help='Verberg meegegeven opdracht')
+        action='store_true', help='verberg debug-informatie')
+    parser.add_argument('-s', '--server', action='store', default='127.0.0.1', help='DVS server (standaard 127.0.0.1)')
+    parser.add_argument('-p', '--port', action='store', default='8120', help='DVS poort (standaard 8120)')
+    parser.add_argument('-t', '--timeout', action='store', default='4', help='timeout in seconden (standaard 4s)')
     parser.add_argument('OPDRACHT', nargs='?',
         action='store', help='opdracht naar DVS server', default='store/trein')
 
     args = parser.parse_args()
 
-    if args.lokaal == True:
-        dvs_client_server = "tcp://127.0.0.1:8120"
-    else:
-        dvs_client_server = "tcp://46.19.34.170:8120"
-
+    dvs_client_server = "tcp://%s:%s" % (args.server, args.port)
+    server_timeout = int(args.timeout)
     opdracht = args.OPDRACHT
 
     if args.quiet == False:
@@ -57,12 +53,12 @@ def main():
     poller = zmq.Poller()
     poller.register(client, zmq.POLLIN)
     
-    if poller.poll(SERVER_TIMEOUT * 1000):
+    if poller.poll(server_timeout * 1000):
         treinen = client.recv_pyobj()
         pretty = pprint.PrettyPrinter(indent=4)
         pretty.pprint(treinen)
     else:
-        print "Timeout: server did not respond within %ss" % SERVER_TIMEOUT
+        print "Timeout: server did not respond within %ss" % server_timeout
         treinen = {}
 
 if __name__ == "__main__":
