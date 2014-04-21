@@ -8,8 +8,7 @@ import zmq
 import argparse
 import pprint
 import sys
-
-SERVER_TIMEOUT = 4
+import time
 
 def main():
     """
@@ -24,26 +23,27 @@ def main():
     parser = argparse.ArgumentParser(
         description='DVS test tool. Stuur opdracht naar DVS daemon')
 
-    parser.add_argument('-l', '--lokaal', dest='lokaal',
-        action='store_true', help='Test met lokale server 127.0.0.1:8120')
     parser.add_argument('-q', '--quiet', dest='quiet',
-        action='store_true', help='Verberg meegegeven opdracht')
+        action='store_true', help='verberg debug-informatie')
+    parser.add_argument('-s', '--server', action='store', default='127.0.0.1', help='DVS server (standaard 127.0.0.1)')
+    parser.add_argument('-p', '--port', action='store', default='8120', help='DVS poort (standaard 8120)')
+    parser.add_argument('-t', '--timeout', action='store', default='4', help='timeout in seconden (standaard 4s)')
     parser.add_argument('OPDRACHT', nargs='?',
-        action='store', help='opdracht naar DVS server', default='store/trein')
+        action='store', help='opdracht naar DVS server (standaard: "status")', default='status')
 
     args = parser.parse_args()
 
-    if args.lokaal == True:
-        dvs_client_server = "tcp://127.0.0.1:8120"
-    else:
-        dvs_client_server = "tcp://46.19.34.170:8120"
-
+    dvs_client_server = "tcp://%s:%s" % (args.server, args.port)
+    server_timeout = int(args.timeout)
     opdracht = args.OPDRACHT
 
     if args.quiet == False:
-        print "Opdracht naar DVS: %s" % opdracht
+        print "DVS server: %s" % dvs_client_server
+        print "Opdracht:   %s" % opdracht
         print "--------------------------------"
         print
+
+    time_start = time.clock()
 
     # Maak verbinding
     context = zmq.Context()
@@ -57,13 +57,20 @@ def main():
     poller = zmq.Poller()
     poller.register(client, zmq.POLLIN)
     
-    if poller.poll(SERVER_TIMEOUT * 1000):
-        treinen = client.recv_pyobj()
+    if poller.poll(server_timeout * 1000):
+        data = client.recv_pyobj()
+        time_elapsed = (time.clock() - time_start)
+
         pretty = pprint.PrettyPrinter(indent=4)
-        pretty.pprint(treinen)
+        pretty.pprint(data)
+
+        if args.quiet == False:
+            print "Opdracht uitgevoerd binnen %ss" % time_elapsed
+
+        sys.exit(0)
     else:
-        print "Timeout: server did not respond within %ss" % SERVER_TIMEOUT
-        treinen = {}
+        print "ERROR: Timeout, server reageerde niet binnen %ss" % server_timeout
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

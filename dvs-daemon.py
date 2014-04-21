@@ -18,6 +18,7 @@ import logging
 import logging.config
 import yaml
 import threading
+from collections import deque
 
 import infoplus_dvs
 
@@ -61,7 +62,7 @@ def main():
     Main loop
     """
 
-    global station_store, trein_store, counters, locks, config
+    global station_store, trein_store, counters, locks, configs, system_status
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -130,6 +131,13 @@ def main():
     counters['gc_station'] = 0
     counters['gc_trein'] = 0
     counters['injecties'] = 0
+    counters['msg_time'] = {}
+
+    # Initialiseer system_status:
+    system_status = {}
+    system_status['status'] = 'UNKNOWN' # of DOWN of UP of RECOVERING
+    system_status['down_since'] = None
+    system_status['recovering_since'] = None
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
@@ -348,7 +356,9 @@ class ClientThread(threading.Thread):
                     station_code = arguments[1].upper()
                     if station_code in station_store:
                         client_socket.send_pyobj(
-                            station_store[station_code], zmq.NOBLOCK)
+                            {'status': system_status,
+                            'data': station_store[station_code]},
+                            zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -356,7 +366,9 @@ class ClientThread(threading.Thread):
                     # Haal alle stations op voor gegeven trein
                     trein_nr = arguments[1]
                     if trein_nr in trein_store:
-                        client_socket.send_pyobj(trein_store[trein_nr], zmq.NOBLOCK)
+                        client_socket.send_pyobj(
+                            {'status': system_status,
+                            'data': trein_store[trein_nr]}, zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -386,6 +398,13 @@ class ClientThread(threading.Thread):
                         # Onbekend type:
                         client_socket.send_pyobj(None)
 
+                elif arguments[0] == 'status':
+                    # Stuur statusinformatie terug:
+                    if len(arguments) == 2 and arguments[1] == 'status':
+                        client_socket.send_pyobj(system_status['status'])
+                    else:
+                        client_socket.send_pyobj(system_status)
+
                 else:
                     # Standaard antwoord
                     client_socket.send_pyobj(None)
@@ -402,10 +421,19 @@ class GarbageThread(threading.Thread):
 
     stopped = None
     logger = None
+    msg_count_queue = None
+
+    count_time_window = 10      # 10 minuten
+    count_treshold = 1          # minimaal 1 bericht in 10m
+    recovery_time = 70          # 70 minuten voor volledig herstel
 
     def __init__(self, event):
         threading.Thread.__init__(self, name='GarbageThread')
         self.logger = logging.getLogger(__name__)
+
+        # Initialiseer downtime detectie queue
+        self.msg_count_queue = deque()
+
         self.logger.info("GC thread geinitialiseerd")
         self.stopped = event
 
@@ -413,14 +441,87 @@ class GarbageThread(threading.Thread):
         self.logger.info("Initiele garbage collecting")
         self.garbage_collect()
 
+        # Loop over garbage collecting iedere 1m:
         while not self.stopped.wait(60):
             try:
                 self.logger.info("Periodieke garbage collecting")
                 self.garbage_collect()
 
                 self.logger.info(
-                    "Statistieken: station_store=%s, trein_store=%s"
-                    % (len(station_store), len(trein_store)))
+                    "Statistieken: station_store=%s, trein_store=%s, status=%s",
+                    len(station_store),
+                    len(trein_store),
+                    system_status['status'])
+
+                # Voeg nieuwe meting toe aan self.msg_count_queue
+                total_msg_now = counters['msg']
+                self.msg_count_queue.append(total_msg_now)
+
+                # Controleer aantal meetpunten:
+                if len(self.msg_count_queue) >= self.count_time_window:
+                    # Bereken aantal ontvangen berichten:
+                    total_msg_ago = self.msg_count_queue.popleft()
+                    msg_received = total_msg_now - total_msg_ago
+
+                    # Log aantal ontvangen berichten binnen tijdwindow:
+                    self.logger.info('Ontvangen berichten (%sm window): %s (%.2f/m)',
+                        self.count_time_window,
+                        msg_received,
+                        (msg_received / self.count_time_window))
+
+                    # Bepaal eventuele downtime:
+                    if msg_received < self.count_treshold:
+                        self.logger.warning('Downtime gedetecteerd, %s berichten ontvangen (%sm window)',
+                            msg_received, self.count_time_window)
+
+                        # Registreer downtime status, en eventueel tijdstip van downtime
+                        # (indien nog niet bekend)
+                        system_status['status'] = 'DOWN'
+                        if system_status['down_since'] == None:
+                            # Downtime start nu
+                            system_status['down_since'] = datetime.now()
+                            system_status['recovering_since'] = None
+
+                    else:
+                        self.logger.debug('Geen downtime gedetecteerd')
+
+                        # Controleer status voor juiste actie:
+                        if system_status['status'] == 'UNKNOWN' or \
+                            system_status['status'] == 'DOWN':
+                            # Systeem was down of past gestart. Nu komt betrouwbaar
+                            # data binnen, zet status naar RECOVERING
+                            self.logger.warning('Systeem is RECOVERING na downtime (gestart om %s)',
+                                system_status['down_since'])
+                            system_status['status'] = 'RECOVERING'
+                            system_status['recovering_since'] = datetime.now()
+
+                        elif system_status['status'] == 'RECOVERING':
+                            # Systeem is aan het recoveren na downtime. Indien recovery-
+                            # tijd voorbij is kan systeem weer naar UP
+
+                            # Controleer recovery tijd:
+                            recover_treshold_time = system_status['recovering_since'] + \
+                                timedelta(minutes = self.recovery_time)
+
+                            # Ook recovery tijd voorbij, systeemstatus is OK:
+                            if datetime.now() >= recover_treshold_time:
+                                system_status['status'] = 'UP'
+                                self.logger.warning('Systeem weer UP na downtime (%s t/m %s) en recovery. Duur downtime %s',
+                                    system_status['down_since'], system_status['recovering_since'],
+                                    (system_status['recovering_since'] - system_status['down_since']))
+                                system_status['down_since'] = None
+                                system_status['recovering_since'] = None
+
+                else:
+                    self.logger.debug('Onvoldoende data voor downtime-detectie')
+
+                    # Stel downtime status in op UNKOWN en behandel verder als normale
+                    # downtime (log starttijd, etc.)
+                    system_status['status'] = 'UNKNOWN'
+                    system_status['recovering_since'] = None
+                    if system_status['down_since'] == None:
+                        system_status['down_since'] = datetime.now()
+
             except Exception:
                 self.logger.error('Fout in GC thread', exc_info=True)
 

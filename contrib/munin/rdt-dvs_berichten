@@ -20,4 +20,4 @@ EOM
 esac
 
 printf "berichten.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/msg -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/msg -q

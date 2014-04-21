@@ -16,4 +16,4 @@ EOM
 esac
 
 printf "treinen.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/trein -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/trein -q

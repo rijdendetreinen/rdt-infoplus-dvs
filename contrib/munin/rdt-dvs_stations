@@ -16,4 +16,4 @@ EOM
 esac
 
 printf "stations.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/station -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/station -q
