@@ -62,7 +62,7 @@ def main():
     Main loop
     """
 
-    global station_store, trein_store, counters, locks, configs, downtime
+    global station_store, trein_store, counters, locks, configs, system_status
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -133,11 +133,11 @@ def main():
     counters['injecties'] = 0
     counters['msg_time'] = {}
 
-    # Initialiseer downtime statusinfo
-    downtime = {}
-    downtime['status'] = 'UNKNOWN' # of DOWN of UP of RECOVERING
-    downtime['down_since'] = None
-    downtime['recovering_since'] = None
+    # Initialiseer system_status:
+    system_status = {}
+    system_status['status'] = 'UNKNOWN' # of DOWN of UP of RECOVERING
+    system_status['down_since'] = None
+    system_status['recovering_since'] = None
 
     # Laad oude datastores in (indien gespecifeerd):
     if args.laadStations == True:
@@ -356,7 +356,7 @@ class ClientThread(threading.Thread):
                     station_code = arguments[1].upper()
                     if station_code in station_store:
                         client_socket.send_pyobj(
-                            {'status': downtime,
+                            {'status': system_status,
                             'data': station_store[station_code]},
                             zmq.NOBLOCK)
                     else:
@@ -367,7 +367,7 @@ class ClientThread(threading.Thread):
                     trein_nr = arguments[1]
                     if trein_nr in trein_store:
                         client_socket.send_pyobj(
-                            {'status': downtime,
+                            {'status': system_status,
                             'data': trein_store[trein_nr]}, zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
@@ -400,7 +400,10 @@ class ClientThread(threading.Thread):
 
                 elif arguments[0] == 'status':
                     # Stuur statusinformatie terug:
-                    client_socket.send_pyobj(downtime)
+                    if len(arguments) == 2 and arguments[1] == 'status':
+                        client_socket.send_pyobj(system_status['status'])
+                    else:
+                        client_socket.send_pyobj(system_status)
 
                 else:
                     # Standaard antwoord
@@ -448,7 +451,7 @@ class GarbageThread(threading.Thread):
                     "Statistieken: station_store=%s, trein_store=%s, status=%s",
                     len(station_store),
                     len(trein_store),
-                    downtime['status'])
+                    system_status['status'])
 
                 # Voeg nieuwe meting toe aan self.msg_count_queue
                 total_msg_now = counters['msg']
@@ -473,51 +476,51 @@ class GarbageThread(threading.Thread):
 
                         # Registreer downtime status, en eventueel tijdstip van downtime
                         # (indien nog niet bekend)
-                        downtime['status'] = 'DOWN'
-                        if downtime['down_since'] == None:
+                        system_status['status'] = 'DOWN'
+                        if system_status['down_since'] == None:
                             # Downtime start nu
-                            downtime['down_since'] = datetime.now()
-                            downtime['recovering_since'] = None
+                            system_status['down_since'] = datetime.now()
+                            system_status['recovering_since'] = None
 
                     else:
                         self.logger.debug('Geen downtime gedetecteerd')
 
                         # Controleer status voor juiste actie:
-                        if downtime['status'] == 'UNKNOWN' or \
-                            downtime['status'] == 'DOWN':
+                        if system_status['status'] == 'UNKNOWN' or \
+                            system_status['status'] == 'DOWN':
                             # Systeem was down of past gestart. Nu komt betrouwbaar
                             # data binnen, zet status naar RECOVERING
                             self.logger.warning('Systeem is RECOVERING na downtime (gestart om %s)',
-                                downtime['down_since'])
-                            downtime['status'] = 'RECOVERING'
-                            downtime['recovering_since'] = datetime.now()
+                                system_status['down_since'])
+                            system_status['status'] = 'RECOVERING'
+                            system_status['recovering_since'] = datetime.now()
 
-                        elif downtime['status'] == 'RECOVERING':
+                        elif system_status['status'] == 'RECOVERING':
                             # Systeem is aan het recoveren na downtime. Indien recovery-
                             # tijd voorbij is kan systeem weer naar UP
 
                             # Controleer recovery tijd:
-                            recover_treshold_time = downtime['recovering_since'] + \
+                            recover_treshold_time = system_status['recovering_since'] + \
                                 timedelta(minutes = self.recovery_time)
 
                             # Ook recovery tijd voorbij, systeemstatus is OK:
                             if datetime.now() >= recover_treshold_time:
-                                downtime['status'] = 'UP'
+                                system_status['status'] = 'UP'
                                 self.logger.warning('Systeem weer UP na downtime (%s t/m %s) en recovery. Duur downtime %s',
-                                    downtime['down_since'], downtime['recovering_since'],
-                                    (downtime['recovering_since'] - downtime['down_since']))
-                                downtime['down_since'] = None
-                                downtime['recovering_since'] = None
+                                    system_status['down_since'], system_status['recovering_since'],
+                                    (system_status['recovering_since'] - system_status['down_since']))
+                                system_status['down_since'] = None
+                                system_status['recovering_since'] = None
 
                 else:
                     self.logger.debug('Onvoldoende data voor downtime-detectie')
 
                     # Stel downtime status in op UNKOWN en behandel verder als normale
                     # downtime (log starttijd, etc.)
-                    downtime['status'] = 'UNKNOWN'
-                    downtime['recovering_since'] = None
-                    if downtime['down_since'] == None:
-                        downtime['down_since'] = datetime.now()
+                    system_status['status'] = 'UNKNOWN'
+                    system_status['recovering_since'] = None
+                    if system_status['down_since'] == None:
+                        system_status['down_since'] = datetime.now()
 
             except Exception:
                 self.logger.error('Fout in GC thread', exc_info=True)
