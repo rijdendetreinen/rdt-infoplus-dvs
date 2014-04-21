@@ -43,7 +43,7 @@ def main():
     if poller.poll(server_timeout * 1000):
         system_status = client.recv_pyobj()
 
-        if system_status == "OK":
+        if system_status == "UP":
             print "OK - No downtime detected"
             sys.exit(0)
         elif system_status == "RECOVERING":
