@@ -8,6 +8,7 @@ import zmq
 import argparse
 import pprint
 import sys
+import time
 
 def main():
     """
@@ -28,7 +29,7 @@ def main():
     parser.add_argument('-p', '--port', action='store', default='8120', help='DVS poort (standaard 8120)')
     parser.add_argument('-t', '--timeout', action='store', default='4', help='timeout in seconden (standaard 4s)')
     parser.add_argument('OPDRACHT', nargs='?',
-        action='store', help='opdracht naar DVS server', default='store/trein')
+        action='store', help='opdracht naar DVS server (standaard: "status")', default='status')
 
     args = parser.parse_args()
 
@@ -37,9 +38,12 @@ def main():
     opdracht = args.OPDRACHT
 
     if args.quiet == False:
-        print "Opdracht naar DVS: %s" % opdracht
+        print "DVS server: %s" % dvs_client_server
+        print "Opdracht:   %s" % opdracht
         print "--------------------------------"
         print
+
+    time_start = time.clock()
 
     # Maak verbinding
     context = zmq.Context()
@@ -54,12 +58,19 @@ def main():
     poller.register(client, zmq.POLLIN)
     
     if poller.poll(server_timeout * 1000):
-        treinen = client.recv_pyobj()
+        data = client.recv_pyobj()
+        time_elapsed = (time.clock() - time_start)
+
         pretty = pprint.PrettyPrinter(indent=4)
-        pretty.pprint(treinen)
+        pretty.pprint(data)
+
+        if args.quiet == False:
+            print "Opdracht uitgevoerd binnen %ss" % time_elapsed
+
+        sys.exit(0)
     else:
-        print "Timeout: server did not respond within %ss" % server_timeout
-        treinen = {}
+        print "ERROR: Timeout, server reageerde niet binnen %ss" % server_timeout
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
