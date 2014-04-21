@@ -776,6 +776,7 @@ class Wijziging(object):
             'geplande werkzaamheden': 'planned engineering work',
             'onverwachte werkzaamheden': 'unexpected engineering work',
             'uitgelopen werkzaamheden': 'over-running engineering works',
+            'uitloop van werkzaamheden': 'over-running engineering works',
             'spoedreparatie aan het spoor': 'emergency repairs',
             'aangepaste dienstregeling': 'an amended timetable',
             'een aangepaste dienstregeling': 'an amended timetable',
@@ -788,6 +789,7 @@ class Wijziging(object):
             'seinstoring': 'signal failure',
             'een seinstoring': 'signal failure',
             'sein- en wisselstoring': 'signalling and points failure',
+            'sein-en wisselstoring': 'signalling and points failure',
             'een sein- en wisselstoring': 'signalling and points failure',
             'storing aan bediensysteem seinen en wissels': 'a control system failure',
             'een storing aan bediensysteem seinen en wissels': 'a control system failure',
@@ -825,6 +827,7 @@ class Wijziging(object):
             'mensen op het spoor': 'persons on the track',
             'dier op het spoor': 'an animal on the track',
             'een dier op het spoor': 'an animal on the track',
+            'een boom op het spoor': 'a tree on the track',
             'verstoring elders': 'a disruption elsewhere',
             'een verstoring elders': 'a disruption elsewhere',
             'persoon op het spoor': 'a trespassing incident',
@@ -836,6 +839,8 @@ class Wijziging(object):
             'gladde sporen': 'slippery rail',
             'defecte bovenleiding': 'overhead wire problems',
             'een defecte bovenleiding': 'overhead wire problems',
+            'beschadigde bovenleiding': 'a damaged overhead wire',
+            'een beschadigde bovenleiding': 'a damaged overhead wire',
             'versperring': 'an obstruction on the line',
             'een versperring': 'an obstruction on the line',
             'beperkingen op last van de politie': 'restrictions imposed by the police',
@@ -851,7 +856,12 @@ class Wijziging(object):
             'koperdiefstal': 'copper theft',
             'verwachte weersomstandigheden': 'expected weather conditions',
             'weersomstandigheden': 'bad weather conditions',
-            'het onschadelijk maken van een bom uit de Tweede Wereldoorlog': 'defusing a bomb from World War II'
+            'het onschadelijk maken van een bom uit de Tweede Wereldoorlog': 'defusing a bomb from World War II',
+            'een evenement': 'an event',
+            'een sein-en overwegstoring': 'signalling failure and a level crossing failure',
+            'een sein- en overwegstoring': 'signalling failure and a level crossing failure',
+            'technisch onderzoek': 'technical inspection',
+            'een brandmelding': 'a fire alarm',
         }
 
         if self.oorzaak_lang in vertalingen:
