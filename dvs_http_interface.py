@@ -35,14 +35,23 @@ def index(station, taal='nl'):
         poller.register(client, zmq.POLLIN)
 
         if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
-            treinen = client.recv_pyobj()
+            data = client.recv_pyobj()
             client.close()
             client.close()
             context.term()
         else:
             client.close()
             context.term()
-            return { 'result': 'ERR', 'status': 'DVS server timeout' }
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': 'DVS server timeout' }
+
+        if 'data' in data:
+            # Nieuw formaat met statusdata:
+            treinen = data['data']
+            status = data['status']['status']
+        else:
+            # Oude formaat:
+            treinen = data
+            status = None
 
         # Lees trein array uit:
         if treinen != None:
@@ -75,9 +84,9 @@ def index(station, taal='nl'):
                 if trein_dict != None:
                     vertrektijden.append(trein_dict)
 
-            return { 'result': 'OK', 'vertrektijden': vertrektijden }
+            return { 'result': 'OK', 'system_status': status, 'vertrektijden': vertrektijden }
         else:
-            return { 'result': 'OK', 'vertrektijden': [] }
+            return { 'result': 'OK', 'system_status': status, 'vertrektijden': [] }
 
         client.close()
         context.term()
@@ -89,7 +98,7 @@ def index(station, taal='nl'):
             logger.exception("ERROR")
         finally:
             response.status = 500
-            return { 'result': 'ERR', 'status': str(e) }
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
 
 
 @bottle.route('/trein/<trein>/<station>')
@@ -112,7 +121,7 @@ def index(trein, station, taal='nl'):
         poller.register(client, zmq.POLLIN)
 
         if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
-            vertrekken = client.recv_pyobj()
+            data = client.recv_pyobj()
             client.close()
             client.close()
             context.term()
@@ -120,7 +129,16 @@ def index(trein, station, taal='nl'):
             client.close()
             context.term()
             response.status = 500
-            return { 'result': 'ERR', 'status': 'DVS server timeout' }
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': 'DVS server timeout' }
+
+        if 'data' in data:
+            # Nieuw formaat met statusdata:
+            vertrekken = data['data']
+            status = data['status']['status']
+        else:
+            # Oude formaat:
+            vertrekken = data
+            status = None
 
         # Lees trein array uit:
         if vertrekken != None and station.upper() in vertrekken:
@@ -130,9 +148,9 @@ def index(trein, station, taal='nl'):
             trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
                 taal, tijd_nu, materieel=True, stopstations=True)
 
-            return { 'result': 'OK', 'trein': trein_dict }
+            return { 'result': 'OK', 'system_status': status, 'trein': trein_dict }
         else:
-            return { 'result': 'ERR', 'status': 'NOTFOUND' }
+            return { 'result': 'ERR', 'system_status': status, 'status': 'NOTFOUND' }
 
         client.close()
         context.term()
@@ -144,4 +162,47 @@ def index(trein, station, taal='nl'):
             logger.exception("ERROR")
         finally:
             response.status = 500
-            return { 'result': 'ERR', 'status': str(e) }
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
+
+@bottle.route('/status')
+def index():
+    try:
+        # Maak verbinding
+        context = zmq.Context()
+        client = context.socket(zmq.REQ)
+        client.connect(dvs_client_server)
+        client.setsockopt(zmq.LINGER, 0)
+
+        # Stuur opdracht:
+        client.send('status')
+
+        # Ontvang response:
+        poller = zmq.Poller()
+        poller.register(client, zmq.POLLIN)
+
+        if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
+            data = client.recv_pyobj()
+            client.close()
+            client.close()
+            context.term()
+        else:
+            client.close()
+            context.term()
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': 'DVS server timeout' }
+
+        if data['down_since'] != None:
+            data['down_since'] = str(data['down_since'])
+
+        if data['recovering_since'] != None:
+            data['recovering_since'] = str(data['recovering_since'])
+
+        return { 'result': 'OK', 'data': data }
+    except Exception as e:
+        client.close()
+        context.term()
+        try:
+            logger = logging.getLogger(__name__)
+            logger.exception("ERROR")
+        finally:
+            response.status = 500
+            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
