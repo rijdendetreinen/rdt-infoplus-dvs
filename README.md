@@ -12,7 +12,7 @@ Deze applicatie wordt sinds december 2013 stabiel gebruikt door de app en websit
 InfoPlus DVS
 ------------
 
-**InfoPlus*** is een project van NS voor het verbeteren van digitale reisinformatie. **DVS** staat voor Dynamische Vertrek Staten. DVS-berichten zijn uitgebreide XML-documenten met daarin per trein de vertrektijd, eindbestemming, tussenstations, eventuele vertraging, wijzigingen, en meer belangrijke informatie. De uitgebreide specificatie van deze berichten is te vinden op de website van het NDOV-loket: [InfoPlus DVS-standaard](https://ndovloket.nl/helpdesk/kb/31/).
+**InfoPlus** is een project van NS voor het verbeteren van digitale reisinformatie. **DVS** staat voor Dynamische Vertrek Staten. DVS-berichten zijn uitgebreide XML-documenten met daarin per trein de vertrektijd, eindbestemming, tussenstations, eventuele vertraging, wijzigingen, en meer belangrijke informatie. De uitgebreide specificatie van deze berichten is te vinden op de website van het NDOV-loket: [InfoPlus DVS-standaard](https://ndovloket.nl/helpdesk/kb/31/).
 
 Je kunt een aansluiting krijgen op InfoPlus DVS via het [NDOV-loket](https://www.ndovloket.nl/). Meer informatie hierover is te vinden op de website van het NDOV-loket, een aansluiting geeft meteen ook toegang tot veel meer actuele ov-informatie in Nederland.
 
@@ -170,7 +170,7 @@ Contact
 
 Voor vragen of opmerkingen:
 
-Geert Wirken
-info@rijdendetreinen.nl
-http://www.rijdendetreinen.nl/
+Geert Wirken  
+info@rijdendetreinen.nl  
+http://www.rijdendetreinen.nl/  
 http://twitter.com/djiwie
