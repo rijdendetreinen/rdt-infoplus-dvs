@@ -26,6 +26,6 @@ EOM
 esac
 
 printf "gc_trein.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/gc_trein -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/gc_trein -q
 printf "gc_station.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/gc_station -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/gc_station -q

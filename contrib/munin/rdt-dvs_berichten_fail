@@ -26,6 +26,6 @@ EOM
 esac
 
 printf "berichten_ouder.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/ouder -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/ouder -q
 printf "berichten_dubbel.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/dubbel -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/dubbel -q

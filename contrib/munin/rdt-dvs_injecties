@@ -20,4 +20,4 @@ EOM
 esac
 
 printf "injecties.value "
-/opt/rdt/infoplus-dvs/dvs-dump.py count/injecties -q -l
+/opt/rdt/infoplus-dvs/dvs-dump.py count/injecties -q
