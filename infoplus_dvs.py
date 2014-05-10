@@ -862,7 +862,11 @@ class Wijziging(object):
             'een sein- en overwegstoring': 'signalling failure and a level crossing failure',
             'technisch onderzoek': 'technical inspection',
             'een brandmelding': 'a fire alarm',
-            'een voorwerp in de bovenleiding': 'an obstacle in the overhead wire'
+            'een voorwerp in de bovenleiding': 'an obstacle in the overhead wire',
+            'Koningsdag': 'King\'s day',
+            'rommel op het spoor': 'rubbish on the track',
+            'grote drukte': 'large crowds',
+            'blikseminslag': 'lightning'
         }
 
         if self.oorzaak_lang in vertalingen:
