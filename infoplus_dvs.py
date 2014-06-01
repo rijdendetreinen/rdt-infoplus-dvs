@@ -856,6 +856,7 @@ class Wijziging(object):
             'koperdiefstal': 'copper theft',
             'verwachte weersomstandigheden': 'expected weather conditions',
             'weersomstandigheden': 'bad weather conditions',
+            'sneeuw': 'snow',
             'het onschadelijk maken van een bom uit de Tweede Wereldoorlog': 'defusing a bomb from World War II',
             'een evenement': 'an event',
             'een sein-en overwegstoring': 'signalling failure and a level crossing failure',
