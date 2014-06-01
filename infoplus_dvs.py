@@ -451,6 +451,21 @@ class Trein(object):
 
         return False
 
+    def treinnaam_str(self, taal='nl', alleen_belangrijk=True, trein=None):
+        """
+        Geeft de treinnaam als string terug. Wanneer de treinnaam misbruikt
+        wordt voor reisinfo, wordt de treinnaam eventueel vertaald naar een
+        andere taal zodat de reisinformatie ook in een andere taal beschikbaar
+        is.
+        """
+
+        if taal == 'en':
+            # Toeslag IC direct
+            if self.treinnaam == 'Toeslag Schiphol-Rotterdam vv':
+                return 'Supplement between Schiphol and Rotterdam v.v.'
+
+        return self.treinnaam
+
     def wijzigingen_str(self, taal='nl', alleen_belangrijk=True, trein=None):
         """
         Geef alle wijzigingsberichten op trein- en vleugelniveau

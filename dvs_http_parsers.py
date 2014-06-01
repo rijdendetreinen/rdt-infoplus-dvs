@@ -34,9 +34,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
         trein_dict['sprWijziging'] = False
 
     trein_dict['opmerkingen'] = trein.wijzigingen_str(taal, True, trein)
-
-    if trein.treinnaam != None:
-        trein_dict['opmerkingen'].append(trein.treinnaam)
+    trein_dict['tips'] = trein.tips(taal)
 
     if trein.statisch == True:
         if taal == 'en':
@@ -44,7 +42,10 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
         else:
             trein_dict['opmerkingen'].append("Geen actuele informatie")
 
-    trein_dict['tips'] = trein.tips(taal)
+    # Voeg de treinnaam toe aan reistips:
+    if trein.treinnaam != None:
+        trein_dict['tips'].append(trein.treinnaam_str(taal))
+
     trein_dict['opgeheven'] = False
     trein_dict['status'] = trein.status
     trein_dict['vervoerder'] = trein.vervoerder
