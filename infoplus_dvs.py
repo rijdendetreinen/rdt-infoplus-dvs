@@ -451,6 +451,21 @@ class Trein(object):
 
         return False
 
+    def treinnaam_str(self, taal='nl', alleen_belangrijk=True, trein=None):
+        """
+        Geeft de treinnaam als string terug. Wanneer de treinnaam misbruikt
+        wordt voor reisinfo, wordt de treinnaam eventueel vertaald naar een
+        andere taal zodat de reisinformatie ook in een andere taal beschikbaar
+        is.
+        """
+
+        if taal == 'en':
+            # Toeslag IC direct
+            if self.treinnaam == 'Toeslag Schiphol-Rotterdam vv':
+                return 'Supplement between Schiphol and Rotterdam v.v.'
+
+        return self.treinnaam
+
     def wijzigingen_str(self, taal='nl', alleen_belangrijk=True, trein=None):
         """
         Geef alle wijzigingsberichten op trein- en vleugelniveau
@@ -856,12 +871,18 @@ class Wijziging(object):
             'koperdiefstal': 'copper theft',
             'verwachte weersomstandigheden': 'expected weather conditions',
             'weersomstandigheden': 'bad weather conditions',
+            'sneeuw': 'snow',
             'het onschadelijk maken van een bom uit de Tweede Wereldoorlog': 'defusing a bomb from World War II',
             'een evenement': 'an event',
             'een sein-en overwegstoring': 'signalling failure and a level crossing failure',
             'een sein- en overwegstoring': 'signalling failure and a level crossing failure',
             'technisch onderzoek': 'technical inspection',
             'een brandmelding': 'a fire alarm',
+            'een voorwerp in de bovenleiding': 'an obstacle in the overhead wire',
+            'Koningsdag': 'King\'s day',
+            'rommel op het spoor': 'rubbish on the track',
+            'grote drukte': 'large crowds',
+            'blikseminslag': 'lightning'
         }
 
         if self.oorzaak_lang in vertalingen:
