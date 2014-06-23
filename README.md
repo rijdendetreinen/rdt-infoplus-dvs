@@ -16,7 +16,7 @@ InfoPlus DVS
 
 Je kunt een aansluiting krijgen op InfoPlus DVS via het [NDOV-loket](https://www.ndovloket.nl/). Meer informatie hierover is te vinden op de website van het NDOV-loket, een aansluiting geeft meteen ook toegang tot veel meer actuele ov-informatie in Nederland.
 
-Het NDOV-loket ontsluit de gegevens via [ZeroMQ](http://zeromq.org/). Je kunt de DVS daemon rechtstreeks aansluiten op de ZMQ-server van het NDOV-loket of via de [universal sub-pubsub proxy](https://github.com/StichtingOpenGeo/universal); het laatste wordt aanbevolen. Door DVS worden dagelijks ca. 170.000 berichten afgeleverd; een eigen sub-pubsub maakt het mogelijk om efficient en binnen je eigen netwerk deze data te distribueren.
+Het NDOV-loket ontsluit de gegevens via [ZeroMQ](http://zeromq.org/). Je kunt de DVS daemon rechtstreeks aansluiten op de ZMQ-server van het NDOV-loket of via de [universal sub-pubsub proxy](https://github.com/StichtingOpenGeo/universal); het laatste wordt aanbevolen. Door DVS worden dagelijks ca. 170.000 berichten afgeleverd; een eigen sub-pubsub maakt het mogelijk om efficiënt en binnen je eigen netwerk deze data te distribueren.
 
 Installatie en werking
 ======================
@@ -42,10 +42,46 @@ Installatie
 
 Iedere minuut wordt de systeemstatus op de terminal gelogd. In deze logmelding wordt tevens het aantal treinen gelogd. Dit aantal zou na het opstarten steeds verder op moeten lopen.
 
+### Configuratie
+
+Standaard bevat dvs-server.yaml de volgende elementen:
+
+```
+---
+bindings:
+    dvs_server: tcp://12.34.56.78:8100
+    client_server: tcp://0.0.0.0:8120
+    injector_server: tcp://0.0.0.0:8140
+
+logging:
+    log_config: config/logging.yaml
+...
+
+```
+
+Belangrijk is dat hier de juiste gegevens worden ingevuld:
+
+* **dvs_server:** De ZeroMQ-bronserver (van NDOVloket of eigen pub-subpub server)
+* **client_server:** lokale ip-adres en poortnummer voor de dvs-daemon.  
+  Deze interface wordt aangesproken door dvs_http.py/wsgi en dvs_dump.py.  
+  0.0.0.0 betekent alle interfaces op het systeem.
+* **injector_server:** lokale ip-adres en poortnummer van de injector interface.
+  De injectorinterface is voor het injecteren van extra trein/busritten (bijvoorbeeld van treinvervangend vervoer bij werkzaamheden). De module om deze informatie uit de statische NS-dienstregeling te lezen en te injecteren is nog niet open-source. 
+
+De interface die je bij `client_server` instelt is ook de interface waar andere tools zoals dvs_dump.py verbinding mee maken.
+
 Gebruik
 -------
 
 Wanneer de daemon actief is kan deze rechtstreeks via ZMQ bevraagd worden. Zowel een commandline tool (dvs-dump.py) als een HTTP interface zijn standaard beschikbaar in dit project.
+
+Om vertrektijden uit te kunnen lezen moet je het volgende doen:
+
+1. Start de dvs-daemon.py om vertrektijden te ontvangen en te verwerken.
+2. Controleer via de console-output of de logfiles of dvs-daemon berichten ontvangt. Iedere minuut wordt de systeemstatus gelogd.
+3. Met dvs-dump.py kun je via de CLI de dvs-daemon bevragen (zie hieronder). Met dvs-http.py start je een HTTP webserver die een REST interface aanbiedt en JSON teruggeeft (zie hieronder).
+
+Houd er rekening mee dat de database met vertrektijden zich langzaam vult na het starten: pas na 70 minuten is de database volledig geladen voor alle stations.
 
 ### dvs-dump.py
 
@@ -116,7 +152,7 @@ Het is mogelijk om de host en poort aan te passen met de parameters `--server` e
 
 ### HTTP interface
 
-De HTTP interface kan voor ontwikkeldoeleinden gestart worden met de tool `dvs-http.py`. Deze tool start een [Bottle](http://bottlepy.org/docs/dev/index.html) ontwikkelserver op http://localhost:8080/. Voor productiedoeleinden kun je de WSGI-koppeling in `dvs-http.wsgi` gebruiken.
+De HTTP interface kan voor ontwikkeldoeleinden gestart worden met de tool `dvs-http.py`. Deze tool start een [Bottle](http://bottlepy.org/docs/dev/index.html) ontwikkelserver op http://localhost:8080/ (of optioneel op een andere host/poort-combinatie). Voor productiedoeleinden kun je de WSGI-koppeling in `dvs-http.wsgi` gebruiken.
 
 De HTTP-interface ontsluit een JSON webservice die reageert op de volgende URL's:
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-Test tool om een lokale HTTP server te starten.
+Testtool om een lokale HTTP server te starten die verbinding maakt
+met dvs-daemon. Niet geschikt voor productie! Gebruik daar WSGI voor.
 """
 
 import bottle
@@ -12,15 +13,11 @@ import logging
 # Initialiseer argparse
 parser = argparse.ArgumentParser(description='DVS HTTP interface test tool')
 
-parser.add_argument('-l', '--lokaal', dest='lokaal',
-    action='store_true', help='Test met lokale server 127.0.0.1:8120')
+parser.add_argument('-s', '--server', action='store', default='127.0.0.1', help='DVS server (standaard 127.0.0.1)')
+parser.add_argument('-p', '--port', action='store', default='8120', help='DVS poort (standaard 8120)')
 
 args = parser.parse_args()
-
-if args.lokaal == True:
-    dvs_http_interface.dvs_client_server = "tcp://127.0.0.1:8120"
-else:
-    dvs_http_interface.dvs_client_server = "tcp://46.19.34.170:8120"
+dvs_http_interface.dvs_client_server = "tcp://%s:%s" % (args.server, args.port)
 
 # Stel logger in:
 logging.basicConfig(level=logging.DEBUG)
