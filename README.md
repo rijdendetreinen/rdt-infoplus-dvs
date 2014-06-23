@@ -16,7 +16,7 @@ InfoPlus DVS
 
 Je kunt een aansluiting krijgen op InfoPlus DVS via het [NDOV-loket](https://www.ndovloket.nl/). Meer informatie hierover is te vinden op de website van het NDOV-loket, een aansluiting geeft meteen ook toegang tot veel meer actuele ov-informatie in Nederland.
 
-Het NDOV-loket ontsluit de gegevens via [ZeroMQ](http://zeromq.org/). Je kunt de DVS daemon rechtstreeks aansluiten op de ZMQ-server van het NDOV-loket of via de [universal sub-pubsub proxy](https://github.com/StichtingOpenGeo/universal); het laatste wordt aanbevolen. Door DVS worden dagelijks ca. 170.000 berichten afgeleverd; een eigen sub-pubsub maakt het mogelijk om efficient en binnen je eigen netwerk deze data te distribueren.
+Het NDOV-loket ontsluit de gegevens via [ZeroMQ](http://zeromq.org/). Je kunt de DVS daemon rechtstreeks aansluiten op de ZMQ-server van het NDOV-loket of via de [universal sub-pubsub proxy](https://github.com/StichtingOpenGeo/universal); het laatste wordt aanbevolen. Door DVS worden dagelijks ca. 170.000 berichten afgeleverd; een eigen sub-pubsub maakt het mogelijk om efficiënt en binnen je eigen netwerk deze data te distribueren.
 
 Installatie en werking
 ======================
@@ -116,7 +116,7 @@ Het is mogelijk om de host en poort aan te passen met de parameters `--server` e
 
 ### HTTP interface
 
-De HTTP interface kan voor ontwikkeldoeleinden gestart worden met de tool `dvs-http.py`. Deze tool start een [Bottle](http://bottlepy.org/docs/dev/index.html) ontwikkelserver op http://localhost:8080/. Voor productiedoeleinden kun je de WSGI-koppeling in `dvs-http.wsgi` gebruiken.
+De HTTP interface kan voor ontwikkeldoeleinden gestart worden met de tool `dvs-http.py`. Deze tool start een [Bottle](http://bottlepy.org/docs/dev/index.html) ontwikkelserver op http://localhost:8080/ (of optioneel op een andere host/poort-combinatie). Voor productiedoeleinden kun je de WSGI-koppeling in `dvs-http.wsgi` gebruiken.
 
 De HTTP-interface ontsluit een JSON webservice die reageert op de volgende URL's:
 
