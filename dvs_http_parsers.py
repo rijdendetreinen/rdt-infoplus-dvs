@@ -19,8 +19,20 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
     # Basis treininformatie
     trein_dict['treinNr'] = trein.treinnr
     trein_dict['vertrek'] = trein.lokaal_vertrek().isoformat()
-    trein_dict['bestemming'] = '/'.join(bestemming.lange_naam
-        for bestemming in trein.eindbestemming_actueel)
+
+    # Parse eindbestemming. Indien eindbestemming uit twee delen bestaat
+    # (vleugeltrein), check dan of beide eindbestemmingen verschillen:
+    if len(trein.eindbestemming_actueel) == 1:
+        trein_dict['bestemming'] = trein.eindbestemming_actueel[0].lange_naam
+    else:
+        if trein.eindbestemming_actueel[0].lange_naam == trein.eindbestemming_actueel[1].lange_naam:
+            # Eindbestemmingen gelijk
+            trein_dict['bestemming'] = trein.eindbestemming_actueel[0].lange_naam
+        else:
+            # Verschillende eindbestemmingen:
+            trein_dict['bestemming'] = '/'.join(bestemming.lange_naam
+                for bestemming in trein.eindbestemming_actueel)
+
     trein_dict['soort'] = trein.soort
     trein_dict['soortAfk'] = trein.soort_code
     trein_dict['vertraging'] = round(trein.vertraging.seconds / 60)
