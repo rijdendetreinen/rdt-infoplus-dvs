@@ -795,6 +795,7 @@ class Wijziging(object):
 
         vertalingen = {
             'geplande werkzaamheden': 'planned engineering work',
+            'werkzaamheden': 'engineering work',
             'onverwachte werkzaamheden': 'unexpected engineering work',
             'uitgelopen werkzaamheden': 'over-running engineering works',
             'uitloop van werkzaamheden': 'over-running engineering works',
@@ -812,6 +813,7 @@ class Wijziging(object):
             'sein- en wisselstoring': 'signalling and points failure',
             'sein-en wisselstoring': 'signalling and points failure',
             'een sein- en wisselstoring': 'signalling and points failure',
+            'een sein-en wisselstoring': 'signalling and points failure',
             'storing aan bediensysteem seinen en wissels': 'a control system failure',
             'een storing aan bediensysteem seinen en wissels': 'a control system failure',
             'defect materieel': 'a broken down train',
