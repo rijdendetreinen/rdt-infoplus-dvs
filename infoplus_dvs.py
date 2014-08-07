@@ -45,7 +45,7 @@ def parse_trein(data):
     trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
 
     # Fix voor verkeerde naam 'NS Interna' voor NS International (zie #1):
-    if trein.vervoerder == 'NS Interna':
+    if trein.vervoerder == 'NS Interna' or trein.vervoerder == 'NS Int':
         trein.vervoerder = 'NS International'
     elif trein.vervoerder == 'Locon Bene':
         trein.vervoerder = 'Locon Benelux'
