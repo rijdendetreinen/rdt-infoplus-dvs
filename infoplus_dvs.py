@@ -888,6 +888,7 @@ class Wijziging(object):
             'een brandmelding': 'a fire alarm',
             'een voorwerp in de bovenleiding': 'an obstacle in the overhead wire',
             'Koningsdag': 'King\'s day',
+            'Vierdaagse': 'Vierdaagse (Four Days Marches)',
             'rommel op het spoor': 'rubbish on the track',
             'grote drukte': 'large crowds',
             'blikseminslag': 'lightning'
