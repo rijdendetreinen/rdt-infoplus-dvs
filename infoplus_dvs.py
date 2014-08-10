@@ -45,7 +45,7 @@ def parse_trein(data):
     trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
 
     # Fix voor verkeerde naam 'NS Interna' voor NS International (zie #1):
-    if trein.vervoerder == 'NS Interna':
+    if trein.vervoerder == 'NS Interna' or trein.vervoerder == 'NS Int':
         trein.vervoerder = 'NS International'
     elif trein.vervoerder == 'Locon Bene':
         trein.vervoerder = 'Locon Benelux'
@@ -795,6 +795,7 @@ class Wijziging(object):
 
         vertalingen = {
             'geplande werkzaamheden': 'planned engineering work',
+            'werkzaamheden': 'engineering work',
             'onverwachte werkzaamheden': 'unexpected engineering work',
             'uitgelopen werkzaamheden': 'over-running engineering works',
             'uitloop van werkzaamheden': 'over-running engineering works',
@@ -812,6 +813,7 @@ class Wijziging(object):
             'sein- en wisselstoring': 'signalling and points failure',
             'sein-en wisselstoring': 'signalling and points failure',
             'een sein- en wisselstoring': 'signalling and points failure',
+            'een sein-en wisselstoring': 'signalling and points failure',
             'storing aan bediensysteem seinen en wissels': 'a control system failure',
             'een storing aan bediensysteem seinen en wissels': 'a control system failure',
             'defect materieel': 'a broken down train',
@@ -886,6 +888,7 @@ class Wijziging(object):
             'een brandmelding': 'a fire alarm',
             'een voorwerp in de bovenleiding': 'an obstacle in the overhead wire',
             'Koningsdag': 'King\'s day',
+            'Vierdaagse': 'Vierdaagse (Four Days Marches)',
             'rommel op het spoor': 'rubbish on the track',
             'grote drukte': 'large crowds',
             'blikseminslag': 'lightning'

@@ -179,14 +179,16 @@ Koppeling met Munin en/of Nagios als monitoringsysteem is mogelijk; zie de direc
 Ontwikkeling
 ============
 
-Deze applicatie is ontwikkeld in Python. Verbeteringen of uitbreidingen zijn van harte welkom! Maak een pull request aan en werk op de **develop** branch in git. De master branch bevat alleen stabiele versies. Werk voor nieuwe functies of grote aanpassingen bij voorkeur op een feature branch.
-
-Voorbeeldberichten zoals door DVS verspreid worden zijn te vinden in de directory /testdata/.
+Deze applicatie is ontwikkeld in Python. Verbeteringen of uitbreidingen zijn van harte welkom! Ook wanneer je niet mee wilt ontwikkelen, maar in het gebruik wel bugs of andere problemen ervaart, kun je meehelpen door een issue aan te maken. Zie het document [Contributing](CONTRIBUTING.md) voor meer informatie.
 
 Licentie
 ========
 
 Deze applicatie wordt vrij verspreid op basis van de GNU General Publice License (GPL) versie 3.
+
+Een belangrijke voorwaarde van de GNU GPL-licentie is dat je de broncode van de applicatie deelt
+wanneer je wijzigingen of toevoegingen maakt op basis van deze applicatie.
+Zie het bestand LICENSE.txt voor de volledige versie van deze licentie.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
