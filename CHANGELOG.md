@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.4
+
+* Voorbereid op hernoeming vervoerder 'NS Interna' naar 'NS Int'
+
 ## 1.2.3
 
 * Dubbele actuele eindbestemming wordt samengevoegd (#3)
