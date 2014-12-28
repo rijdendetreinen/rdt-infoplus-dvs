@@ -33,6 +33,7 @@ import logging.config
 import yaml
 import threading
 from collections import deque
+from Queue import Queue
 
 import infoplus_dvs
 
@@ -76,7 +77,7 @@ def main():
     Main loop
     """
 
-    global station_store, trein_store, counters, locks, configs, system_status
+    global station_store, trein_store, counters, locks, configs, system_status, message_queue
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -163,6 +164,13 @@ def main():
     # Socket to talk to server
     context = zmq.Context()
 
+    message_queue = Queue()
+
+    # Start een nieuwe thread om messages te verwerken
+    worker_thread = WorkerThread()
+    worker_thread.daemon = True
+    worker_thread.start()
+
     # Start een nieuwe thread om client requests uit te lezen
     client_thread = ClientThread(dvs_client_bind)
     client_thread.daemon = True
@@ -198,95 +206,8 @@ def main():
     try:
         while True:
             multipart = server_socket.recv_multipart()
-            content = GzipFile('', 'r', 0 ,
-                StringIO(''.join(multipart[1:]))).read()
-
-            # Parse trein xml:
-            try:
-                trein = infoplus_dvs.parse_trein(content)
-
-                rit_station_code = trein.rit_station.code
-                
-                if trein.status == '5':
-                    # Trein vertrokken
-                    # Verwijder uit station_store
-                    if rit_station_code in station_store \
-                    and trein.treinnr in station_store[rit_station_code]:
-                        with locks['station']:
-                            del(station_store[rit_station_code][trein.treinnr])
-
-                    # Verwijder uit trein_store
-                    if trein.treinnr in trein_store \
-                    and rit_station_code in trein_store[trein.treinnr]:
-                        del(trein_store[trein.treinnr][rit_station_code])
-                        if len(trein_store[trein.treinnr]) == 0:
-                            with locks['trein']:
-                                del(trein_store[trein.treinnr])
-                else:
-                    # Maak item in trein_store indien niet aanwezig
-                    if trein.treinnr not in trein_store:
-                        with locks['trein']:
-                            trein_store[trein.treinnr] = {}
-
-                    # Maak item in station_store indien niet aanwezig:
-                    if rit_station_code not in station_store:
-                        with locks['station']:
-                            station_store[rit_station_code] = {}
-
-                    # Update of insert trein aan station store:
-                    if trein.treinnr in station_store[rit_station_code]:
-                        # Trein komt reeds voor in station store voor dit station
-                        if trein.rit_timestamp > station_store[rit_station_code][trein.treinnr].rit_timestamp:
-                            # Bericht is nieuwer, update store:
-                            station_store[rit_station_code][trein.treinnr] = trein
-                        elif trein.rit_timestamp == station_store[rit_station_code][trein.treinnr].rit_timestamp:
-                            # Bericht is nieuwer, update store:
-                            logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
-                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
-                                trein.treinnr, trein.rit_station.code)
-
-                            # Update counter voor dubbele berichten:
-                            counters['dubbel'] += 1
-                        else:
-                            # Bepaal 1 seconde treshold:
-                            warn_treshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
-                            
-                            # Warning log message indien treshold van 1 seconde overschreden is:
-                            if trein.rit_timestamp <= warn_treshold:
-                                log_level = logging.WARNING
-                            else:
-                                log_level = logging.INFO
-
-                            logger.log(log_level, 'Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
-                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
-                                trein.treinnr, trein.rit_station.code)
-
-                            # Update counter voor verouderde berichten:
-                            counters['ouder'] += 1
-                    else:
-                        # Trein kwam op dit station nog niet voor, voeg toe:
-                        station_store[rit_station_code][trein.treinnr] = trein
-
-                    # Update of insert trein aan trein store:
-                    if rit_station_code in trein_store[trein.treinnr]:
-                        # Trein komt reeds voor in trein store voor dit treinnr
-                        if trein.rit_timestamp > trein_store[trein.treinnr][rit_station_code].rit_timestamp:
-                            # Bericht is nieuwer, update store:
-                            trein_store[trein.treinnr][rit_station_code] = trein
-                    else:
-                        # Treinnr kwam op dit station nog niet voor, voeg toe:
-                        trein_store[trein.treinnr][rit_station_code] = trein
-
-            except infoplus_dvs.OngeldigDvsBericht:
-                logger.error('Ongeldig DVS bericht')
-                logger.debug('Ongeldig DVS bericht: %s', content)
-            except Exception:
-                logger.error(
-                    'Fout tijdens DVS bericht verwerken', exc_info=True)
-                logger.error('DVS crash bericht: %s', content)
-                
-            counters['msg'] += + 1
-
+            content = multipart[1:]
+            message_queue.put(content)
 
     except KeyboardInterrupt:
         logger.info('Shutting down...')
@@ -336,6 +257,115 @@ def laad_treinen():
     trein_store_file.close()
 
     return store
+
+class WorkerThread(threading.Thread):
+    """
+    Worker thread voor het verwerken van DVS berichten.
+    """
+
+    logger = None
+
+    def __init__ (self):
+        self.logger = logging.getLogger(__name__)
+        threading.Thread.__init__(self, name='WorkerThread')
+
+    def run(self):
+        self.logger.info('Consumer thread gestart')
+
+        while True:
+            message = message_queue.get()
+            content = GzipFile('', 'r', 0 ,
+                StringIO(''.join(message))).read()
+
+            # Parse trein xml:
+            try:
+                trein = infoplus_dvs.parse_trein(content)
+
+                rit_station_code = trein.rit_station.code
+                
+                if trein.status == '5':
+                    # Trein vertrokken
+                    # Verwijder uit station_store
+                    if rit_station_code in station_store \
+                    and trein.treinnr in station_store[rit_station_code]:
+                        with locks['station']:
+                            del(station_store[rit_station_code][trein.treinnr])
+
+                    # Verwijder uit trein_store
+                    if trein.treinnr in trein_store \
+                    and rit_station_code in trein_store[trein.treinnr]:
+                        del(trein_store[trein.treinnr][rit_station_code])
+                        if len(trein_store[trein.treinnr]) == 0:
+                            with locks['trein']:
+                                del(trein_store[trein.treinnr])
+                else:
+                    # Maak item in trein_store indien niet aanwezig
+                    if trein.treinnr not in trein_store:
+                        with locks['trein']:
+                            trein_store[trein.treinnr] = {}
+
+                    # Maak item in station_store indien niet aanwezig:
+                    if rit_station_code not in station_store:
+                        with locks['station']:
+                            station_store[rit_station_code] = {}
+
+                    # Update of insert trein aan station store:
+                    if trein.treinnr in station_store[rit_station_code]:
+                        # Trein komt reeds voor in station store voor dit station
+                        if trein.rit_timestamp > station_store[rit_station_code][trein.treinnr].rit_timestamp:
+                            # Bericht is nieuwer, update store:
+                            station_store[rit_station_code][trein.treinnr] = trein
+                        elif trein.rit_timestamp == station_store[rit_station_code][trein.treinnr].rit_timestamp:
+                            # Bericht is nieuwer, update store:
+                            self.logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
+                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
+                                trein.treinnr, trein.rit_station.code)
+
+                            # Update counter voor dubbele berichten:
+                            counters['dubbel'] += 1
+                        else:
+                            # Bepaal 1 seconde treshold:
+                            warn_treshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
+                            
+                            # Warning log message indien treshold van 1 seconde overschreden is:
+                            if trein.rit_timestamp <= warn_treshold:
+                                log_level = logging.WARNING
+                            else:
+                                log_level = logging.INFO
+
+                            self.logger.log(log_level, 'Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
+                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
+                                trein.treinnr, trein.rit_station.code)
+
+                            # Update counter voor verouderde berichten:
+                            counters['ouder'] += 1
+                    else:
+                        # Trein kwam op dit station nog niet voor, voeg toe:
+                        station_store[rit_station_code][trein.treinnr] = trein
+
+                    # Update of insert trein aan trein store:
+                    if rit_station_code in trein_store[trein.treinnr]:
+                        # Trein komt reeds voor in trein store voor dit treinnr
+                        if trein.rit_timestamp > trein_store[trein.treinnr][rit_station_code].rit_timestamp:
+                            # Bericht is nieuwer, update store:
+                            trein_store[trein.treinnr][rit_station_code] = trein
+                    else:
+                        # Treinnr kwam op dit station nog niet voor, voeg toe:
+                        trein_store[trein.treinnr][rit_station_code] = trein
+
+            except infoplus_dvs.OngeldigDvsBericht:
+                self.logger.error('Ongeldig DVS bericht')
+                self.logger.debug('Ongeldig DVS bericht: %s', content)
+            except Exception:
+                self.logger.error(
+                    'Fout tijdens DVS bericht verwerken', exc_info=True)
+                self.logger.error('DVS crash bericht: %s', content)
+                
+            counters['msg'] += + 1
+
+
+            pass
+
 
 class ClientThread(threading.Thread):
     """
