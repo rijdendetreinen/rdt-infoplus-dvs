@@ -192,9 +192,6 @@ def main():
     except AttributeError:
         server_socket.setsockopt(zmq.HWM, 0)
 
-    poller = zmq.Poller()
-    poller.register(server_socket, zmq.POLLIN)
-
     # Registreer starttijd server:
     starttime = datetime.now()
 
@@ -203,9 +200,6 @@ def main():
     gc_thread = GarbageThread(gc_stopped)
     gc_thread.daemon = True
     gc_thread.start()
-
-    #socks = dict(poller.poll())
-    #print socks
 
     logger.info("Gereed voor ontvangen DVS berichten (van server %s)", dvs_server)
 
@@ -464,7 +458,7 @@ class ClientThread(threading.Thread):
                     client_socket.send_pyobj(None)
             except Exception:
                 client_socket.send_pyobj(None)
-                self.logger.exception('Fout bij sturen client respone')
+                self.logger.exception('Fout bij sturen client response')
 
 
 # Garbage collection thread:
