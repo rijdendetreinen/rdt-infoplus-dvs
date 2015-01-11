@@ -35,7 +35,7 @@ Requirements:
 Installatie
 -----------
 
-1. Clone dit repository (directory naar keuze)
+1. Clone deze repository (directory naar keuze)
 2. Kopieer in config/ het bestand `dvs-server.yaml.dist` naar `dvs-server.yaml`
 3. Pas de instellingen in dit bestand aan
 4. Start de DVS daemon met `./dvs-daemon.py`

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.5
+
+* Verwerken berichten gebeurt op aparte worker thread (voorkomt verloren berichten bij DVS bursts)
+* ZeroMQ HWM (high water mark) op onbeperkt gezet
+* Vertalingen bijgewerkt
+* Kleine bugfixes, code opgeschoond
+
 ## 1.2.4
 
 * Voorbereid op hernoeming vervoerder 'NS Interna' naar 'NS Int'

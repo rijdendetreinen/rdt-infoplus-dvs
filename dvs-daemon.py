@@ -2,7 +2,7 @@
 
 """
 InfoPlus DVS Daemon, voor het verwerken en opvragen van NS InfoPlus-DVS berichten.
-Copyright (C) 2013-2014 Geert Wirken
+Copyright (C) 2013-2015 Geert Wirken
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import logging.config
 import yaml
 import threading
 from collections import deque
+from Queue import Queue
 
 import infoplus_dvs
 
@@ -76,7 +77,7 @@ def main():
     Main loop
     """
 
-    global station_store, trein_store, counters, locks, configs, system_status
+    global station_store, trein_store, counters, locks, configs, system_status, message_queue
 
     # Maak output in utf-8 mogelijk in Python 2.x:
     reload(sys)
@@ -163,6 +164,13 @@ def main():
     # Socket to talk to server
     context = zmq.Context()
 
+    message_queue = Queue()
+
+    # Start een nieuwe thread om messages te verwerken
+    worker_thread = WorkerThread()
+    worker_thread.daemon = True
+    worker_thread.start()
+
     # Start een nieuwe thread om client requests uit te lezen
     client_thread = ClientThread(dvs_client_bind)
     client_thread.daemon = True
@@ -178,8 +186,11 @@ def main():
     server_socket.connect(dvs_server)
     server_socket.setsockopt(zmq.SUBSCRIBE, '')
 
-    poller = zmq.Poller()
-    poller.register(server_socket, zmq.POLLIN)
+    # Stel HWM in (fallback voor oude pyzmq versies):
+    try:
+        server_socket.setsockopt(zmq.RCVHWM, 0)
+    except AttributeError:
+        server_socket.setsockopt(zmq.HWM, 0)
 
     # Registreer starttijd server:
     starttime = datetime.now()
@@ -190,16 +201,81 @@ def main():
     gc_thread.daemon = True
     gc_thread.start()
 
-    #socks = dict(poller.poll())
-    #print socks
-
     logger.info("Gereed voor ontvangen DVS berichten (van server %s)", dvs_server)
 
     try:
         while True:
             multipart = server_socket.recv_multipart()
+            content = multipart[1:]
+            message_queue.put(content)
+
+    except KeyboardInterrupt:
+        logger.info('Afsluiten...')
+
+        server_socket.close()
+        context.term()
+
+        gc_stopped.set()
+
+        logger.info("Station store opslaan...")
+        pickle.dump(station_store, open('datadump/station.store', 'wb'), -1)
+
+        logger.info("Trein store opslaan...")
+        pickle.dump(trein_store, open('datadump/trein.store', 'wb'), -1)
+
+        logger.info(
+            "Statistieken: %s berichten verwerkt sinds %s", counters['msg'], starttime)
+
+    except Exception:
+        logger.error("Fout in main loop", exc_info=True)
+
+
+def laad_stations():
+    """
+    Laad stations uit pickle dump
+    """
+
+    logger = logging.getLogger(__name__)
+
+    logger.info('Inladen station_store...')
+    station_store_file = open('datadump/station.store', 'rb')
+    store = pickle.load(station_store_file)
+    station_store_file.close()
+
+    return store
+
+def laad_treinen():
+    """
+    Laad treinen uit pickle dump
+    """
+
+    logger = logging.getLogger(__name__)
+
+    logger.info('Inladen trein_store...')
+    trein_store_file = open('datadump/trein.store', 'rb')
+    store = pickle.load(trein_store_file)
+    trein_store_file.close()
+
+    return store
+
+class WorkerThread(threading.Thread):
+    """
+    Worker thread voor het verwerken van DVS berichten.
+    """
+
+    logger = None
+
+    def __init__ (self):
+        self.logger = logging.getLogger(__name__)
+        threading.Thread.__init__(self, name='WorkerThread')
+
+    def run(self):
+        self.logger.info('Consumer thread gestart')
+
+        while True:
+            message = message_queue.get()
             content = GzipFile('', 'r', 0 ,
-                StringIO(''.join(multipart[1:]))).read()
+                StringIO(''.join(message))).read()
 
             # Parse trein xml:
             try:
@@ -241,7 +317,7 @@ def main():
                             station_store[rit_station_code][trein.treinnr] = trein
                         elif trein.rit_timestamp == station_store[rit_station_code][trein.treinnr].rit_timestamp:
                             # Bericht is nieuwer, update store:
-                            logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
+                            self.logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
                                 trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
                                 trein.treinnr, trein.rit_station.code)
 
@@ -257,7 +333,7 @@ def main():
                             else:
                                 log_level = logging.INFO
 
-                            logger.log(log_level, 'Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
+                            self.logger.log(log_level, 'Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
                                 trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
                                 trein.treinnr, trein.rit_station.code)
 
@@ -278,64 +354,18 @@ def main():
                         trein_store[trein.treinnr][rit_station_code] = trein
 
             except infoplus_dvs.OngeldigDvsBericht:
-                logger.error('Ongeldig DVS bericht')
-                logger.debug('Ongeldig DVS bericht: %s', content)
+                self.logger.error('Ongeldig DVS bericht')
+                self.logger.debug('Ongeldig DVS bericht: %s', content)
             except Exception:
-                logger.error(
+                self.logger.error(
                     'Fout tijdens DVS bericht verwerken', exc_info=True)
-                logger.error('DVS crash bericht: %s', content)
+                self.logger.error('DVS crash bericht: %s', content)
                 
             counters['msg'] += + 1
 
 
-    except KeyboardInterrupt:
-        logger.info('Shutting down...')
+            pass
 
-        server_socket.close()
-        context.term()
-
-        gc_stopped.set()
-
-        logger.info("Saving station store...")
-        pickle.dump(station_store, open('datadump/station.store', 'wb'), -1)
-
-        logger.info("Saving trein store...")
-        pickle.dump(trein_store, open('datadump/trein.store', 'wb'), -1)
-
-        logger.info(
-            "Statistieken: %s berichten verwerkt sinds %s", counters['msg'], starttime)
-
-    except Exception:
-        logger.error("Fout in main loop", exc_info=True)
-
-
-def laad_stations():
-    """
-    Laad stations uit pickle dump
-    """
-
-    logger = logging.getLogger(__name__)
-
-    logger.info('Inladen station_store...')
-    station_store_file = open('datadump/station.store', 'rb')
-    store = pickle.load(station_store_file)
-    station_store_file.close()
-
-    return store
-
-def laad_treinen():
-    """
-    Laad treinen uit pickle dump
-    """
-
-    logger = logging.getLogger(__name__)
-
-    logger.info('Inladen trein_store...')
-    trein_store_file = open('datadump/trein.store', 'rb')
-    store = pickle.load(trein_store_file)
-    trein_store_file.close()
-
-    return store
 
 class ClientThread(threading.Thread):
     """
@@ -369,10 +399,11 @@ class ClientThread(threading.Thread):
                     # Haal alle treinen op voor gegeven station
                     station_code = arguments[1].upper()
                     if station_code in station_store:
-                        client_socket.send_pyobj(
-                            {'status': system_status,
-                            'data': station_store[station_code]},
-                            zmq.NOBLOCK)
+                        with locks['station']:
+                            client_socket.send_pyobj(
+                                {'status': system_status,
+                                'data': station_store[station_code]},
+                                zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -380,9 +411,10 @@ class ClientThread(threading.Thread):
                     # Haal alle stations op voor gegeven trein
                     trein_nr = arguments[1]
                     if trein_nr in trein_store:
-                        client_socket.send_pyobj(
-                            {'status': system_status,
-                            'data': trein_store[trein_nr]}, zmq.NOBLOCK)
+                        with locks['trein']:
+                            client_socket.send_pyobj(
+                                {'status': system_status,
+                                'data': trein_store[trein_nr]}, zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -390,10 +422,12 @@ class ClientThread(threading.Thread):
                     # Haal de volledige datastore op...
                     if arguments[1] == 'trein':
                         # Volledige trein store:
-                        client_socket.send_pyobj(trein_store, zmq.NOBLOCK)
+                        with locks['trein']:
+                            client_socket.send_pyobj(trein_store, zmq.NOBLOCK)
                     elif arguments[1] == 'station':
                         # Volledige station store:
-                        client_socket.send_pyobj(station_store, zmq.NOBLOCK)
+                        with locks['station']:
+                            client_socket.send_pyobj(station_store, zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj(None)
 
@@ -424,7 +458,7 @@ class ClientThread(threading.Thread):
                     client_socket.send_pyobj(None)
             except Exception:
                 client_socket.send_pyobj(None)
-                self.logger.exception('Fout bij sturen client respone')
+                self.logger.exception('Fout bij sturen client response')
 
 
 # Garbage collection thread:
@@ -627,7 +661,7 @@ class GarbageThread(threading.Thread):
 
             # Verwijder treinen uit trein_store dict
             # indien geen informatie meer:
-            if len(trein_store[trein_rit]) == 0:
+            if trein_rit in trein_store and len(trein_store[trein_rit]) == 0:
                 del(trein_store[trein_rit])
 
         # Bereken duur voor GC en duur per item
