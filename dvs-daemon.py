@@ -400,10 +400,11 @@ class ClientThread(threading.Thread):
                     # Haal alle treinen op voor gegeven station
                     station_code = arguments[1].upper()
                     if station_code in station_store:
-                        client_socket.send_pyobj(
-                            {'status': system_status,
-                            'data': station_store[station_code]},
-                            zmq.NOBLOCK)
+                        with locks['station']:
+                            client_socket.send_pyobj(
+                                {'status': system_status,
+                                'data': station_store[station_code]},
+                                zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -411,9 +412,10 @@ class ClientThread(threading.Thread):
                     # Haal alle stations op voor gegeven trein
                     trein_nr = arguments[1]
                     if trein_nr in trein_store:
-                        client_socket.send_pyobj(
-                            {'status': system_status,
-                            'data': trein_store[trein_nr]}, zmq.NOBLOCK)
+                        with locks['trein']:
+                            client_socket.send_pyobj(
+                                {'status': system_status,
+                                'data': trein_store[trein_nr]}, zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj({})
 
@@ -421,10 +423,12 @@ class ClientThread(threading.Thread):
                     # Haal de volledige datastore op...
                     if arguments[1] == 'trein':
                         # Volledige trein store:
-                        client_socket.send_pyobj(trein_store, zmq.NOBLOCK)
+                        with locks['trein']:
+                            client_socket.send_pyobj(trein_store, zmq.NOBLOCK)
                     elif arguments[1] == 'station':
                         # Volledige station store:
-                        client_socket.send_pyobj(station_store, zmq.NOBLOCK)
+                        with locks['station']:
+                            client_socket.send_pyobj(station_store, zmq.NOBLOCK)
                     else:
                         client_socket.send_pyobj(None)
 
