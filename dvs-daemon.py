@@ -658,7 +658,7 @@ class GarbageThread(threading.Thread):
 
             # Verwijder treinen uit trein_store dict
             # indien geen informatie meer:
-            if len(trein_store[trein_rit]) == 0:
+            if trein_rit in trein_store and len(trein_store[trein_rit]) == 0:
                 del(trein_store[trein_rit])
 
         # Bereken duur voor GC en duur per item
