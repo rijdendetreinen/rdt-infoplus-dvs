@@ -185,7 +185,12 @@ def main():
     server_socket = context.socket(zmq.SUB)
     server_socket.connect(dvs_server)
     server_socket.setsockopt(zmq.SUBSCRIBE, '')
-    server_socket.setsockopt(zmq.RCVHWM, 0)
+
+    # Stel HWM in (fallback voor oude pyzmq versies):
+    try:
+        server_socket.setsockopt(zmq.RCVHWM, 0)
+    except AttributeError:
+        server_socket.setsockopt(zmq.HWM, 0)
 
     poller = zmq.Poller()
     poller.register(server_socket, zmq.POLLIN)
