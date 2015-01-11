@@ -896,6 +896,7 @@ class Wijziging(object):
             'technisch onderzoek': 'technical inspection',
             'een brandmelding': 'a fire alarm',
             'een voorwerp in de bovenleiding': 'an obstacle in the overhead wire',
+            'een voorwerp op het spoor': 'an obstacle on the track',
             'Koningsdag': 'King\'s day',
             'Vierdaagse': 'Vierdaagse (Four Days Marches)',
             'rommel op het spoor': 'rubbish on the track',
