@@ -2,7 +2,7 @@
 
 """
 InfoPlus DVS Daemon, voor het verwerken en opvragen van NS InfoPlus-DVS berichten.
-Copyright (C) 2013-2014 Geert Wirken
+Copyright (C) 2013-2015 Geert Wirken
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -210,17 +210,17 @@ def main():
             message_queue.put(content)
 
     except KeyboardInterrupt:
-        logger.info('Shutting down...')
+        logger.info('Afsluiten...')
 
         server_socket.close()
         context.term()
 
         gc_stopped.set()
 
-        logger.info("Saving station store...")
+        logger.info("Station store opslaan...")
         pickle.dump(station_store, open('datadump/station.store', 'wb'), -1)
 
-        logger.info("Saving trein store...")
+        logger.info("Trein store opslaan...")
         pickle.dump(trein_store, open('datadump/trein.store', 'wb'), -1)
 
         logger.info(
