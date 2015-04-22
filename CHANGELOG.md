@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.6
+
+* Gaat nu beter om met negatieve vertraging
+
 ## 1.2.5
 
 * Verwerken berichten gebeurt op aparte worker thread (voorkomt verloren berichten bij DVS bursts)
