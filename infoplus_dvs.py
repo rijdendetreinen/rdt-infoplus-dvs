@@ -846,7 +846,8 @@ class Wijziging(object):
             'aanrijding': 'a collision',
             'een aanrijding': 'a collision',
             'aanrijding met een voertuig': 'a collision with a vehicle',
-            'aanrijding met een dier': 'a collision with an anmial',
+            'aanrijding met een dier': 'a collision with an animal',
+            'een aanrijding met een dier': 'a collision with an animal',
             'een aanrijding met een voertuig': 'a collision with a vehicle',
             'auto op het spoor': 'a car on the track',
             'een auto op het spoor': 'a car on the track',
@@ -903,7 +904,9 @@ class Wijziging(object):
             'grote drukte': 'large crowds',
             'blikseminslag': 'lightning',
             'wateroverlast': 'flooding',
+            'een technische storing in een tunnel': 'a technical problem in a tunnel',
             'hinder op het spoor': 'interference on the line',
+            'veiligheidsredenen': 'safety reasons',
             'door nog onbekende oorzaak': 'a yet unknown reason'
         }
 
