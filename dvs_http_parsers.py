@@ -35,7 +35,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
 
     trein_dict['soort'] = trein.soort
     trein_dict['soortAfk'] = trein.soort_code
-    trein_dict['vertraging'] = round(trein.vertraging.seconds / 60)
+    trein_dict['vertraging'] = float(round(float(trein.vertraging) / 60))
     trein_dict['spoor'] = '/'.join(str(spoor)
         for spoor in trein.vertrekspoor_actueel)
 

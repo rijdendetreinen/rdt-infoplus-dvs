@@ -62,8 +62,8 @@ def parse_trein(data):
     trein.vertrek = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Gepland"]').text)
     trein.vertrek_actueel = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Actueel"]').text)
 
-    trein.vertraging = isodate.parse_duration(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ExacteVertrekVertraging').text)
-    trein.vertraging_gedempt = isodate.parse_duration(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}GedempteVertrekVertraging').text)
+    trein.vertraging = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ExacteVertrekVertraging').text)
+    trein.vertraging_gedempt = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}GedempteVertrekVertraging').text)
 
     # Gepland en actueel vertrekspoor:
     trein.vertrekspoor = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Gepland"]'))
@@ -206,8 +206,8 @@ def parse_trein_dict(trein_dict, statisch=False):
     trein.vertrek = trein_dict['vertrek']
     trein.vertrek_actueel = trein.vertrek
 
-    trein.vertraging = datetime.timedelta(0)
-    trein.vertraging_gedempt = datetime.timedelta(0)
+    trein.vertraging = 0
+    trein.vertraging_gedempt = 0
 
     # Gepland en actueel vertrekspoor:
     trein.vertrekspoor = []
@@ -1060,3 +1060,16 @@ class OngeldigDvsBericht(Exception):
     # Verder een standaard Exception
 
     pass
+
+def iso_duur_naar_seconden(string):
+    """
+    Vertaal een ISO tijdsduur naar seconden.
+    Deze functie houdt rekening met negatieve duur
+    (in tegenstelling tot isodate).
+    """
+
+    if len(string) > 0:
+        if string[0] == '-':
+            return isodate.parse_duration(string[1:]).seconds * -1
+
+    return isodate.parse_duration(string).seconds
