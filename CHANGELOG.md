@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.7
+
+* Bugfix voor HTTP interface in combinatie met geinjecteerde ritten
+
 ## 1.2.6
 
 * Gaat nu beter om met negatieve vertraging
