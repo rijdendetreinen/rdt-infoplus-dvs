@@ -398,8 +398,8 @@ class Trein(object):
     vertrek = None
     vertrek_actueel = None
     
-    vertraging = None
-    vertraging_gedempt = None
+    vertraging = 0
+    vertraging_gedempt = 0
 
     vertrekspoor = []
     vertrekspoor_actueel = []
