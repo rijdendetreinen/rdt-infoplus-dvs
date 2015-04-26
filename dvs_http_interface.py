@@ -101,9 +101,9 @@ def trein_details(trein, station, taal='nl'):
         if vertrekken != None and station.upper() in vertrekken:
             trein_info = vertrekken[station.upper()]
 
-            # Parse basis informatie:
+            # Parse basisinformatie:
             trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
-                taal, tijd_nu, materieel=True, stopstations=True)
+                taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'])
 
             return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict}
         else:

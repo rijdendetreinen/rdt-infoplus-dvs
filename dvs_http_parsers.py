@@ -4,9 +4,14 @@ van de DVS HTTP interface.
 """
 
 from datetime import timedelta
+import urllib2
+import socket
+import json
+import logging
 
+_logger = logging.getLogger(__name__)
 
-def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
+def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, serviceinfo_config=None):
     """
     Vertaal een InfoPlus_DVS Trein object naar een dict,
     geschikt voor een JSON output.
@@ -14,7 +19,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
     met de parameter stopstations alle stops per treinvleugel.
     """
 
-    trein_dict = { }
+    trein_dict = {}
 
     # Basis treininformatie
     trein_dict['treinNr'] = trein.treinnr
@@ -73,7 +78,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
             for bestemming in trein.eindbestemming)
 
         # Controleer of vertrektijd meer dan 2 min geleden is:
-        if trein.vertrek + timedelta(minutes = 2) < tijd_nu:
+        if trein.vertrek + timedelta(minutes=2) < tijd_nu:
             # Sla deze trein over. We laten opgeheven treinen tot 2 min
             # na vertrek in de feed zitten; vertrektijd van deze trein
             # is meer dan 2 minuten na vertrektijd
@@ -107,7 +112,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
     trein_dict['vleugels'] = []
     for vleugel in trein.vleugels:
         vleugel_dict = {
-            'bestemming': vleugel.eindbestemming_actueel.lange_naam }
+            'bestemming': vleugel.eindbestemming_actueel.lange_naam}
 
         if materieel == True:
             vleugel_dict['mat'] = [
@@ -115,23 +120,92 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False):
                 for mat in vleugel.materieel]
 
         if stopstations == True:
-            vleugel_dict['stopstations'] = \
-                stopstations_to_list(vleugel.stopstations_actueel)
+            vleugel_dict['stopstations'] = stopstations_to_list(
+                vleugel.stopstations_actueel, trein.treinnr, 
+                trein.rit_datum, serviceinfo_config)
 
         trein_dict['vleugels'].append(vleugel_dict)
 
     return trein_dict
 
-def stopstations_to_list(stations):
+def stopstations_to_list(stations, treinnr, ritdatum, serviceinfo_config):
     """
     Vertaal de stopstations van een trein naar een list van
     stopstations, geschikt om als JSON result terug te geven.
     """
 
     stations_list = []
+    serviceinfo = retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config)
 
     for station in stations:
-        stations_list.append(
-            {'code': station.code, 'naam': station.lange_naam})
+        station_dict = {'code': station.code, 'naam': station.lange_naam}
+        
+        extra_stop_data = None
+        if serviceinfo != None:
+            # Zoek halte op in serviceinfo.
+            # TODO: beter omgaan met vleugeltreinen
+            for service in serviceinfo:
+                for stop in service['stops']:
+                    if stop['station'].lower() == station.code.lower():
+                        extra_stop_data = stop
+                        break
+
+            if extra_stop_data != None:
+                # Verwerk spoorinformatie:
+                station_dict['sprWijziging'] = False
+                station_dict['aankomstspoor'] = extra_stop_data['scheduled_arrival_platform']
+                station_dict['vertrekspoor'] = extra_stop_data['scheduled_departure_platform']
+
+                if extra_stop_data['actual_arrival_platform'] != None and \
+                    extra_stop_data['scheduled_arrival_platform'] != extra_stop_data['actual_arrival_platform']:
+                    station_dict['aankomstspoor'] = extra_stop_data['actual_arrival_platform']
+                    station_dict['sprWijziging'] = True
+
+                if extra_stop_data['actual_departure_platform'] != None and \
+                    extra_stop_data['scheduled_departure_platform'] != extra_stop_data['actual_departure_platform']:
+                    station_dict['vertrekspoor'] = extra_stop_data['actual_departure_platform']
+                    station_dict['sprWijziging'] = True
+
+                # Overige data:
+                station_dict['aankomst'] = extra_stop_data['arrival_time']
+                station_dict['vertrek'] = extra_stop_data['departure_time']
+                station_dict['vertragingAankomst'] = extra_stop_data['arrival_delay']
+                station_dict['vertragingVertrek'] = extra_stop_data['arrival_delay']
+
+        # Voeg station toe aan de list met alle stations
+        stations_list.append(station_dict)
 
     return stations_list
+
+
+def retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config):
+    """
+    Haal extra serviceinformatie op om de informatie over stops te verrijken
+    met bijvoorbeeld aankomsttijd etc.
+
+    Bij fouten, uitgeschakelde serviceinfo configuratie, etc. geeft deze method None.
+    In alle andere gevallen wordt de services dict van de rdt-serviceinfo API teruggegeven.
+    """
+
+    if serviceinfo_config == None or serviceinfo_config['enabled'] == False:
+        return None
+    else:
+        try:
+            trein_url = "%sservice/%s/%s" % (serviceinfo_config['url'], ritdatum, treinnr)
+            response = urllib2.urlopen(trein_url, timeout=2)
+            data = json.load(response)
+
+            if 'services' in data:
+                return data['services']
+            else:
+                return None
+        except ValueError as error:
+            _logger.error("Ongeldige JSON voor serviceinfo (datalengte: %s)")
+        except urllib2.URLError as error:
+            if not isinstance(error.reason, socket.timeout):
+                _logger.warn("Serviceinfo timeout: %s", error)
+            else:
+                _logger.error("HTTP fout: %s. Geen serviceinfo beschikbaar", error)
+        except Exception as error:
+            _logger.error("Generieke fout: %s. Geen serviceinfo beschikbaar", error)
+            return None
