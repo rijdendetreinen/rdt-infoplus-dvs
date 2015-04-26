@@ -36,41 +36,8 @@ from collections import deque
 from Queue import Queue
 
 import infoplus_dvs
+import dvs_util
 
-def setup_logging(default_path='logging.yaml',
-    default_level=logging.INFO, env_key='LOG_CFG'):
-    """
-    Setup logging configuration
-    """
-
-    path = default_path
-    value = os.getenv(env_key, None)
-    if value:
-        path = value
-    if os.path.exists(path):
-        with open(path, 'rt') as config_file:
-            log_config = yaml.load(config_file.read())
-        logging.config.dictConfig(log_config)
-    else:
-        logging.basicConfig(level=default_level)
-
-def load_config(config_file_path='config/dvs-server.yaml'):
-    """
-    Setup logging configuration
-    """
-
-    global config
-
-    if os.path.exists(config_file_path):
-        try:
-            with open(config_file_path, 'rt') as config_file:
-                config = yaml.load(config_file.read())
-        except Exception as e:
-            print "Fout in configuratiebestand. Foutmelding: %s" % e
-            sys.exit(1)
-    else:
-        print "Configuratiebestand '%s' niet aanwezig" % config_file_path
-        sys.exit(1)
 
 def main():
     """
@@ -102,17 +69,10 @@ def main():
     args = parser.parse_args()
 
     # Laad configuratie:
-    load_config(args.configFile)
+    config = dvs_util.load_config(args.configFile)
 
     # Stel logging in:
-    log_config_file = None
-
-    # Check of er een logger configuratie is opgegeven:
-    if 'logging' in config and 'log_config' in config['logging']:
-        log_config_file = config['logging']['log_config']
-    
-    # Stel logger in adhv config:
-    setup_logging(log_config_file)
+    dvs_util.setup_logging(config)
 
     # Geef logger instance:
     logger = logging.getLogger(__name__)

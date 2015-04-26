@@ -14,6 +14,8 @@ from bottle import response
 import dvs_http_parsers
 
 SERVER_TIMEOUT = 4
+config = {}
+
 
 @bottle.route('/station/<station>')
 @bottle.route('/station/<station>/<taal>')
@@ -24,7 +26,7 @@ def index(station, taal='nl'):
         # Maak verbinding
         context = zmq.Context()
         client = context.socket(zmq.REQ)
-        client.connect(dvs_client_server)
+        client.connect(config['dvs']['daemon'])
         client.setsockopt(zmq.LINGER, 0)
 
         # Stuur opdracht:
@@ -110,7 +112,7 @@ def index(trein, station, taal='nl'):
         # Maak verbinding
         context = zmq.Context()
         client = context.socket(zmq.REQ)
-        client.connect(dvs_client_server)
+        client.connect(config['dvs']['daemon'])
         client.setsockopt(zmq.LINGER, 0)
 
         # Stuur opdracht: haal alle informatie op voor dit treinnummer
@@ -170,7 +172,7 @@ def index():
         # Maak verbinding
         context = zmq.Context()
         client = context.socket(zmq.REQ)
-        client.connect(dvs_client_server)
+        client.connect(config['dvs']['daemon'])
         client.setsockopt(zmq.LINGER, 0)
 
         # Stuur opdracht:

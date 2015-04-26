@@ -2,9 +2,11 @@ import os, sys
 sys.path.insert(0,os.path.dirname(__file__))
 
 import bottle
+import dvs_util
 import dvs_http_interface
 
-# Default config:
-dvs_http_interface.dvs_client_server = "tcp://127.0.0.1:8120"
+# Load config:
+dvs_http_interface.config = dvs_util.load_config(sys.argv[1])
+dvs_util.setup_logging(dvs_http_interface.config)
 
 application = bottle.default_app()
