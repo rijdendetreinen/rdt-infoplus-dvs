@@ -170,7 +170,7 @@ def stopstations_to_list(stations, treinnr, ritdatum, serviceinfo_config):
                 station_dict['aankomst'] = extra_stop_data['arrival_time']
                 station_dict['vertrek'] = extra_stop_data['departure_time']
                 station_dict['vertragingAankomst'] = extra_stop_data['arrival_delay']
-                station_dict['vertragingVertrek'] = extra_stop_data['arrival_delay']
+                station_dict['vertragingVertrek'] = extra_stop_data['departure_delay']
 
         # Voeg station toe aan de list met alle stations
         stations_list.append(station_dict)
