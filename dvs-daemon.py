@@ -638,7 +638,7 @@ class GarbageThread(threading.Thread):
 # Injector thread:
 class InjectorThread(threading.Thread):
     """
-    Thread die verantwoordelijk is voor garbage collection
+    Thread die verantwoordelijk is voor verwerken van DVS injecties
     """
 
     logger = None
@@ -661,20 +661,16 @@ class InjectorThread(threading.Thread):
         while True:
             try:
                 # Ontvang injection dict
-                trein_dict = client_socket.recv_pyobj()
+                trein_dict = client_socket.recv_json()
                 
                 self.logger.debug("Nieuwe injectie: %s", trein_dict)
                 counters['injecties'] += 1
 
-                # Stuur response naar injector
-                client_socket.send_pyobj(True)
-
                 # Converteer ontvangen dict naar 
                 trein = infoplus_dvs.parse_trein_dict(trein_dict, True)
 
-                # Bepaal rit ID. Prefix 'i' om overlap met InfoPlus
-                # DVS ID's te voorkomen.
-                rit_id = 'i%s' % trein.rit_id
+                # TODO: betere manier van identificatie (overlap infoplus)
+                rit_id = trein.rit_id
 
                 # Voeg trein toe aan stores:
                 with locks['trein']:
@@ -690,8 +686,12 @@ class InjectorThread(threading.Thread):
                 station_store[trein.rit_station.code][rit_id] = trein
                 trein_store[rit_id][trein.rit_station.code] = trein
 
+                # Stuur response naar injector
+                client_socket.send_pyobj(True)
+
             except Exception:
                 self.logger.exception("Fout tijdens verwerken injectie")
+                client_socket.send_pyobj(False)
 
 if __name__ == "__main__":
     main()
