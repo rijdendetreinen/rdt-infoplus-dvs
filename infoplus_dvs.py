@@ -196,7 +196,7 @@ def parse_trein_dict(trein_dict, statisch=False):
 
     trein.rit_datum = isodate.parse_date(trein_dict['service_date'])
     trein.rit_station = Station(trein_dict['stop_code'].upper(), None)
-    trein.rit_timestamp = datetime.datetime.now()
+    trein.rit_timestamp = datetime.datetime.now(pytz.utc)
 
     # Treinnummer, soort/formule, etc:
     trein.treinnr = trein_dict['service_number']
