@@ -23,6 +23,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
 
     # Basis treininformatie
     trein_dict['treinNr'] = trein.treinnr
+    trein_dict['id'] = trein.rit_id
     trein_dict['vertrek'] = trein.lokaal_vertrek().isoformat()
 
     # Parse eindbestemming. Indien eindbestemming uit twee delen bestaat
@@ -121,7 +122,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
 
         if stopstations == True:
             vleugel_dict['stopstations'] = stopstations_to_list(
-                vleugel.stopstations_actueel, trein.treinnr, 
+                vleugel.stopstations_actueel, trein.rit_id,
                 trein.rit_datum, serviceinfo_config)
 
         trein_dict['vleugels'].append(vleugel_dict)

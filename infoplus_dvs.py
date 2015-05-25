@@ -189,7 +189,11 @@ def parse_trein_dict(trein_dict, statisch=False):
 
 
     # Metadata over rit:
-    trein.rit_id = 'inject-%s' % trein_dict['service_id']
+    if int(trein_dict['service_number']) == 0:
+        trein.rit_id = 'i%s' % trein_dict['service_id']
+    else:
+        trein.rit_id = trein_dict['service_number']
+
     trein.rit_datum = isodate.parse_date(trein_dict['service_date'])
     trein.rit_station = Station(trein_dict['stop_code'].upper(), None)
     trein.rit_timestamp = datetime.datetime.now()

@@ -668,8 +668,6 @@ class InjectorThread(threading.Thread):
 
                 # Converteer ontvangen dict naar 
                 trein = infoplus_dvs.parse_trein_dict(trein_dict, True)
-
-                # TODO: betere manier van identificatie (overlap infoplus)
                 rit_id = trein.rit_id
 
                 # Voeg trein toe aan stores:
@@ -687,11 +685,11 @@ class InjectorThread(threading.Thread):
                 trein_store[rit_id][trein.rit_station.code] = trein
 
                 # Stuur response naar injector
-                client_socket.send_pyobj(True)
+                client_socket.send_json({'result': True})
 
-            except Exception:
-                self.logger.exception("Fout tijdens verwerken injectie")
-                client_socket.send_pyobj(False)
+            except Exception as e:
+                self.logger.exception("Fout tijdens verwerken injectie: %s", e)
+                client_socket.send_json({'result': False, 'error': str(e)})
 
 if __name__ == "__main__":
     main()
