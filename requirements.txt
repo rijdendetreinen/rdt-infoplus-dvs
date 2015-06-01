@@ -1,0 +1,8 @@
+PyYAML>=3.11
+argparse>=1.2.1
+bottle>=0.12.8
+isodate>=0.5.1
+pyaml>=15.5.7
+pytz>=2015.4
+pyzmq>=14.6.0
+wsgiref>=0.1.2
