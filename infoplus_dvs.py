@@ -33,13 +33,13 @@ def parse_trein(data):
     trein = Trein()
     
     # Metadata over rit:
-    trein.rit_id = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitId').text
     trein.rit_datum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitDatum').text
     trein.rit_station = parse_station(vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitStation'))
     trein.rit_timestamp = isodate.parse_datetime(product.attrib.get('TimeStamp'))
     
     # Treinnummer, soort/formule, etc:
     trein.treinnr = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNummer').text
+    trein.rit_id = trein.treinnr
     trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
     trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
     trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
