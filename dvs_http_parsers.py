@@ -138,18 +138,30 @@ def stopstations_to_list(stations, treinnr, ritdatum, serviceinfo_config):
     stations_list = []
     serviceinfo = retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config)
 
+    destination_code = stations[-1].code.lower()
+
     for station in stations:
         station_dict = {'code': station.code, 'naam': station.lange_naam}
         
         extra_stop_data = None
         if serviceinfo != None:
             # Zoek halte op in serviceinfo.
-            # TODO: beter omgaan met vleugeltreinen
             for service in serviceinfo:
-                for stop in service['stops']:
-                    if stop['station'].lower() == station.code.lower():
-                        extra_stop_data = stop
-                        break
+                # Zoek alleen in vleugel met zelfde eindbestemming:
+                if service['stops'][-1]['station'] == destination_code:
+                    for stop in service['stops']:
+                        if stop['station'].lower() == station.code.lower():
+                            extra_stop_data = stop
+                            break
+
+            # Fallback: indien nog geen stop gevonden is, probeer
+            # het nogmaals zonder check op eindbestemming vleugel
+            if extra_stop_data is None:
+                for service in serviceinfo:
+                    for stop in service['stops']:
+                        if stop['station'].lower() == station.code.lower():
+                            extra_stop_data = stop
+                            break
 
             if extra_stop_data != None:
                 # Verwerk spoorinformatie:
