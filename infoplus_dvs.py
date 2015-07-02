@@ -33,13 +33,13 @@ def parse_trein(data):
     trein = Trein()
     
     # Metadata over rit:
-    trein.rit_id = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitId').text
     trein.rit_datum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitDatum').text
     trein.rit_station = parse_station(vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitStation'))
     trein.rit_timestamp = isodate.parse_datetime(product.attrib.get('TimeStamp'))
     
     # Treinnummer, soort/formule, etc:
     trein.treinnr = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNummer').text
+    trein.rit_id = trein.treinnr
     trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
     trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
     trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
@@ -186,24 +186,29 @@ def parse_trein_dict(trein_dict, statisch=False):
     # Maak trein object:
     trein = Trein()
     trein.statisch = statisch
-    
+
+
     # Metadata over rit:
-    trein.rit_id = trein_dict['rit_id']
-    trein.rit_datum = trein_dict['vertrek'].date()
-    trein.rit_station = Station(trein_dict['rit_station'].upper(), None)
-    trein.rit_timestamp = datetime.datetime.now()
-    
+    if int(trein_dict['service_number']) == 0:
+        trein.rit_id = 'i%s' % trein_dict['service_id']
+    else:
+        trein.rit_id = trein_dict['service_number']
+
+    trein.rit_datum = isodate.parse_date(trein_dict['service_date'])
+    trein.rit_station = Station(trein_dict['stop_code'].upper(), None)
+    trein.rit_timestamp = datetime.datetime.now(pytz.utc)
+
     # Treinnummer, soort/formule, etc:
-    trein.treinnr = trein_dict['treinnr']
-    trein.soort = trein_dict['soort']
-    trein.soort_code = trein_dict['soort_code']
-    trein.vervoerder = trein_dict['vervoerder_naam']
-    
+    trein.treinnr = trein_dict['service_number']
+    trein.soort = trein_dict['transmode_text']
+    trein.soort_code = trein_dict['transmode_code']
+    trein.vervoerder = trein_dict['company']
+
     # Status:
     trein.status = 0
 
     # Vertrektijd en vertraging:
-    trein.vertrek = trein_dict['vertrek']
+    trein.vertrek = isodate.parse_datetime(trein_dict['departure']).astimezone (pytz.utc)
     trein.vertrek_actueel = trein.vertrek
 
     trein.vertraging = 0
@@ -211,16 +216,26 @@ def parse_trein_dict(trein_dict, statisch=False):
 
     # Gepland en actueel vertrekspoor:
     trein.vertrekspoor = []
-    if trein_dict['spoor'] != None:
-        trein.vertrekspoor.append(Spoor(trein_dict['spoor']))
+    if trein_dict['platform'] != None:
+        trein.vertrekspoor.append(Spoor(trein_dict['platform']))
     trein.vertrekspoor_actueel = trein.vertrekspoor
 
     # Geplande en actuele bestemming:
-    trein.eindbestemming = [Station(trein_dict['bestemming_code'], trein_dict['bestemming_naam'])]
+    trein.eindbestemming = [Station(trein_dict['destination_code'], trein_dict['destination_text'])]
     trein.eindbestemming_actueel = trein.eindbestemming
 
-    if 'niet_instappen' in trein_dict:
-        trein.niet_instappen = trein_dict['niet_instappen']
+    # Vleugel:
+    vleugel = TreinVleugel(trein.eindbestemming[0])
+    vleugel.eindbestemming_actueel = vleugel.eindbestemming
+    vleugel.stopstations = []
+    for stop in trein_dict['stops']:
+        vleugel.stopstations.append(Station(stop[0], stop[1]))
+    vleugel.stopstations_actueel = vleugel.stopstations
+
+    trein.vleugels = [vleugel]
+
+    if 'do_not_board' in trein_dict:
+        trein.niet_instappen = trein_dict['do_not_board']
 
     # Verkorte route
     trein.verkorte_route = []

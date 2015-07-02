@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0
+
+* Koppeling met rdt-serviceinfo in HTTP-interface
+* Nieuw formaat injecties
+* Configuratie voor HTTP-interface naar eigen http.yaml config
+
 ## 1.2.7
 
 * Bugfix voor HTTP interface in combinatie met geinjecteerde ritten

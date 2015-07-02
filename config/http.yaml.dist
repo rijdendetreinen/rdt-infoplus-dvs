@@ -1,0 +1,9 @@
+---
+dvs:
+    daemon: tcp://127.0.0.1:8120
+serviceinfo:
+    enabled: false
+    url: http://rdt-serviceinfo-api.example.org/
+logging:
+    log_config: config/logging.yaml
+...

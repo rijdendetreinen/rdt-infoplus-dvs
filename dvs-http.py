@@ -7,23 +7,39 @@ met dvs-daemon. Niet geschikt voor productie! Gebruik daar WSGI voor.
 
 import bottle
 import argparse
-import dvs_http_interface
 import logging
 
-# Initialiseer argparse
-parser = argparse.ArgumentParser(description='DVS HTTP interface test tool')
+import dvs_http_interface
+import dvs_util
 
-parser.add_argument('-s', '--server', action='store', default='127.0.0.1', help='DVS server (standaard 127.0.0.1)')
-parser.add_argument('-p', '--port', action='store', default='8120', help='DVS poort (standaard 8120)')
+def main():
+    """
+    Main loop
+    """
 
-args = parser.parse_args()
-dvs_http_interface.dvs_client_server = "tcp://%s:%s" % (args.server, args.port)
+    # Initialiseer argparse
+    parser = argparse.ArgumentParser(description='DVS HTTP interface test tool')
 
-# Stel logger in:
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+    parser.add_argument('-c', '--config', dest='configFile',
+        default='config/http.yaml', action='store',
+        help='HTTP configuratiebestand')
 
-logger.info("Server: %s", dvs_http_interface.dvs_client_server)
+    # Parse config:
+    args = parser.parse_args()
+    config = dvs_util.load_config(args.configFile)
 
-bottle.debug(True)
-bottle.run(host='localhost', port=8080, reloader=True)
+    # Stel logger in:
+    dvs_util.setup_logging(config)
+
+    dvs_http_interface.config = config
+
+    # Start bottle:
+    logger = logging.getLogger(__name__)
+    logger.info("DVS server: %s", config['dvs']['daemon'])
+
+    bottle.debug(True)
+    bottle.run(host='localhost', port=8080, reloader=True)
+
+
+if __name__ == "__main__":
+    main()
