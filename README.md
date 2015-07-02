@@ -9,6 +9,9 @@ Dit is een Python daemon voor het ontvangen en verwerken van InfoPlus DVS-berich
 
 Deze applicatie wordt sinds december 2013 stabiel gebruikt door de app en website van [Rijden de Treinen](http://www.rijdendetreinen.nl/) (zie voor een implementatie op basis van deze daemon de [actuele vertrektijden](http://vertrektijden.rijdendetreinen.nl/)).
 
+Deze applicatie kan gekoppeld worden aan [rdt-serviceinfo](https://github.com/geertw/rdt-serviceinfo): het kan injecties ontvangen om bussen en buitenlandse treinen
+toe te voegen aan de feed, en de http-interface van rdt-infoplus-dvs kan de route van een trein verrijken met aankomst- en vertrektijden uit rdt-serviceinfo.
+
 InfoPlus DVS
 ------------
 
@@ -36,8 +39,8 @@ Installatie
 -----------
 
 1. Clone deze repository (directory naar keuze)
-2. Kopieer in config/ het bestand `dvs-server.yaml.dist` naar `dvs-server.yaml`
-3. Pas de instellingen in dit bestand aan
+2. Kopieer in config/ het bestand `dvs-server.yaml.dist` naar `dvs-server.yaml`, en `http.yaml.dist` naar `http.yaml`.
+3. Pas de instellingen in deze bestanden aan
 4. Start de DVS daemon met `./dvs-daemon.py`
 
 Iedere minuut wordt de systeemstatus op de terminal gelogd. In deze logmelding wordt tevens het aantal treinen gelogd. Dit aantal zou na het opstarten steeds verder op moeten lopen.
