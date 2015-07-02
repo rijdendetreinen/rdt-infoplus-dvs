@@ -13,45 +13,28 @@ from bottle import response
 
 import dvs_http_parsers
 
+
 SERVER_TIMEOUT = 4
+config = {}
+
 
 @bottle.route('/station/<station>')
 @bottle.route('/station/<station>/<taal>')
-def index(station, taal='nl'):
+def station_details(station, taal='nl'):
     try:
         tijd_nu = datetime.now(pytz.utc)
 
-        # Maak verbinding
-        context = zmq.Context()
-        client = context.socket(zmq.REQ)
-        client.connect(dvs_client_server)
-        client.setsockopt(zmq.LINGER, 0)
-
         # Stuur opdracht:
-        client.send('station/%s' % station)
-
-        # Ontvang response:
-        poller = zmq.Poller()
-        poller.register(client, zmq.POLLIN)
-
-        if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
-            data = client.recv_pyobj()
-            client.close()
-            client.close()
-            context.term()
-        else:
-            client.close()
-            context.term()
-            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': 'DVS server timeout' }
+        data = _send_dvs_command('station/%s' % station)
 
         if 'data' in data:
             # Nieuw formaat met statusdata:
             treinen = data['data']
-            status = data['status']['status']
+            dvs_status = data['status']['status']
         else:
             # Oude formaat:
             treinen = data
-            status = None
+            dvs_status = None
 
         # Lees trein array uit:
         if treinen != None:
@@ -84,15 +67,10 @@ def index(station, taal='nl'):
                 if trein_dict != None:
                     vertrektijden.append(trein_dict)
 
-            return { 'result': 'OK', 'system_status': status, 'vertrektijden': vertrektijden }
+            return {'result': 'OK', 'system_status': dvs_status, 'vertrektijden': vertrektijden}
         else:
-            return { 'result': 'OK', 'system_status': status, 'vertrektijden': [] }
-
-        client.close()
-        context.term()
+            return {'result': 'OK', 'system_status': dvs_status, 'vertrektijden': []}
     except Exception as e:
-        client.close()
-        context.term()
         try:
             logger = logging.getLogger(__name__)
             logger.exception("ERROR")
@@ -103,60 +81,35 @@ def index(station, taal='nl'):
 
 @bottle.route('/trein/<trein>/<station>')
 @bottle.route('/trein/<trein>/<station>/<taal>')
-def index(trein, station, taal='nl'):
+def trein_details(trein, station, taal='nl'):
     try:
         tijd_nu = datetime.now(pytz.utc)
 
-        # Maak verbinding
-        context = zmq.Context()
-        client = context.socket(zmq.REQ)
-        client.connect(dvs_client_server)
-        client.setsockopt(zmq.LINGER, 0)
-
         # Stuur opdracht: haal alle informatie op voor dit treinnummer
-        client.send('trein/%s' % trein)
-
-        # Ontvang response:
-        poller = zmq.Poller()
-        poller.register(client, zmq.POLLIN)
-
-        if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
-            data = client.recv_pyobj()
-            client.close()
-            client.close()
-            context.term()
-        else:
-            client.close()
-            context.term()
-            response.status = 500
-            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': 'DVS server timeout' }
+        data = _send_dvs_command('trein/%s' % trein)
 
         if 'data' in data:
             # Nieuw formaat met statusdata:
             vertrekken = data['data']
-            status = data['status']['status']
+            dvs_status = data['status']['status']
         else:
             # Oude formaat:
             vertrekken = data
-            status = None
+            dvs_status = None
 
         # Lees trein array uit:
         if vertrekken != None and station.upper() in vertrekken:
             trein_info = vertrekken[station.upper()]
 
-            # Parse basis informatie:
+            # Parse basisinformatie:
             trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
-                taal, tijd_nu, materieel=True, stopstations=True)
+                taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'])
 
-            return { 'result': 'OK', 'system_status': status, 'trein': trein_dict }
+            return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict}
         else:
-            return { 'result': 'ERR', 'system_status': status, 'status': 'NOTFOUND' }
+            return {'result': 'ERR', 'system_status': dvs_status, 'status': 'NOTFOUND'}
 
-        client.close()
-        context.term()
     except Exception as e:
-        client.close()
-        context.term()
         try:
             logger = logging.getLogger(__name__)
             logger.exception("ERROR")
@@ -165,30 +118,10 @@ def index(trein, station, taal='nl'):
             return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
 
 @bottle.route('/status')
-def index():
+def status():
     try:
-        # Maak verbinding
-        context = zmq.Context()
-        client = context.socket(zmq.REQ)
-        client.connect(dvs_client_server)
-        client.setsockopt(zmq.LINGER, 0)
-
         # Stuur opdracht:
-        client.send('status')
-
-        # Ontvang response:
-        poller = zmq.Poller()
-        poller.register(client, zmq.POLLIN)
-
-        if poller.poll(SERVER_TIMEOUT * 1000): # 10s timeout in milliseconds
-            data = client.recv_pyobj()
-            client.close()
-            client.close()
-            context.term()
-        else:
-            client.close()
-            context.term()
-            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': 'DVS server timeout' }
+        data = _send_dvs_command('status')
 
         if data['down_since'] != None:
             data['down_since'] = str(data['down_since'])
@@ -196,13 +129,50 @@ def index():
         if data['recovering_since'] != None:
             data['recovering_since'] = str(data['recovering_since'])
 
-        return { 'result': 'OK', 'data': data }
+        return {'result': 'OK', 'data': data}
     except Exception as e:
-        client.close()
-        context.term()
         try:
             logger = logging.getLogger(__name__)
             logger.exception("ERROR")
         finally:
             response.status = 500
-            return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
+            return {'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e)}
+
+
+def _send_dvs_command(command):
+    """
+    Bereid de ZeroMQ connectie naar de DVS daemon voor
+    """
+
+    # Maak verbinding
+    context = zmq.Context()
+    client = context.socket(zmq.REQ)
+    client.connect(config['dvs']['daemon'])
+    client.setsockopt(zmq.LINGER, 0)
+
+    # Stuur opdracht:
+    client.send(command)
+
+    # Ontvang response:
+    poller = zmq.Poller()
+    poller.register(client, zmq.POLLIN)
+
+    if poller.poll(SERVER_TIMEOUT * 1000):
+        data = client.recv_pyobj()
+        client.close()
+        context.term()
+
+        return data
+    else:
+        client.close()
+        context.term()
+
+        raise DvsException('DVS Server Timeout')
+
+
+class DvsException(Exception):
+    """
+    Exception class voor DVS fouten
+    """
+
+    pass
