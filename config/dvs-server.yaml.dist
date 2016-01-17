@@ -6,4 +6,7 @@ bindings:
 
 logging:
     log_config: config/logging.yaml
+
+zmq:
+  envelope: /RIG/InfoPlusDVSInterface
 ...

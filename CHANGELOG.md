@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.1
+
+* Optie voor ZMQ envelope toegevoegd
+
 ## 1.3.0
 
 * Koppeling met rdt-serviceinfo in HTTP-interface
