@@ -144,7 +144,13 @@ def main():
     # Stel ZeroMQ in:
     server_socket = context.socket(zmq.SUB)
     server_socket.connect(dvs_server)
-    server_socket.setsockopt(zmq.SUBSCRIBE, config['zmq']['envelope'])
+
+    # Stel envelope in:
+    envelope = ''
+    if 'zmq' in config and 'envelope' in config['zmq']:
+        envelope = config['zmq']['envelope']
+
+    server_socket.setsockopt(zmq.SUBSCRIBE, envelope)
 
     # Stel HWM in (fallback voor oude pyzmq versies):
     try:
