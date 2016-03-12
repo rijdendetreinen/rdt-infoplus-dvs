@@ -164,6 +164,10 @@ def parse_trein(data):
             if volgorde_vertrek_node != None:
                 mat.volgorde_vertrek = volgorde_vertrek_node.text
 
+            matnummer_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelNummer')
+            if matnummer_node != None:
+                mat.matnummer = matnummer_node.text
+
             vleugel.materieel.append(mat)
 
         # Wijzigingsbericht(en):
@@ -668,6 +672,7 @@ class Materieel(object):
     eindbestemming_actueel = None
     vertrekpositie = None
     volgorde_vertrek = None
+    matnummer = None
 
     def __init__(self):
         pass
@@ -681,6 +686,13 @@ class Materieel(object):
             return '%s-%s' % (self.soort, self.aanduiding)
         else:
             return self.soort
+
+    def get_matnummer(self):
+        if self.matnummer == None:
+            return None
+
+        # Schoon matnummer op:
+        return self.matnummer.lstrip("0-").rstrip("0").rstrip("-")
 
 class Wijziging(object):
     """

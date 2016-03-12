@@ -117,7 +117,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
 
         if materieel == True:
             vleugel_dict['mat'] = [
-                (mat.treintype(), mat.eindbestemming_actueel.middel_naam)
+                (mat.treintype(), mat.eindbestemming_actueel.middel_naam, mat.get_matnummer())
                 for mat in vleugel.materieel]
 
         if stopstations == True:
