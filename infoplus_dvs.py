@@ -25,24 +25,24 @@ def parse_trein(data):
         raise OngeldigDvsBericht()
 
     # Zoek belangrijke nodes op:
-    product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisInformatieProductDVS')
-    vertrekstaat = product.find('{urn:ndov:cdm:trein:reisinformatie:data:2}DynamischeVertrekStaat')
-    trein_node = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Trein')
+    product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:4}ReisInformatieProductDVS')
+    vertrekstaat = product.find('{urn:ndov:cdm:trein:reisinformatie:data:4}DynamischeVertrekStaat')
+    trein_node = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:4}Trein')
 
     # Maak trein object:
     trein = Trein()
     
     # Metadata over rit:
-    trein.rit_datum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitDatum').text
-    trein.rit_station = parse_station(vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitStation'))
+    trein.rit_datum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:4}RitDatum').text
+    trein.rit_station = parse_station(vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:4}RitStation'))
     trein.rit_timestamp = isodate.parse_datetime(product.attrib.get('TimeStamp'))
     
     # Treinnummer, soort/formule, etc:
-    trein.treinnr = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNummer').text
+    trein.treinnr = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinNummer').text
     trein.rit_id = trein.treinnr
-    trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
-    trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
-    trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
+    trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinSoort').text
+    trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinSoort').attrib['Code']
+    trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}Vervoerder').text
 
     # Fix voor verkeerde naam 'NS Interna' voor NS International (zie #1):
     if trein.vervoerder == 'NS Interna' or trein.vervoerder == 'NS Int':
@@ -51,75 +51,75 @@ def parse_trein(data):
         trein.vervoerder = 'Locon Benelux'
     
     # Treinnaam
-    naam_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNaam')
+    naam_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinNaam')
     if naam_node != None:
         trein.treinnaam = naam_node.text
 
     # Status:
-    trein.status = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinStatus').text
+    trein.status = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinStatus').text
 
     # Vertrektijd en vertraging:
-    trein.vertrek = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Gepland"]').text)
-    trein.vertrek_actueel = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Actueel"]').text)
+    trein.vertrek = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}VertrekTijd[@InfoStatus="Gepland"]').text)
+    trein.vertrek_actueel = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}VertrekTijd[@InfoStatus="Actueel"]').text)
 
-    trein.vertraging = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ExacteVertrekVertraging').text)
-    trein.vertraging_gedempt = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}GedempteVertrekVertraging').text)
+    trein.vertraging = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}ExacteVertrekVertraging').text)
+    trein.vertraging_gedempt = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}GedempteVertrekVertraging').text)
 
     # Gepland en actueel vertrekspoor:
-    trein.vertrekspoor = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Gepland"]'))
-    trein.vertrekspoor_actueel = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Actueel"]'))
+    trein.vertrekspoor = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinVertrekSpoor[@InfoStatus="Gepland"]'))
+    trein.vertrekspoor_actueel = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinVertrekSpoor[@InfoStatus="Actueel"]'))
 
     # Geplande en actuele bestemming:
-    trein.eindbestemming = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Gepland"]'))
-    trein.eindbestemming_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Actueel"]'))
+    trein.eindbestemming = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinEindBestemming[@InfoStatus="Gepland"]'))
+    trein.eindbestemming_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinEindBestemming[@InfoStatus="Actueel"]'))
 
     # Diverse statusvariabelen:
-    trein.reserveren = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Reserveren').text)
-    trein.toeslag = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Toeslag').text)
-    nin_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}NietInstappen')
+    trein.reserveren = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}Reserveren').text)
+    trein.toeslag = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}Toeslag').text)
+    nin_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}NietInstappen')
 
     if nin_node != None:
         trein.niet_instappen = parse_boolean(nin_node.text)
     else:
         __logger__.warn("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinnr, trein.rit_station.code)
 
-    trein.rangeerbeweging = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RangeerBeweging').text)
-    trein.speciaal_kaartje = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpeciaalKaartje').text)
-    trein.achterblijven = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}AchterBlijvenAchtersteTreinDeel').text)
+    trein.rangeerbeweging = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}RangeerBeweging').text)
+    trein.speciaal_kaartje = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}SpeciaalKaartje').text)
+    trein.achterblijven = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}AchterBlijvenAchtersteTreinDeel').text)
 
     # Parse wijzigingsberichten:
     trein.wijzigingen = []
-    for wijziging_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
+    for wijziging_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}Wijziging'):
         trein.wijzigingen.append(parse_wijziging(wijziging_node))
 
     # Reistips:
     trein.reistips = []
-    for reistip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTip'):
-        reistip = ReisTip(reistip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipCode').text)
+    for reistip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}ReisTip'):
+        reistip = ReisTip(reistip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}ReisTipCode').text)
 
-        reistip.stations = parse_stations(reistip_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipStation'))
+        reistip.stations = parse_stations(reistip_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}ReisTipStation'))
         trein.reistips.append(reistip)
 
     # Instaptips:
     trein.instaptips = []
-    for instaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTip'):
+    for instaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}InstapTip'):
         instaptip = InstapTip()
 
-        instaptip.uitstap_station = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipUitstapStation'))
-        instaptip.eindbestemming = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinEindBestemming'))
-        instaptip.treinsoort = instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinSoort').text
-        instaptip.instap_spoor = parse_spoor(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekSpoor'))
-        instaptip.instap_vertrek = isodate.parse_datetime(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekTijd').text)
+        instaptip.uitstap_station = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}InstapTipUitstapStation'))
+        instaptip.eindbestemming = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}InstapTipTreinEindBestemming'))
+        instaptip.treinsoort = instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}InstapTipTreinSoort').text
+        instaptip.instap_spoor = parse_spoor(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}InstapTipVertrekSpoor'))
+        instaptip.instap_vertrek = isodate.parse_datetime(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}InstapTipVertrekTijd').text)
 
         trein.instaptips.append(instaptip)
 
     # Overstaptips:
     trein.overstaptips = []
-    for overstaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTip'):
+    for overstaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}OverstapTip'):
         overstaptip = OverstapTip()
 
-        overstaptip.bestemming = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipBestemming'))
-        overstaptip.overstap_station = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipOverstapStation'))
+        overstaptip.bestemming = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}OverstapTipBestemming'))
+        overstaptip.overstap_station = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}OverstapTipOverstapStation'))
 
         trein.overstaptips.append(overstaptip)
 
@@ -127,40 +127,40 @@ def parse_trein(data):
     trein.verkorte_route = []
     trein.verkorte_route_actueel = []
 
-    trein.verkorte_route = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
-    trein.verkorte_route_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
+    trein.verkorte_route = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}VerkorteRoute[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:4}Station'))
+    trein.verkorte_route_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}VerkorteRoute[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:4}Station'))
 
     # Parse treinvleugels
     trein.vleugels = []
 
-    for vleugel_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugel'):
-        vleugel_eindbestemming = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Gepland"]'))
+    for vleugel_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinVleugel'):
+        vleugel_eindbestemming = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinVleugelEindBestemming[@InfoStatus="Gepland"]'))
         vleugel = TreinVleugel(vleugel_eindbestemming)
 
         # Vertrekspoor en bestemming voor de vleugel:
-        vleugel.vertrekspoor = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Gepland"]'))
-        vleugel.vertrekspoor_actueel = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Actueel"]'))
-        vleugel.eindbestemming_actueel = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Actueel"]'))
+        vleugel.vertrekspoor = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinVleugelVertrekSpoor[@InfoStatus="Gepland"]'))
+        vleugel.vertrekspoor_actueel = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinVleugelVertrekSpoor[@InfoStatus="Actueel"]'))
+        vleugel.eindbestemming_actueel = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}TreinVleugelEindBestemming[@InfoStatus="Actueel"]'))
 
         # Stopstations:
-        vleugel.stopstations = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}StopStations[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
-        vleugel.stopstations_actueel = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}StopStations[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
+        vleugel.stopstations = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}StopStations[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:4}Station'))
+        vleugel.stopstations_actueel = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}StopStations[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:4}Station'))
 
         # Materieel per vleugel:
         vleugel.materieel = []
-        for mat_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelDVS'):
+        for mat_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelDeelDVS'):
             mat = Materieel()
-            mat.soort = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelSoort').text
-            mat.aanduiding = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelAanduiding').text
-            mat.lengte = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelLengte').text
-            mat.eindbestemming = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelEindBestemming[@InfoStatus="Gepland"]'))
-            mat.eindbestemming_actueel = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelEindBestemming[@InfoStatus="Actueel"]'))
+            mat.soort = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelSoort').text
+            mat.aanduiding = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelAanduiding').text
+            mat.lengte = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelLengte').text
+            mat.eindbestemming = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelDeelEindBestemming[@InfoStatus="Gepland"]'))
+            mat.eindbestemming_actueel = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelDeelEindBestemming[@InfoStatus="Actueel"]'))
 
-            vertrekpositie_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelVertrekPositie')
+            vertrekpositie_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelDeelVertrekPositie')
             if vertrekpositie_node != None:
                 mat.vertrekpositie = vertrekpositie_node.text
 
-            volgorde_vertrek_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelVolgordeVertrek')
+            volgorde_vertrek_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MaterieelDeelVolgordeVertrek')
             if volgorde_vertrek_node != None:
                 mat.volgorde_vertrek = volgorde_vertrek_node.text
 
@@ -168,7 +168,7 @@ def parse_trein(data):
 
         # Wijzigingsbericht(en):
         vleugel.wijzigingen = []
-        for wijziging_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
+        for wijziging_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:4}Wijziging'):
             vleugel.wijzigingen.append(parse_wijziging(wijziging_node))
 
         # Voeg vleugel aan trein toe:
@@ -268,15 +268,15 @@ def parse_station(station_element):
 
     station_object = Station(
         station_element.find(
-            '{urn:ndov:cdm:trein:reisinformatie:data:2}StationCode').text,
+            '{urn:ndov:cdm:trein:reisinformatie:data:4}StationCode').text,
         station_element.find(
-            '{urn:ndov:cdm:trein:reisinformatie:data:2}LangeNaam').text
+            '{urn:ndov:cdm:trein:reisinformatie:data:4}LangeNaam').text
         )
 
-    station_object.korte_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}KorteNaam').text
-    station_object.middel_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MiddelNaam').text
-    station_object.uic = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}UICCode').text
-    station_object.station_type = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Type').text
+    station_object.korte_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}KorteNaam').text
+    station_object.middel_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MiddelNaam').text
+    station_object.uic = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}UICCode').text
+    station_object.station_type = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}Type').text
 
     return station_object
 
@@ -287,20 +287,20 @@ def parse_wijziging(wijziging_node):
     """
 
     wijziging = Wijziging(wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text)
+        '{urn:ndov:cdm:trein:reisinformatie:data:4}WijzigingType').text)
     
     oorzaak_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
+        '{urn:ndov:cdm:trein:reisinformatie:data:4}WijzigingOorzaakKort')
     if oorzaak_node != None:
         wijziging.oorzaak = oorzaak_node.text
     
     oorzaak_lang_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
+        '{urn:ndov:cdm:trein:reisinformatie:data:4}WijzigingOorzaakLang')
     if oorzaak_lang_node != None:
         wijziging.oorzaak_lang = oorzaak_lang_node.text
 
     station_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
+        '{urn:ndov:cdm:trein:reisinformatie:data:4}WijzigingStation')
     if station_node != None:
         wijziging.station = parse_station(station_node)
 
@@ -325,11 +325,11 @@ def parse_spoor(spoor_node):
     """
 
     spoor = Spoor(spoor_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
+        '{urn:ndov:cdm:trein:reisinformatie:data:4}SpoorNummer').text)
 
     # Zoek eventuele fase:
     fase_node = spoor_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorFase')
+        '{urn:ndov:cdm:trein:reisinformatie:data:4}SpoorFase')
     if (fase_node != None):
         spoor.fase = fase_node.text
 
