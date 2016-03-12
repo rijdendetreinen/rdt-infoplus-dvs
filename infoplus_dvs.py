@@ -279,8 +279,10 @@ def parse_station(station_element):
 
     station_object.korte_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}KorteNaam').text
     station_object.middel_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}MiddelNaam').text
-    station_object.uic = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}UICCode').text
+    uic_node = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}UICCode')
     station_object.station_type = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:4}Type').text
+    if uic_node is not None:
+        station_object.uic = uic_node.text
 
     return station_object
 
