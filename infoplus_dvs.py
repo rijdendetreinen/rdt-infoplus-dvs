@@ -795,6 +795,16 @@ class Wijziging(object):
                 return 'Attention, train goes to %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Let op, rijdt naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
+        elif self.wijziging_type == '50':
+            if taal == 'en':
+                return 'No real-time information'
+            else:
+                return 'Geen actuele informatie'
+        elif self.wijziging_type == '51':
+            if taal == 'en':
+                return 'Bus replaces train'
+            else:
+                return 'Bus vervangt trein'
         else:
             return '%s' % self.wijziging_type
 
