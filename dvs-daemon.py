@@ -124,8 +124,14 @@ def main():
 
     message_queue = Queue()
 
+    keep_departures = False
+    if 'debug' in config:
+        if config['debug']['keep_departures'] == True:
+            keep_departures = True
+            logger.warn("Debug optie 'keep_departures' actief: ritten worden niet gewist")
+
     # Start een nieuwe thread om messages te verwerken
-    worker_thread = WorkerThread()
+    worker_thread = WorkerThread(keep_departures)
     worker_thread.daemon = True
     worker_thread.start()
 
@@ -161,7 +167,7 @@ def main():
 
     # Start nieuwe thread voor garbage collecting:
     gc_stopped = threading.Event()
-    gc_thread = GarbageThread(gc_stopped, config)
+    gc_thread = GarbageThread(gc_stopped, config, keep_departures)
     gc_thread.daemon = True
     gc_thread.start()
 
@@ -228,9 +234,11 @@ class WorkerThread(threading.Thread):
     """
 
     logger = None
+    keep_departures = False
 
-    def __init__ (self):
+    def __init__ (self, keep_departures):
         self.logger = logging.getLogger(__name__)
+        self.keep_departures = keep_departures
         threading.Thread.__init__(self, name='WorkerThread')
 
     def run(self):
@@ -247,7 +255,7 @@ class WorkerThread(threading.Thread):
 
                 rit_station_code = trein.rit_station.code
                 
-                if trein.status == '5':
+                if trein.status == '5' and self.keep_departures is False:
                     # Trein vertrokken
                     # Verwijder uit station_store
                     if rit_station_code in station_store \
@@ -441,6 +449,8 @@ class GarbageThread(threading.Thread):
     gc_threshold = 10           # 10 minuten na gepland vertrek wissen
     gc_threshold_static = 0     # injecties: 0 minuten na gepland vertrek wissen
 
+    keep_departures = False     # debugoptie
+
     """
     Initialiseer GC thread
     Paremeters:
@@ -448,7 +458,7 @@ class GarbageThread(threading.Thread):
     - configuration: config dict, bevat optioneel een key 'gc' met optioneel
       waarden 'count_time_window', 'count_threshold', 'recovery_time', 'gc_threshold'
     """
-    def __init__(self, event, configuration):
+    def __init__(self, event, configuration, keep_departures):
         threading.Thread.__init__(self, name='GarbageThread')
         self.logger = logging.getLogger(__name__)
 
@@ -477,6 +487,7 @@ class GarbageThread(threading.Thread):
                          self.gc_threshold,
                          self.gc_threshold_static)
         self.stopped = event
+        self.keep_departures = keep_departures
 
     def run(self):
         self.logger.info("Initiele garbage collecting")
@@ -591,7 +602,10 @@ class GarbageThread(threading.Thread):
                     or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
                         try:
                             with locks['station']:
-                                del(station_store[station][trein_rit])
+                                if self.keep_departures is False:
+                                    del(station_store[station][trein_rit])
+                                else:
+                                    station_store[station][trein_rit].status = '5'
 
                             verwerkte_items += 1
 
@@ -630,7 +644,10 @@ class GarbageThread(threading.Thread):
                     or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
                         try:
                             with locks['trein']:
-                                del(trein_store[trein_rit][station])
+                                if self.keep_departures is False:
+                                    del(trein_store[trein_rit][station])
+                                else:
+                                    trein_store[trein_rit][station].status = '5'
 
                             verwerkte_items += 1
 
