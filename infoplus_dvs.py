@@ -25,24 +25,31 @@ def parse_trein(data):
         raise OngeldigDvsBericht()
 
     # Zoek belangrijke nodes op:
-    product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisInformatieProductDVS')
-    vertrekstaat = product.find('{urn:ndov:cdm:trein:reisinformatie:data:2}DynamischeVertrekStaat')
-    trein_node = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Trein')
+    product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:4}ReisInformatieProductDVS')
+    namespace = "urn:ndov:cdm:trein:reisinformatie:data:4"
+
+    if product is None:
+        # Probeer oude namespace (DVS-TIBCO):
+        product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisInformatieProductDVS')
+        namespace = "urn:ndov:cdm:trein:reisinformatie:data:2"
+
+    vertrekstaat = product.find('{%s}DynamischeVertrekStaat' % namespace)
+    trein_node = vertrekstaat.find('{%s}Trein' % namespace)
 
     # Maak trein object:
     trein = Trein()
     
     # Metadata over rit:
-    trein.rit_datum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitDatum').text
-    trein.rit_station = parse_station(vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitStation'))
+    trein.rit_datum = vertrekstaat.find('{%s}RitDatum' % namespace).text
+    trein.rit_station = parse_station(vertrekstaat.find('{%s}RitStation' % namespace), namespace)
     trein.rit_timestamp = isodate.parse_datetime(product.attrib.get('TimeStamp'))
     
     # Treinnummer, soort/formule, etc:
-    trein.treinnr = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNummer').text
+    trein.treinnr = trein_node.find('{%s}TreinNummer' % namespace).text
     trein.rit_id = trein.treinnr
-    trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
-    trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
-    trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
+    trein.soort = trein_node.find('{%s}TreinSoort' % namespace).text
+    trein.soort_code = trein_node.find('{%s}TreinSoort' % namespace).attrib['Code']
+    trein.vervoerder = trein_node.find('{%s}Vervoerder' % namespace).text
 
     # Fix voor verkeerde naam 'NS Interna' voor NS International (zie #1):
     if trein.vervoerder == 'NS Interna' or trein.vervoerder == 'NS Int':
@@ -51,75 +58,75 @@ def parse_trein(data):
         trein.vervoerder = 'Locon Benelux'
     
     # Treinnaam
-    naam_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNaam')
+    naam_node = trein_node.find('{%s}TreinNaam' % namespace)
     if naam_node != None:
         trein.treinnaam = naam_node.text
 
     # Status:
-    trein.status = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinStatus').text
+    trein.status = trein_node.find('{%s}TreinStatus' % namespace).text
 
     # Vertrektijd en vertraging:
-    trein.vertrek = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Gepland"]').text)
-    trein.vertrek_actueel = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Actueel"]').text)
+    trein.vertrek = isodate.parse_datetime(trein_node.find('{%s}VertrekTijd[@InfoStatus="Gepland"]' % namespace).text)
+    trein.vertrek_actueel = isodate.parse_datetime(trein_node.find('{%s}VertrekTijd[@InfoStatus="Actueel"]' % namespace).text)
 
-    trein.vertraging = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ExacteVertrekVertraging').text)
-    trein.vertraging_gedempt = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}GedempteVertrekVertraging').text)
+    trein.vertraging = iso_duur_naar_seconden(trein_node.find('{%s}ExacteVertrekVertraging' % namespace).text)
+    trein.vertraging_gedempt = iso_duur_naar_seconden(trein_node.find('{%s}GedempteVertrekVertraging' % namespace).text)
 
     # Gepland en actueel vertrekspoor:
-    trein.vertrekspoor = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Gepland"]'))
-    trein.vertrekspoor_actueel = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Actueel"]'))
+    trein.vertrekspoor = parse_vertreksporen(trein_node.findall('{%s}TreinVertrekSpoor[@InfoStatus="Gepland"]' % namespace), namespace)
+    trein.vertrekspoor_actueel = parse_vertreksporen(trein_node.findall('{%s}TreinVertrekSpoor[@InfoStatus="Actueel"]' % namespace), namespace)
 
     # Geplande en actuele bestemming:
-    trein.eindbestemming = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Gepland"]'))
-    trein.eindbestemming_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Actueel"]'))
+    trein.eindbestemming = parse_stations(trein_node.findall('{%s}TreinEindBestemming[@InfoStatus="Gepland"]' % namespace), namespace)
+    trein.eindbestemming_actueel = parse_stations(trein_node.findall('{%s}TreinEindBestemming[@InfoStatus="Actueel"]' % namespace), namespace)
 
     # Diverse statusvariabelen:
-    trein.reserveren = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Reserveren').text)
-    trein.toeslag = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Toeslag').text)
-    nin_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}NietInstappen')
+    trein.reserveren = parse_boolean(trein_node.find('{%s}Reserveren' % namespace).text)
+    trein.toeslag = parse_boolean(trein_node.find('{%s}Toeslag' % namespace).text)
+    nin_node = trein_node.find('{%s}NietInstappen' % namespace)
 
     if nin_node != None:
         trein.niet_instappen = parse_boolean(nin_node.text)
     else:
         __logger__.warn("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinnr, trein.rit_station.code)
 
-    trein.rangeerbeweging = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RangeerBeweging').text)
-    trein.speciaal_kaartje = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpeciaalKaartje').text)
-    trein.achterblijven = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}AchterBlijvenAchtersteTreinDeel').text)
+    trein.rangeerbeweging = parse_boolean(trein_node.find('{%s}RangeerBeweging' % namespace).text)
+    trein.speciaal_kaartje = parse_boolean(trein_node.find('{%s}SpeciaalKaartje' % namespace).text)
+    trein.achterblijven = parse_boolean(trein_node.find('{%s}AchterBlijvenAchtersteTreinDeel' % namespace).text)
 
     # Parse wijzigingsberichten:
     trein.wijzigingen = []
-    for wijziging_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
-        trein.wijzigingen.append(parse_wijziging(wijziging_node))
+    for wijziging_node in trein_node.findall('{%s}Wijziging' % namespace):
+        trein.wijzigingen.append(parse_wijziging(wijziging_node, namespace))
 
     # Reistips:
     trein.reistips = []
-    for reistip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTip'):
-        reistip = ReisTip(reistip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipCode').text)
+    for reistip_node in trein_node.findall('{%s}ReisTip' % namespace):
+        reistip = ReisTip(reistip_node.find('{%s}ReisTipCode' % namespace).text)
 
-        reistip.stations = parse_stations(reistip_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipStation'))
+        reistip.stations = parse_stations(reistip_node.findall('{%s}ReisTipStation' % namespace), namespace)
         trein.reistips.append(reistip)
 
     # Instaptips:
     trein.instaptips = []
-    for instaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTip'):
+    for instaptip_node in trein_node.findall('{%s}InstapTip'):
         instaptip = InstapTip()
 
-        instaptip.uitstap_station = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipUitstapStation'))
-        instaptip.eindbestemming = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinEindBestemming'))
-        instaptip.treinsoort = instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinSoort').text
-        instaptip.instap_spoor = parse_spoor(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekSpoor'))
-        instaptip.instap_vertrek = isodate.parse_datetime(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekTijd').text)
+        instaptip.uitstap_station = parse_station(instaptip_node.find('{%s}InstapTipUitstapStation' % namespace), namespace)
+        instaptip.eindbestemming = parse_station(instaptip_node.find('{%s}InstapTipTreinEindBestemming' % namespace), namespace)
+        instaptip.treinsoort = instaptip_node.find('{%s}InstapTipTreinSoort' % namespace).text
+        instaptip.instap_spoor = parse_spoor(instaptip_node.find('{%s}InstapTipVertrekSpoor' % namespace), namespace)
+        instaptip.instap_vertrek = isodate.parse_datetime(instaptip_node.find('{%s}InstapTipVertrekTijd' % namespace).text)
 
         trein.instaptips.append(instaptip)
 
     # Overstaptips:
     trein.overstaptips = []
-    for overstaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTip'):
+    for overstaptip_node in trein_node.findall('{%s}OverstapTip' % namespace):
         overstaptip = OverstapTip()
 
-        overstaptip.bestemming = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipBestemming'))
-        overstaptip.overstap_station = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipOverstapStation'))
+        overstaptip.bestemming = parse_station(overstaptip_node.find('{%s}OverstapTipBestemming' % namespace), namespace)
+        overstaptip.overstap_station = parse_station(overstaptip_node.find('{%s}OverstapTipOverstapStation' % namespace), namespace)
 
         trein.overstaptips.append(overstaptip)
 
@@ -127,49 +134,53 @@ def parse_trein(data):
     trein.verkorte_route = []
     trein.verkorte_route_actueel = []
 
-    trein.verkorte_route = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
-    trein.verkorte_route_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
+    trein.verkorte_route = parse_stations(trein_node.findall('{%s}VerkorteRoute[@InfoStatus="Gepland"]/{%s}Station' % (namespace, namespace)), namespace)
+    trein.verkorte_route_actueel = parse_stations(trein_node.findall('{%s}VerkorteRoute[@InfoStatus="Actueel"]/{%s}Station'% (namespace, namespace)), namespace)
 
     # Parse treinvleugels
     trein.vleugels = []
 
-    for vleugel_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugel'):
-        vleugel_eindbestemming = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Gepland"]'))
+    for vleugel_node in trein_node.findall('{%s}TreinVleugel' % namespace):
+        vleugel_eindbestemming = parse_station(vleugel_node.find('{%s}TreinVleugelEindBestemming[@InfoStatus="Gepland"]' % namespace), namespace)
         vleugel = TreinVleugel(vleugel_eindbestemming)
 
         # Vertrekspoor en bestemming voor de vleugel:
-        vleugel.vertrekspoor = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Gepland"]'))
-        vleugel.vertrekspoor_actueel = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Actueel"]'))
-        vleugel.eindbestemming_actueel = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Actueel"]'))
+        vleugel.vertrekspoor = parse_vertreksporen(vleugel_node.findall('{%s}TreinVleugelVertrekSpoor[@InfoStatus="Gepland"]' % namespace), namespace)
+        vleugel.vertrekspoor_actueel = parse_vertreksporen(vleugel_node.findall('{%s}TreinVleugelVertrekSpoor[@InfoStatus="Actueel"]' % namespace), namespace)
+        vleugel.eindbestemming_actueel = parse_station(vleugel_node.find('{%s}TreinVleugelEindBestemming[@InfoStatus="Actueel"]' % namespace), namespace)
 
         # Stopstations:
-        vleugel.stopstations = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}StopStations[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
-        vleugel.stopstations_actueel = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}StopStations[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
+        vleugel.stopstations = parse_stations(vleugel_node.findall('{%s}StopStations[@InfoStatus="Gepland"]/{%s}Station' % (namespace, namespace)), namespace)
+        vleugel.stopstations_actueel = parse_stations(vleugel_node.findall('{%s}StopStations[@InfoStatus="Actueel"]/{%s}Station' % (namespace, namespace)), namespace)
 
         # Materieel per vleugel:
         vleugel.materieel = []
-        for mat_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelDVS'):
+        for mat_node in vleugel_node.findall('{%s}MaterieelDeelDVS' % namespace):
             mat = Materieel()
-            mat.soort = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelSoort').text
-            mat.aanduiding = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelAanduiding').text
-            mat.lengte = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelLengte').text
-            mat.eindbestemming = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelEindBestemming[@InfoStatus="Gepland"]'))
-            mat.eindbestemming_actueel = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelEindBestemming[@InfoStatus="Actueel"]'))
+            mat.soort = mat_node.find('{%s}MaterieelSoort' % namespace).text
+            mat.aanduiding = mat_node.find('{%s}MaterieelAanduiding' % namespace).text
+            mat.lengte = mat_node.find('{%s}MaterieelLengte' % namespace).text
+            mat.eindbestemming = parse_station(mat_node.find('{%s}MaterieelDeelEindBestemming[@InfoStatus="Gepland"]' % namespace), namespace)
+            mat.eindbestemming_actueel = parse_station(mat_node.find('{%s}MaterieelDeelEindBestemming[@InfoStatus="Actueel"]' % namespace), namespace)
 
-            vertrekpositie_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelVertrekPositie')
+            vertrekpositie_node = mat_node.find('{%s}MaterieelDeelVertrekPositie' % namespace)
             if vertrekpositie_node != None:
                 mat.vertrekpositie = vertrekpositie_node.text
 
-            volgorde_vertrek_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelVolgordeVertrek')
+            volgorde_vertrek_node = mat_node.find('{%s}MaterieelDeelVolgordeVertrek' % namespace)
             if volgorde_vertrek_node != None:
                 mat.volgorde_vertrek = volgorde_vertrek_node.text
+
+            matnummer_node = mat_node.find('{%s}MaterieelNummer' % namespace)
+            if matnummer_node != None:
+                mat.matnummer = matnummer_node.text
 
             vleugel.materieel.append(mat)
 
         # Wijzigingsbericht(en):
         vleugel.wijzigingen = []
-        for wijziging_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
-            vleugel.wijzigingen.append(parse_wijziging(wijziging_node))
+        for wijziging_node in vleugel_node.findall('{%s}Wijziging' % namespace):
+            vleugel.wijzigingen.append(parse_wijziging(wijziging_node, namespace))
 
         # Voeg vleugel aan trein toe:
         trein.vleugels.append(vleugel)
@@ -248,7 +259,7 @@ def parse_trein_dict(trein_dict, statisch=False):
 
 
 
-def parse_stations(station_nodes):
+def parse_stations(station_nodes, namespace):
     """
     Vertaal een node met stations naar een list van Station objecten.
     """
@@ -256,81 +267,83 @@ def parse_stations(station_nodes):
     stations = []
 
     for station_node in station_nodes:
-        stations.append(parse_station(station_node))
+        stations.append(parse_station(station_node, namespace))
 
     return stations
 
 
-def parse_station(station_element):
+def parse_station(station_element, namespace):
     """
     Vertaal een XML node met een station naar een Station object.
     """
 
     station_object = Station(
         station_element.find(
-            '{urn:ndov:cdm:trein:reisinformatie:data:2}StationCode').text,
+            '{%s}StationCode' % namespace).text,
         station_element.find(
-            '{urn:ndov:cdm:trein:reisinformatie:data:2}LangeNaam').text
+            '{%s}LangeNaam' % namespace).text
         )
 
-    station_object.korte_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}KorteNaam').text
-    station_object.middel_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MiddelNaam').text
-    station_object.uic = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}UICCode').text
-    station_object.station_type = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Type').text
+    station_object.korte_naam = station_element.find('{%s}KorteNaam' % namespace).text
+    station_object.middel_naam = station_element.find('{%s}MiddelNaam' % namespace).text
+    uic_node = station_element.find('{%s}UICCode' % namespace)
+    station_object.station_type = station_element.find('{%s}Type' % namespace).text
+    if uic_node is not None:
+        station_object.uic = uic_node.text
 
     return station_object
 
 
-def parse_wijziging(wijziging_node):
+def parse_wijziging(wijziging_node, namespace):
     """
     Vertaal een XML node met een wijziging naar een Wijziging object.
     """
 
     wijziging = Wijziging(wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text)
-    
+        '{%s}WijzigingType' % namespace).text)
+
     oorzaak_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
+        '{%s}WijzigingOorzaakKort' % namespace)
     if oorzaak_node != None:
         wijziging.oorzaak = oorzaak_node.text
-    
+
     oorzaak_lang_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
+        '{%s}WijzigingOorzaakLang' % namespace)
     if oorzaak_lang_node != None:
         wijziging.oorzaak_lang = oorzaak_lang_node.text
 
     station_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
+        '{%s}WijzigingStation' % namespace)
     if station_node != None:
-        wijziging.station = parse_station(station_node)
+        wijziging.station = parse_station(station_node, namespace)
 
     return wijziging
 
 
-def parse_vertreksporen(spoor_nodes):
+def parse_vertreksporen(spoor_nodes, namespace):
     """
     Vertaal een XML node met vertreksporen naar een list met Spoor objecten.
     """
     sporen = []
-    
+
     for spoor_node in spoor_nodes:
-        sporen.append(parse_spoor(spoor_node))
+        sporen.append(parse_spoor(spoor_node, namespace))
 
     return sporen
 
 
-def parse_spoor(spoor_node):
+def parse_spoor(spoor_node, namespace):
     """
     Vertaal een XML node met een vertrekspoor naar een Spoor object.
     """
 
     spoor = Spoor(spoor_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
+        '{%s}SpoorNummer' % namespace).text)
 
     # Zoek eventuele fase:
     fase_node = spoor_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorFase')
-    if (fase_node != None):
+        '{%s}SpoorFase' % namespace)
+    if fase_node is not None:
         spoor.fase = fase_node.text
 
     return spoor
@@ -668,6 +681,7 @@ class Materieel(object):
     eindbestemming_actueel = None
     vertrekpositie = None
     volgorde_vertrek = None
+    matnummer = None
 
     def __init__(self):
         pass
@@ -681,6 +695,13 @@ class Materieel(object):
             return '%s-%s' % (self.soort, self.aanduiding)
         else:
             return self.soort
+
+    def get_matnummer(self):
+        if self.matnummer == None:
+            return None
+
+        # Schoon matnummer op:
+        return self.matnummer.lstrip("0-").rstrip("0").rstrip("-")
 
 class Wijziging(object):
     """
@@ -781,6 +802,16 @@ class Wijziging(object):
                 return 'Attention, train goes to %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Let op, rijdt naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
+        elif self.wijziging_type == '50':
+            if taal == 'en':
+                return 'No real-time information'
+            else:
+                return 'Geen actuele informatie'
+        elif self.wijziging_type == '51':
+            if taal == 'en':
+                return 'Bus replaces train'
+            else:
+                return 'Bus vervangt trein'
         else:
             return '%s' % self.wijziging_type
 
