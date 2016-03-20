@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
-import os
 import zmq
 from gzip import GzipFile
 from cStringIO import StringIO
@@ -30,7 +29,6 @@ import argparse
 import gc
 import logging
 import logging.config
-import yaml
 import threading
 from collections import deque
 from Queue import Queue
