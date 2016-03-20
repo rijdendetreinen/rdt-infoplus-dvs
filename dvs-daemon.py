@@ -161,7 +161,7 @@ def main():
 
     # Start nieuwe thread voor garbage collecting:
     gc_stopped = threading.Event()
-    gc_thread = GarbageThread(gc_stopped)
+    gc_thread = GarbageThread(gc_stopped, config)
     gc_thread.daemon = True
     gc_thread.start()
 
@@ -288,11 +288,11 @@ class WorkerThread(threading.Thread):
                             # Update counter voor dubbele berichten:
                             counters['dubbel'] += 1
                         else:
-                            # Bepaal 1 seconde treshold:
-                            warn_treshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
+                            # Bepaal 1 seconde threshold:
+                            warn_threshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
                             
-                            # Warning log message indien treshold van 1 seconde overschreden is:
-                            if trein.rit_timestamp <= warn_treshold:
+                            # Warning log message indien threshold van 1 seconde overschreden is:
+                            if trein.rit_timestamp <= warn_threshold:
                                 log_level = logging.WARNING
                             else:
                                 log_level = logging.INFO
@@ -326,7 +326,6 @@ class WorkerThread(threading.Thread):
                 self.logger.error('DVS crash bericht: %s', content)
                 
             counters['msg'] += + 1
-
 
             pass
 
@@ -436,10 +435,17 @@ class GarbageThread(threading.Thread):
     msg_count_queue = None
 
     count_time_window = 10      # 10 minuten
-    count_treshold = 1          # minimaal 1 bericht in 10m
+    count_threshold = 1         # minimaal 1 bericht in 10m
     recovery_time = 70          # 70 minuten voor volledig herstel
 
-    def __init__(self, event):
+    """
+    Initialiseer GC thread
+    Paremeters:
+    - event: threading.Event() object
+    - configuration: config dict, bevat optioneel een key 'gc' met optioneel
+      waarden 'count_time_window', 'count_threshold', 'recovery_time', 'gc_threshold'
+    """
+    def __init__(self, event, configuration):
         threading.Thread.__init__(self, name='GarbageThread')
         self.logger = logging.getLogger(__name__)
 
@@ -482,7 +488,7 @@ class GarbageThread(threading.Thread):
                         (msg_received / self.count_time_window))
 
                     # Bepaal eventuele downtime:
-                    if msg_received < self.count_treshold:
+                    if msg_received < self.count_threshold:
                         self.logger.warning('Downtime gedetecteerd, %s berichten ontvangen (%sm window)',
                             msg_received, self.count_time_window)
 
@@ -512,11 +518,11 @@ class GarbageThread(threading.Thread):
                             # tijd voorbij is kan systeem weer naar UP
 
                             # Controleer recovery tijd:
-                            recover_treshold_time = system_status['recovering_since'] + \
+                            recover_threshold_time = system_status['recovering_since'] + \
                                 timedelta(minutes = self.recovery_time)
 
                             # Ook recovery tijd voorbij, systeemstatus is OK:
-                            if datetime.now() >= recover_treshold_time:
+                            if datetime.now() >= recover_threshold_time:
                                 system_status['status'] = 'UP'
                                 self.logger.warning('Systeem weer UP na downtime (%s t/m %s) en recovery. Duur downtime %s',
                                     system_status['down_since'], system_status['recovering_since'],
@@ -531,7 +537,7 @@ class GarbageThread(threading.Thread):
                     # downtime (log starttijd, etc.)
                     system_status['status'] = 'UNKNOWN'
                     system_status['recovering_since'] = None
-                    if system_status['down_since'] == None:
+                    if system_status['down_since'] is None:
                         system_status['down_since'] = datetime.now()
 
             except Exception:
@@ -546,9 +552,9 @@ class GarbageThread(threading.Thread):
 
         global station_store, trein_store, counters
 
-        # Bereken treshold:
-        treshold = datetime.now(pytz.utc) - timedelta(minutes=10)
-        treshold_statisch = datetime.now(pytz.utc)
+        # Bereken threshold:
+        threshold = datetime.now(pytz.utc) - timedelta(minutes=10)
+        threshold_statisch = datetime.now(pytz.utc)
 
         # Performance controle; start:
         start = datetime.now()
@@ -558,8 +564,8 @@ class GarbageThread(threading.Thread):
         for station in station_store:
             try:
                 for trein_rit, trein in station_store[station].items():
-                    if (trein.statisch == False and trein.vertrek_actueel < treshold) \
-                    or (trein.statisch == True and trein.vertrek_actueel < treshold_statisch):
+                    if (trein.statisch == False and trein.vertrek_actueel < threshold) \
+                    or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
                         try:
                             with locks['station']:
                                 del(station_store[station][trein_rit])
@@ -597,8 +603,8 @@ class GarbageThread(threading.Thread):
         for trein_rit in trein_store.keys():
             try:
                 for station, trein in trein_store[trein_rit].items():
-                    if (trein.statisch == False and trein.vertrek_actueel < treshold) \
-                    or (trein.statisch == True and trein.vertrek_actueel < treshold_statisch):
+                    if (trein.statisch == False and trein.vertrek_actueel < threshold) \
+                    or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
                         try:
                             with locks['trein']:
                                 del(trein_store[trein_rit][station])
