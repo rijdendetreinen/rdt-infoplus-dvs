@@ -99,9 +99,6 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
                 treindelen_string = " en ".join(treindelen).capitalize()
                 trein_dict['opmerkingen'].append("%s treindeel slechts tot %s" % (treindelen_string, bestemming))
 
-    # Bij meerdere vleugels: geef als reistip welk deel naar welke bestemming gaat (indien matnummers bekend)
-    # TODO
-
     if trein.statisch == True:
         if taal == 'en':
             trein_dict['opmerkingen'].append("No real-time information")
