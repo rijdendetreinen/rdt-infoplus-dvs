@@ -7,6 +7,18 @@ bindings:
 logging:
     log_config: config/logging.yaml
 
-zmq:
-  envelope: /RIG/InfoPlusDVSInterface
+# Optionele instellingen:
+#zmq:
+#  envelope: /RIG/InfoPlusDVSInterface
+
+# Tenzij instellingen voor downtimedetectie en GC ingesteld worden, worden
+# de standaardinstellingen overgenomen
+#downtime_detection:
+#  count_time_window: 10   # meet downtime over periode van 10 minuten
+#  count_threshold: 1      # er moet minstens 1 bericht per minuut gedetecteerd zijn (gemiddeld)
+#  recovery_time: 70       # status is hersteld 70 minuten zonder downtime
+
+#garbage_collection:
+#  gc_threshold: 10        # wis treinen zonder vertrekbericht 10 minuten na vertrektijd
+#  gc_threshold_static: 0  # wis geinjecteerde ritten 0 minuten na vertrektijd
 ...

@@ -165,7 +165,7 @@ def main():
     gc_thread.daemon = True
     gc_thread.start()
 
-    logger.info("Gereed voor ontvangen DVS berichten (van server %s)", dvs_server)
+    logger.info("Gereed voor ontvangen DVS berichten (van server %s), envelope: %s", dvs_server, envelope)
 
     try:
         while True:
@@ -438,6 +438,9 @@ class GarbageThread(threading.Thread):
     count_threshold = 1         # minimaal 1 bericht in 10m
     recovery_time = 70          # 70 minuten voor volledig herstel
 
+    gc_threshold = 10           # 10 minuten na gepland vertrek wissen
+    gc_threshold_static = 0     # injecties: 0 minuten na gepland vertrek wissen
+
     """
     Initialiseer GC thread
     Paremeters:
@@ -452,7 +455,27 @@ class GarbageThread(threading.Thread):
         # Initialiseer downtime detectie queue
         self.msg_count_queue = deque()
 
+        if 'downtime_detection' in configuration:
+            if 'count_time_window' in configuration['downtime_detection']:
+                self.count_time_window = int(configuration['downtime_detection']['count_time_window'])
+            if 'count_threshold' in configuration['downtime_detection']:
+                self.count_threshold = int(configuration['downtime_detection']['count_threshold'])
+            if 'recovery_time' in configuration['downtime_detection']:
+                self.recovery_time = int(configuration['downtime_detection']['recovery_time'])
+        if 'garbage_collection' in configuration:
+            if 'gc_threshold' in configuration['garbage_collection']:
+                self.gc_threshold = int(configuration['garbage_collection']['gc_threshold'])
+            if 'gc_threshold_static' in configuration['garbage_collection']:
+                self.gc_threshold_static = int(configuration['garbage_collection']['gc_threshold_static'])
+
         self.logger.info("GC thread geinitialiseerd")
+        self.logger.info("Configuratie downtimedetectie: window: %sm, threshold: >=%s bericht/min, recovery time: %sm",
+                         self.count_time_window,
+                         self.count_threshold,
+                         self.recovery_time)
+        self.logger.info("Configuratie garbage collection: threshold: %sm, threshold statisch: %sm",
+                         self.gc_threshold,
+                         self.gc_threshold_static)
         self.stopped = event
 
     def run(self):
@@ -553,8 +576,8 @@ class GarbageThread(threading.Thread):
         global station_store, trein_store, counters
 
         # Bereken threshold:
-        threshold = datetime.now(pytz.utc) - timedelta(minutes=10)
-        threshold_statisch = datetime.now(pytz.utc)
+        threshold = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold)
+        threshold_statisch = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold_static)
 
         # Performance controle; start:
         start = datetime.now()
