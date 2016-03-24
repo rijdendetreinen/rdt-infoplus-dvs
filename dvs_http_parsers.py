@@ -90,6 +90,8 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
         for bestemming in afwijkende_eindbestemming:
             treindelen = []
             for vertrekpositie in afwijkende_eindbestemming[bestemming]:
+                if vertrekpositie is None:
+                    vertrekpositie = 1
                 treindelen.append(treindelen_strings[int(vertrekpositie)])
 
             if taal == 'en':
