@@ -25,24 +25,31 @@ def parse_trein(data):
         raise OngeldigDvsBericht()
 
     # Zoek belangrijke nodes op:
-    product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisInformatieProductDVS')
-    vertrekstaat = product.find('{urn:ndov:cdm:trein:reisinformatie:data:2}DynamischeVertrekStaat')
-    trein_node = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Trein')
+    product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:4}ReisInformatieProductDVS')
+    namespace = "urn:ndov:cdm:trein:reisinformatie:data:4"
+
+    if product is None:
+        # Probeer oude namespace (DVS-TIBCO):
+        product = root.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisInformatieProductDVS')
+        namespace = "urn:ndov:cdm:trein:reisinformatie:data:2"
+
+    vertrekstaat = product.find('{%s}DynamischeVertrekStaat' % namespace)
+    trein_node = vertrekstaat.find('{%s}Trein' % namespace)
 
     # Maak trein object:
     trein = Trein()
     
     # Metadata over rit:
-    trein.rit_datum = vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitDatum').text
-    trein.rit_station = parse_station(vertrekstaat.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RitStation'))
+    trein.rit_datum = vertrekstaat.find('{%s}RitDatum' % namespace).text
+    trein.rit_station = parse_station(vertrekstaat.find('{%s}RitStation' % namespace), namespace)
     trein.rit_timestamp = isodate.parse_datetime(product.attrib.get('TimeStamp'))
     
     # Treinnummer, soort/formule, etc:
-    trein.treinnr = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNummer').text
+    trein.treinnr = trein_node.find('{%s}TreinNummer' % namespace).text
     trein.rit_id = trein.treinnr
-    trein.soort = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').text
-    trein.soort_code = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinSoort').attrib['Code']
-    trein.vervoerder = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Vervoerder').text
+    trein.soort = trein_node.find('{%s}TreinSoort' % namespace).text
+    trein.soort_code = trein_node.find('{%s}TreinSoort' % namespace).attrib['Code']
+    trein.vervoerder = trein_node.find('{%s}Vervoerder' % namespace).text
 
     # Fix voor verkeerde naam 'NS Interna' voor NS International (zie #1):
     if trein.vervoerder == 'NS Interna' or trein.vervoerder == 'NS Int':
@@ -51,75 +58,75 @@ def parse_trein(data):
         trein.vervoerder = 'Locon Benelux'
     
     # Treinnaam
-    naam_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinNaam')
+    naam_node = trein_node.find('{%s}TreinNaam' % namespace)
     if naam_node != None:
         trein.treinnaam = naam_node.text
 
     # Status:
-    trein.status = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinStatus').text
+    trein.status = trein_node.find('{%s}TreinStatus' % namespace).text
 
     # Vertrektijd en vertraging:
-    trein.vertrek = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Gepland"]').text)
-    trein.vertrek_actueel = isodate.parse_datetime(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}VertrekTijd[@InfoStatus="Actueel"]').text)
+    trein.vertrek = isodate.parse_datetime(trein_node.find('{%s}VertrekTijd[@InfoStatus="Gepland"]' % namespace).text)
+    trein.vertrek_actueel = isodate.parse_datetime(trein_node.find('{%s}VertrekTijd[@InfoStatus="Actueel"]' % namespace).text)
 
-    trein.vertraging = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ExacteVertrekVertraging').text)
-    trein.vertraging_gedempt = iso_duur_naar_seconden(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}GedempteVertrekVertraging').text)
+    trein.vertraging = iso_duur_naar_seconden(trein_node.find('{%s}ExacteVertrekVertraging' % namespace).text)
+    trein.vertraging_gedempt = iso_duur_naar_seconden(trein_node.find('{%s}GedempteVertrekVertraging' % namespace).text)
 
     # Gepland en actueel vertrekspoor:
-    trein.vertrekspoor = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Gepland"]'))
-    trein.vertrekspoor_actueel = parse_vertreksporen(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVertrekSpoor[@InfoStatus="Actueel"]'))
+    trein.vertrekspoor = parse_vertreksporen(trein_node.findall('{%s}TreinVertrekSpoor[@InfoStatus="Gepland"]' % namespace), namespace)
+    trein.vertrekspoor_actueel = parse_vertreksporen(trein_node.findall('{%s}TreinVertrekSpoor[@InfoStatus="Actueel"]' % namespace), namespace)
 
     # Geplande en actuele bestemming:
-    trein.eindbestemming = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Gepland"]'))
-    trein.eindbestemming_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinEindBestemming[@InfoStatus="Actueel"]'))
+    trein.eindbestemming = parse_stations(trein_node.findall('{%s}TreinEindBestemming[@InfoStatus="Gepland"]' % namespace), namespace)
+    trein.eindbestemming_actueel = parse_stations(trein_node.findall('{%s}TreinEindBestemming[@InfoStatus="Actueel"]' % namespace), namespace)
 
     # Diverse statusvariabelen:
-    trein.reserveren = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Reserveren').text)
-    trein.toeslag = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Toeslag').text)
-    nin_node = trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}NietInstappen')
+    trein.reserveren = parse_boolean(trein_node.find('{%s}Reserveren' % namespace).text)
+    trein.toeslag = parse_boolean(trein_node.find('{%s}Toeslag' % namespace).text)
+    nin_node = trein_node.find('{%s}NietInstappen' % namespace)
 
     if nin_node != None:
         trein.niet_instappen = parse_boolean(nin_node.text)
     else:
         __logger__.warn("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinnr, trein.rit_station.code)
 
-    trein.rangeerbeweging = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}RangeerBeweging').text)
-    trein.speciaal_kaartje = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}SpeciaalKaartje').text)
-    trein.achterblijven = parse_boolean(trein_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}AchterBlijvenAchtersteTreinDeel').text)
+    trein.rangeerbeweging = parse_boolean(trein_node.find('{%s}RangeerBeweging' % namespace).text)
+    trein.speciaal_kaartje = parse_boolean(trein_node.find('{%s}SpeciaalKaartje' % namespace).text)
+    trein.achterblijven = parse_boolean(trein_node.find('{%s}AchterBlijvenAchtersteTreinDeel' % namespace).text)
 
     # Parse wijzigingsberichten:
     trein.wijzigingen = []
-    for wijziging_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
-        trein.wijzigingen.append(parse_wijziging(wijziging_node))
+    for wijziging_node in trein_node.findall('{%s}Wijziging' % namespace):
+        trein.wijzigingen.append(parse_wijziging(wijziging_node, namespace))
 
     # Reistips:
     trein.reistips = []
-    for reistip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTip'):
-        reistip = ReisTip(reistip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipCode').text)
+    for reistip_node in trein_node.findall('{%s}ReisTip' % namespace):
+        reistip = ReisTip(reistip_node.find('{%s}ReisTipCode' % namespace).text)
 
-        reistip.stations = parse_stations(reistip_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}ReisTipStation'))
+        reistip.stations = parse_stations(reistip_node.findall('{%s}ReisTipStation' % namespace), namespace)
         trein.reistips.append(reistip)
 
     # Instaptips:
     trein.instaptips = []
-    for instaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTip'):
+    for instaptip_node in trein_node.findall('{%s}InstapTip'):
         instaptip = InstapTip()
 
-        instaptip.uitstap_station = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipUitstapStation'))
-        instaptip.eindbestemming = parse_station(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinEindBestemming'))
-        instaptip.treinsoort = instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipTreinSoort').text
-        instaptip.instap_spoor = parse_spoor(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekSpoor'))
-        instaptip.instap_vertrek = isodate.parse_datetime(instaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}InstapTipVertrekTijd').text)
+        instaptip.uitstap_station = parse_station(instaptip_node.find('{%s}InstapTipUitstapStation' % namespace), namespace)
+        instaptip.eindbestemming = parse_station(instaptip_node.find('{%s}InstapTipTreinEindBestemming' % namespace), namespace)
+        instaptip.treinsoort = instaptip_node.find('{%s}InstapTipTreinSoort' % namespace).text
+        instaptip.instap_spoor = parse_spoor(instaptip_node.find('{%s}InstapTipVertrekSpoor' % namespace), namespace)
+        instaptip.instap_vertrek = isodate.parse_datetime(instaptip_node.find('{%s}InstapTipVertrekTijd' % namespace).text)
 
         trein.instaptips.append(instaptip)
 
     # Overstaptips:
     trein.overstaptips = []
-    for overstaptip_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTip'):
+    for overstaptip_node in trein_node.findall('{%s}OverstapTip' % namespace):
         overstaptip = OverstapTip()
 
-        overstaptip.bestemming = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipBestemming'))
-        overstaptip.overstap_station = parse_station(overstaptip_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}OverstapTipOverstapStation'))
+        overstaptip.bestemming = parse_station(overstaptip_node.find('{%s}OverstapTipBestemming' % namespace), namespace)
+        overstaptip.overstap_station = parse_station(overstaptip_node.find('{%s}OverstapTipOverstapStation' % namespace), namespace)
 
         trein.overstaptips.append(overstaptip)
 
@@ -127,49 +134,53 @@ def parse_trein(data):
     trein.verkorte_route = []
     trein.verkorte_route_actueel = []
 
-    trein.verkorte_route = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
-    trein.verkorte_route_actueel = parse_stations(trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}VerkorteRoute[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
+    trein.verkorte_route = parse_stations(trein_node.findall('{%s}VerkorteRoute[@InfoStatus="Gepland"]/{%s}Station' % (namespace, namespace)), namespace)
+    trein.verkorte_route_actueel = parse_stations(trein_node.findall('{%s}VerkorteRoute[@InfoStatus="Actueel"]/{%s}Station'% (namespace, namespace)), namespace)
 
     # Parse treinvleugels
     trein.vleugels = []
 
-    for vleugel_node in trein_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugel'):
-        vleugel_eindbestemming = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Gepland"]'))
+    for vleugel_node in trein_node.findall('{%s}TreinVleugel' % namespace):
+        vleugel_eindbestemming = parse_station(vleugel_node.find('{%s}TreinVleugelEindBestemming[@InfoStatus="Gepland"]' % namespace), namespace)
         vleugel = TreinVleugel(vleugel_eindbestemming)
 
         # Vertrekspoor en bestemming voor de vleugel:
-        vleugel.vertrekspoor = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Gepland"]'))
-        vleugel.vertrekspoor_actueel = parse_vertreksporen(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelVertrekSpoor[@InfoStatus="Actueel"]'))
-        vleugel.eindbestemming_actueel = parse_station(vleugel_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}TreinVleugelEindBestemming[@InfoStatus="Actueel"]'))
+        vleugel.vertrekspoor = parse_vertreksporen(vleugel_node.findall('{%s}TreinVleugelVertrekSpoor[@InfoStatus="Gepland"]' % namespace), namespace)
+        vleugel.vertrekspoor_actueel = parse_vertreksporen(vleugel_node.findall('{%s}TreinVleugelVertrekSpoor[@InfoStatus="Actueel"]' % namespace), namespace)
+        vleugel.eindbestemming_actueel = parse_station(vleugel_node.find('{%s}TreinVleugelEindBestemming[@InfoStatus="Actueel"]' % namespace), namespace)
 
         # Stopstations:
-        vleugel.stopstations = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}StopStations[@InfoStatus="Gepland"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
-        vleugel.stopstations_actueel = parse_stations(vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}StopStations[@InfoStatus="Actueel"]/{urn:ndov:cdm:trein:reisinformatie:data:2}Station'))
+        vleugel.stopstations = parse_stations(vleugel_node.findall('{%s}StopStations[@InfoStatus="Gepland"]/{%s}Station' % (namespace, namespace)), namespace)
+        vleugel.stopstations_actueel = parse_stations(vleugel_node.findall('{%s}StopStations[@InfoStatus="Actueel"]/{%s}Station' % (namespace, namespace)), namespace)
 
         # Materieel per vleugel:
         vleugel.materieel = []
-        for mat_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelDVS'):
+        for mat_node in vleugel_node.findall('{%s}MaterieelDeelDVS' % namespace):
             mat = Materieel()
-            mat.soort = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelSoort').text
-            mat.aanduiding = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelAanduiding').text
-            mat.lengte = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelLengte').text
-            mat.eindbestemming = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelEindBestemming[@InfoStatus="Gepland"]'))
-            mat.eindbestemming_actueel = parse_station(mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelEindBestemming[@InfoStatus="Actueel"]'))
+            mat.soort = mat_node.find('{%s}MaterieelSoort' % namespace).text
+            mat.aanduiding = mat_node.find('{%s}MaterieelAanduiding' % namespace).text
+            mat.lengte = mat_node.find('{%s}MaterieelLengte' % namespace).text
+            mat.eindbestemming = parse_station(mat_node.find('{%s}MaterieelDeelEindBestemming[@InfoStatus="Gepland"]' % namespace), namespace)
+            mat.eindbestemming_actueel = parse_station(mat_node.find('{%s}MaterieelDeelEindBestemming[@InfoStatus="Actueel"]' % namespace), namespace)
 
-            vertrekpositie_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelVertrekPositie')
+            vertrekpositie_node = mat_node.find('{%s}MaterieelDeelVertrekPositie' % namespace)
             if vertrekpositie_node != None:
                 mat.vertrekpositie = vertrekpositie_node.text
 
-            volgorde_vertrek_node = mat_node.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MaterieelDeelVolgordeVertrek')
+            volgorde_vertrek_node = mat_node.find('{%s}MaterieelDeelVolgordeVertrek' % namespace)
             if volgorde_vertrek_node != None:
                 mat.volgorde_vertrek = volgorde_vertrek_node.text
+
+            matnummer_node = mat_node.find('{%s}MaterieelNummer' % namespace)
+            if matnummer_node != None:
+                mat.matnummer = matnummer_node.text
 
             vleugel.materieel.append(mat)
 
         # Wijzigingsbericht(en):
         vleugel.wijzigingen = []
-        for wijziging_node in vleugel_node.findall('{urn:ndov:cdm:trein:reisinformatie:data:2}Wijziging'):
-            vleugel.wijzigingen.append(parse_wijziging(wijziging_node))
+        for wijziging_node in vleugel_node.findall('{%s}Wijziging' % namespace):
+            vleugel.wijzigingen.append(parse_wijziging(wijziging_node, namespace))
 
         # Voeg vleugel aan trein toe:
         trein.vleugels.append(vleugel)
@@ -248,7 +259,7 @@ def parse_trein_dict(trein_dict, statisch=False):
 
 
 
-def parse_stations(station_nodes):
+def parse_stations(station_nodes, namespace):
     """
     Vertaal een node met stations naar een list van Station objecten.
     """
@@ -256,81 +267,83 @@ def parse_stations(station_nodes):
     stations = []
 
     for station_node in station_nodes:
-        stations.append(parse_station(station_node))
+        stations.append(parse_station(station_node, namespace))
 
     return stations
 
 
-def parse_station(station_element):
+def parse_station(station_element, namespace):
     """
     Vertaal een XML node met een station naar een Station object.
     """
 
     station_object = Station(
         station_element.find(
-            '{urn:ndov:cdm:trein:reisinformatie:data:2}StationCode').text,
+            '{%s}StationCode' % namespace).text,
         station_element.find(
-            '{urn:ndov:cdm:trein:reisinformatie:data:2}LangeNaam').text
+            '{%s}LangeNaam' % namespace).text
         )
 
-    station_object.korte_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}KorteNaam').text
-    station_object.middel_naam = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}MiddelNaam').text
-    station_object.uic = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}UICCode').text
-    station_object.station_type = station_element.find('{urn:ndov:cdm:trein:reisinformatie:data:2}Type').text
+    station_object.korte_naam = station_element.find('{%s}KorteNaam' % namespace).text
+    station_object.middel_naam = station_element.find('{%s}MiddelNaam' % namespace).text
+    uic_node = station_element.find('{%s}UICCode' % namespace)
+    station_object.station_type = station_element.find('{%s}Type' % namespace).text
+    if uic_node is not None:
+        station_object.uic = uic_node.text
 
     return station_object
 
 
-def parse_wijziging(wijziging_node):
+def parse_wijziging(wijziging_node, namespace):
     """
     Vertaal een XML node met een wijziging naar een Wijziging object.
     """
 
     wijziging = Wijziging(wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingType').text)
-    
+        '{%s}WijzigingType' % namespace).text)
+
     oorzaak_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakKort')
+        '{%s}WijzigingOorzaakKort' % namespace)
     if oorzaak_node != None:
         wijziging.oorzaak = oorzaak_node.text
-    
+
     oorzaak_lang_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingOorzaakLang')
+        '{%s}WijzigingOorzaakLang' % namespace)
     if oorzaak_lang_node != None:
         wijziging.oorzaak_lang = oorzaak_lang_node.text
 
     station_node = wijziging_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}WijzigingStation')
+        '{%s}WijzigingStation' % namespace)
     if station_node != None:
-        wijziging.station = parse_station(station_node)
+        wijziging.station = parse_station(station_node, namespace)
 
     return wijziging
 
 
-def parse_vertreksporen(spoor_nodes):
+def parse_vertreksporen(spoor_nodes, namespace):
     """
     Vertaal een XML node met vertreksporen naar een list met Spoor objecten.
     """
     sporen = []
-    
+
     for spoor_node in spoor_nodes:
-        sporen.append(parse_spoor(spoor_node))
+        sporen.append(parse_spoor(spoor_node, namespace))
 
     return sporen
 
 
-def parse_spoor(spoor_node):
+def parse_spoor(spoor_node, namespace):
     """
     Vertaal een XML node met een vertrekspoor naar een Spoor object.
     """
 
     spoor = Spoor(spoor_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorNummer').text)
+        '{%s}SpoorNummer' % namespace).text)
 
     # Zoek eventuele fase:
     fase_node = spoor_node.find(
-        '{urn:ndov:cdm:trein:reisinformatie:data:2}SpoorFase')
-    if (fase_node != None):
+        '{%s}SpoorFase' % namespace)
+    if fase_node is not None:
         spoor.fase = fase_node.text
 
     return spoor
@@ -668,6 +681,7 @@ class Materieel(object):
     eindbestemming_actueel = None
     vertrekpositie = None
     volgorde_vertrek = None
+    matnummer = None
 
     def __init__(self):
         pass
@@ -681,6 +695,13 @@ class Materieel(object):
             return '%s-%s' % (self.soort, self.aanduiding)
         else:
             return self.soort
+
+    def get_matnummer(self):
+        if self.matnummer == None:
+            return None
+
+        # Schoon matnummer op:
+        return self.matnummer.lstrip("0-").rstrip("0").rstrip("-")
 
 class Wijziging(object):
     """
@@ -781,14 +802,24 @@ class Wijziging(object):
                 return 'Attention, train goes to %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
             else:
                 return 'Let op, rijdt naar %s%s' % (self.station.lange_naam, self.oorzaak_prefix(taal))
+        elif self.wijziging_type == '50':
+            if taal == 'en':
+                return 'No real-time information'
+            else:
+                return 'Geen actuele informatie'
+        elif self.wijziging_type == '51':
+            if taal == 'en':
+                return 'Bus replaces train'
+            else:
+                return 'Bus vervangt trein'
         else:
             return '%s' % self.wijziging_type
 
     def oorzaak_prefix(self, taal):
         """
-        Geeft een string terug met oorzaak (indien aanwezig), inclusief een
-        prefix 'i.v.m.'. Geeft een lege string terug indien de taal Engels is,
-        oorzaken worden namelijk alleen in het Nederlands geboden.
+        Geeft een string terug met oorzaak (indien aanwezig)
+        Geeft een lege string terug indien de taal Engels is en er geen vertaling
+        beschikbaar is. Oorzaken worden namelijk alleen in het Nederlands geboden.
         """
 
         if self.oorzaak_lang == None:
@@ -801,7 +832,7 @@ class Wijziging(object):
             else:
                 return ''
         else:
-            return ' i.v.m. %s' % self.oorzaak_lang
+            return ' %s' % self.oorzaak_lang
 
     def oorzaak_engels(self):
         """
@@ -809,119 +840,90 @@ class Wijziging(object):
         """
 
         vertalingen = {
-            'geplande werkzaamheden': 'planned engineering work',
-            'werkzaamheden': 'engineering work',
-            'onverwachte werkzaamheden': 'unexpected engineering work',
-            'uitgelopen werkzaamheden': 'over-running engineering works',
-            'uitloop van werkzaamheden': 'over-running engineering works',
-            'de aanleg van een nieuw spoor': 'construction of a new track',
-            'spoedreparatie aan het spoor': 'emergency repairs',
-            'aangepaste dienstregeling': 'an amended timetable',
-            'een aangepaste dienstregeling': 'an amended timetable',
-            'grote vertraging': 'large delay',
-            'te hoog opgelopen vertraging': 'excessive delay',
-            'eerdere verstoring': 'an earlier disruption',
-            'te hoog opgelopen vertraging in het buitenland': 'excessive delay abroad',
-            'een eerdere verstoring': 'an earlier disruption',
-            'herstelwerkzaamheden': 'reparation works',
-            'seinstoring': 'signal failure',
-            'een seinstoring': 'signal failure',
-            'sein- en wisselstoring': 'signalling and points failure',
-            'sein-en wisselstoring': 'signalling and points failure',
-            'een sein- en wisselstoring': 'signalling and points failure',
-            'een sein-en wisselstoring': 'signalling and points failure',
-            'storing aan bediensysteem seinen en wissels': 'a control system failure',
-            'een storing aan bediensysteem seinen en wissels': 'a control system failure',
-            'defect materieel': 'a broken down train',
-            'defecte trein': 'a broken down train',
-            'een defecte trein': 'a broken down train',
-            'ontspoorde trein': 'a derailed train',
-            'een ontspoorde trein': 'a derailed train',
-            'gestrande trein': 'a stranded train',
-            'een gestrande trein': 'a stranded train',
-            'defecte spoorbrug': 'a defective railway bridge',
-            'een defecte spoorbrug': 'a defective railway bridge',
-            'beschadigd spoorviaduct': 'a damaged railway bridge',
-            'een beschadigd spoorviaduct': 'a damaged railway bridge',
-            'beschadigde spoorbrug': 'a damaged railway bridge',
-            'een beschadigde spoorbrug': 'a damaged railway bridge',
-            'beperkingen in de materieelinzet': 'rolling stock problems',
-            'beperkingen in het buitenland': 'restrictions abroad',
-            'acties van het personeel': 'staff strike',
-            'acties in het buitenland': 'staff strike abroad',
-            'wisselstoring': 'points failure',
-            'een wisselstoring': 'points failure',
-            'een defect wissel': 'a defective switch',
-            'veel defect materieel': 'numerous broken down trains',
-            'overwegstoring': 'a level crossing failure',
-            'een overwegstoring': 'level crossing failure',
-            'overwegstoringen': 'level crossing failures',
-            'aanrijding met een persoon': 'a person hit by a train',
-            'een aanrijding met een persoon': 'a person hit by a train',
-            'aanrijding': 'a collision',
-            'een aanrijding': 'a collision',
-            'aanrijding met een voertuig': 'a collision with a vehicle',
-            'aanrijding met een dier': 'a collision with an animal',
-            'een aanrijding met een dier': 'a collision with an animal',
-            'een aanrijding met een voertuig': 'a collision with a vehicle',
-            'auto op het spoor': 'a car on the track',
-            'een auto op het spoor': 'a car on the track',
-            'mensen op het spoor': 'persons on the track',
-            'dier op het spoor': 'an animal on the track',
-            'een dier op het spoor': 'an animal on the track',
-            'een boom op het spoor': 'a tree on the track',
-            'verstoring elders': 'a disruption elsewhere',
-            'een verstoring elders': 'a disruption elsewhere',
-            'persoon op het spoor': 'a trespassing incident',
-            'een persoon op het spoor': 'a trespassing incident',
-            'defect spoor': 'a defective rail',
-            'een defect spoor': 'a defective rail',
-            'defect aan het spoor': 'a defective rail',
-            'een defect aan het spoor': 'a defective rail',
-            'gladde sporen': 'slippery rail',
-            'defecte bovenleiding': 'overhead wire problems',
-            'een defecte bovenleiding': 'overhead wire problems',
-            'beschadigde bovenleiding': 'a damaged overhead wire',
-            'een beschadigde bovenleiding': 'a damaged overhead wire',
-            'een beschadigde overweg': 'a damaged level crossing',
-            'een defecte overweg': 'a defective level crossing',
-            'versperring': 'an obstruction on the line',
-            'een versperring': 'an obstruction on the line',
-            'inzet van de politie': 'police action',
-            'beperkingen op last van de politie': 'restrictions imposed by the police',
-            'beperkingen op last van de brandweer': 'restrictions imposed by the fire brigade',
-            'inzet van de brandweer': 'fire brigade action',
-            'politieonderzoek': 'police investigation',
-            'vandalisme': 'vandalism',
-            'inzet van hulpdiensten': 'an emergency call',
-            'stroomstoring': 'power disruption',
-            'een stroomstoring': 'power disruption',
-            'stormschade': 'storm damage',
-            'bermbrand': 'a lineside fire',
-            'diverse oorzaken': 'various reasons',
-            'meerdere verstoringen': 'multiple disruptions',
-            'koperdiefstal': 'copper theft',
+            'door geplande werkzaamheden': 'planned engineering work',
+            'door werkzaamheden': 'engineering work',
+            'door onverwachte werkzaamheden': 'unexpected engineering work',
+            'door uitgelopen werkzaamheden': 'over-running engineering works',
+            'door uitloop van werkzaamheden': 'over-running engineering works',
+            'door de aanleg van een nieuw spoor': 'construction of a new track',
+            'door een spoedreparatie aan het spoor': 'emergency repairs',
+            'door een aangepaste dienstregeling': 'an amended timetable',
+            'door te grote vertraging': 'large delay',
+            'door te hoog opgelopen vertraging': 'excessive delay',
+            'door te veel vertraging in het buitenland': 'excessive delay abroad',
+            'door een eerdere verstoring': 'an earlier disruption',
+            'door herstelwerkzaamheden': 'reparation works',
+            'door een seinstoring': 'signal failure',
+            'door een sein- en wisselstoring': 'signalling and points failure',
+            'door een sein-en wisselstoring': 'signalling and points failure',
+            'door een storing aan bediensysteem seinen en wissels': 'a control system failure',
+            'door defect materieel': 'a broken down train',
+            'door een defecte trein': 'a broken down train',
+            'door een ontspoorde trein': 'a derailed train',
+            'door een gestrande trein': 'a stranded train',
+            'door een defecte spoorbrug': 'a defective railway bridge',
+            'door een beschadigd spoorviaduct': 'a damaged railway bridge',
+            'door een beschadigde spoorbrug': 'a damaged railway bridge',
+            'door beperkingen in de materieelinzet': 'rolling stock problems',
+            'door beperkingen in het buitenland': 'restrictions abroad',
+            'door acties van het personeel': 'staff strike',
+            'door acties in het buitenland': 'staff strike abroad',
+            'door een wisselstoring': 'points failure',
+            'door een defect wissel': 'a defective switch',
+            'door veel defect materieel': 'numerous broken down trains',
+            'door een overwegstoring': 'level crossing failure',
+            'door overwegstoringen': 'level crossing failures',
+            'door een aanrijding met een persoon': 'a person hit by a train',
+            'door een aanrijding': 'a collision',
+            'door een aanrijding met een dier': 'a collision with an animal',
+            'door een aanrijding met een voertuig': 'a collision with a vehicle',
+            'door een auto op het spoor': 'a car on the track',
+            'door mensen op het spoor': 'persons on the track',
+            'door een dier op het spoor': 'an animal on the track',
+            'door een boom op het spoor': 'a tree on the track',
+            'door een verstoring elders': 'a disruption elsewhere',
+            'door een persoon op het spoor': 'a trespassing incident',
+            'door een defect spoor': 'a defective rail',
+            'door een defect aan het spoor': 'a defective rail',
+            'door gladde sporen': 'slippery rail',
+            'door een defecte bovenleiding': 'overhead wire problems',
+            'door een beschadigde bovenleiding': 'a damaged overhead wire',
+            'door een beschadigde overweg': 'a damaged level crossing',
+            'door een defecte overweg': 'a defective level crossing',
+            'door een versperring': 'an obstruction on the line',
+            'door inzet van de politie': 'police action',
+            'op last van de politie': 'restrictions imposed by the police',
+            'op last van de brandweer': 'restrictions imposed by the fire brigade',
+            'door politieonderzoek': 'police investigation',
+            'door vandalisme': 'vandalism',
+            'door inzet van hulpdiensten': 'an emergency call',
+            'door een stroomstoring': 'power disruption',
+            'door stormschade': 'storm damage',
+            'door een bermbrand': 'a lineside fire',
+            'door diverse oorzaken': 'various reasons',
+            'door meerdere verstoringen': 'multiple disruptions',
+            'door koperdiefstal': 'copper theft',
             'verwachte weersomstandigheden': 'expected weather conditions',
-            'weersomstandigheden': 'bad weather conditions',
+            'door weersomstandigheden': 'bad weather conditions',
             'sneeuw': 'snow',
-            'het onschadelijk maken van een bom uit de Tweede Wereldoorlog': 'defusing a bomb from World War II',
-            'het onschadelijk maken van een bom uit de 2e WO': 'defusing a bomb from World War II',
-            'een evenement': 'an event',
-            'een sein-en overwegstoring': 'signalling failure and a level crossing failure',
-            'een sein- en overwegstoring': 'signalling failure and a level crossing failure',
-            'technisch onderzoek': 'technical inspection',
-            'een brandmelding': 'a fire alarm',
-            'een voorwerp in de bovenleiding': 'an obstacle in the overhead wire',
-            'een voorwerp op het spoor': 'an obstacle on the track',
-            'Koningsdag': 'King\'s day',
-            'Vierdaagse': 'Vierdaagse (Four Days Marches)',
-            'rommel op het spoor': 'rubbish on the track',
-            'grote drukte': 'large crowds',
-            'blikseminslag': 'lightning',
-            'wateroverlast': 'flooding',
-            'een technische storing in een tunnel': 'a technical problem in a tunnel',
-            'hinder op het spoor': 'interference on the line',
+            'door het onschadelijk maken van een bom uit de Tweede Wereldoorlog': 'defusing a bomb from World War II',
+            'door het onschadelijk maken van een bom uit de 2e WO': 'defusing a bomb from World War II',
+            'door een evenement': 'an event',
+            'door een sein-en overwegstoring': 'signalling failure and a level crossing failure',
+            'door een sein- en overwegstoring': 'signalling failure and a level crossing failure',
+            'door technisch onderzoek': 'technical inspection',
+            'door een brandmelding': 'a fire alarm',
+            'door een voorwerp in de bovenleiding': 'an obstacle in the overhead wire',
+            'door een voorwerp op het spoor': 'an obstacle on the track',
+            'door rommel op het spoor': 'rubbish on the track',
+            'door grote drukte': 'large crowds',
+            'door blikseminslag': 'lightning',
+            'door wateroverlast': 'flooding',
+            'door problemen op het spoor in het buitenland': 'railway problems abroad',
+            'door een technische storing in een tunnel': 'a technical problem in a tunnel',
+            'door hinder op het spoor': 'interference on the line',
             'veiligheidsredenen': 'safety reasons',
+            'door een vervangende trein': 'a replacement train',
             'door nog onbekende oorzaak': 'a yet unknown reason'
         }
 
