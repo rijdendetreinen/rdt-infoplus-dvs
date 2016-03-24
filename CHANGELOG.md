@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.0
+
+* Ondersteuning voor InfoPlus DVS-PP
+* Materieelnummers (uit DVS-PP)
+* Attendering op afwijkende eindbestemming treinstellen
+* Ondersteuning voor nieuwe oorzaakteksten
+* Meer debugopties mogelijk
+
 ## 1.3.1
 
 * Optie voor ZMQ envelope toegevoegd
