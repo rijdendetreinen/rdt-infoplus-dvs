@@ -76,9 +76,9 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
         for bestemming in afwijkende_eindbestemming_nrs:
             matnummers = ", ".join(afwijkende_eindbestemming_nrs[bestemming])
             if taal == 'en':
-                trein_dict['opmerkingen'].append("Carriage %s only to %s" % (matnummers, bestemming))
+                trein_dict['opmerkingen'].append("Coach %s terminates at %s" % (matnummers, bestemming))
             else:
-                trein_dict['opmerkingen'].append("Treinstel %s slechts tot %s" % (matnummers, bestemming))
+                trein_dict['opmerkingen'].append("Treinstel %s tot %s" % (matnummers, bestemming))
 
     # Verwerk afwijkende treindelen zonder matnummer naar opmerking:
     if taal == 'en':
@@ -96,10 +96,10 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
 
             if taal == 'en':
                 treindelen_string = " and ".join(treindelen).capitalize()
-                trein_dict['opmerkingen'].append("%s train part only to %s" % (treindelen_string, bestemming))
+                trein_dict['opmerkingen'].append("%s train part terminates at %s" % (treindelen_string, bestemming))
             else:
                 treindelen_string = " en ".join(treindelen).capitalize()
-                trein_dict['opmerkingen'].append("%s treindeel slechts tot %s" % (treindelen_string, bestemming))
+                trein_dict['opmerkingen'].append("%s treindeel tot %s" % (treindelen_string, bestemming))
 
     if trein.statisch == True:
         if taal == 'en':
