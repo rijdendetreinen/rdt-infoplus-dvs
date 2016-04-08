@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1
+
+* Geen melding 'voorste treindeel tot' voor locomotieven
+* Notatie 186-locs
+* Vertalingen bijgewerkt
+
 ## 1.4.0
 
 * Ondersteuning voor InfoPlus DVS-PP
