@@ -7,6 +7,7 @@ import isodate
 import datetime
 import pytz
 import logging
+import re
 
 # Vraag een logger object:
 __logger__ = logging.getLogger(__name__)
@@ -697,11 +698,23 @@ class Materieel(object):
             return self.soort
 
     def get_matnummer(self):
+        """
+        Bereken een leesbaar materieelnummer
+        """
         if self.matnummer == None:
             return None
 
         # Schoon matnummer op:
-        return self.matnummer.lstrip("0-").rstrip("0").rstrip("-")
+        matnummer = self.matnummer.lstrip("0-").rstrip("0").rstrip("-")
+
+        # Fix 1-86xxx notatie:
+        regex = re.compile("(1)\\-(86)([0-9]{3})")
+        match = regex.match(matnummer)
+
+        if match:
+            matnummer = "%s%s-%s" % match.group(1, 2, 3)
+
+        return matnummer
 
 class Wijziging(object):
     """
