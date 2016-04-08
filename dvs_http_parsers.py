@@ -60,7 +60,6 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
 
     for vleugel in trein.vleugels:
         for mat in vleugel.materieel:
-            mat.eindbestemming_actueel.code = counter
             if mat.is_loc():
                 continue
             if mat.eindbestemming_actueel.code != vleugel.eindbestemming_actueel.code:
