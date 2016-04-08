@@ -57,8 +57,12 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
     # Controleer of alle treindelen naar de vleugel-eindbestemming gaan
     afwijkende_eindbestemming = {}
     afwijkende_eindbestemming_nrs = {}
+
     for vleugel in trein.vleugels:
         for mat in vleugel.materieel:
+            mat.eindbestemming_actueel.code = counter
+            if mat.is_loc():
+                continue
             if mat.eindbestemming_actueel.code != vleugel.eindbestemming_actueel.code:
                 if mat.get_matnummer() != None:
                     if mat.eindbestemming_actueel.lange_naam not in afwijkende_eindbestemming_nrs:

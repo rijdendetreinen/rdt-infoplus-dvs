@@ -697,6 +697,19 @@ class Materieel(object):
         else:
             return self.soort
 
+    def is_loc(self):
+        """
+        Bepaal of dit materieeldeel een locomotief is
+        """
+        soort = self.treintype()
+
+        if soort == 'E-LOC-1700' or soort == 'TRAXX-E186' or \
+        soort == 'TRAXX HSL-E186' or soort == 'E-LOC-TRAX' \
+        or soort == 'E-LOC-TR25' or soort == 'BR189-ELOC':
+            return True
+
+        return False
+
     def get_matnummer(self):
         """
         Bereken een leesbaar materieelnummer
