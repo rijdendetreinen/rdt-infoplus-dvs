@@ -7,6 +7,7 @@ import isodate
 import datetime
 import pytz
 import logging
+import re
 
 # Vraag een logger object:
 __logger__ = logging.getLogger(__name__)
@@ -696,12 +697,37 @@ class Materieel(object):
         else:
             return self.soort
 
+    def is_loc(self):
+        """
+        Bepaal of dit materieeldeel een locomotief is
+        """
+        soort = self.treintype()
+
+        if soort == 'E-LOC-1700' or soort == 'TRAXX-E186' or \
+        soort == 'TRAXX HSL-E186' or soort == 'E-LOC-TRAX' \
+        or soort == 'E-LOC-TR25' or soort == 'BR189-ELOC':
+            return True
+
+        return False
+
     def get_matnummer(self):
+        """
+        Bereken een leesbaar materieelnummer
+        """
         if self.matnummer == None:
             return None
 
         # Schoon matnummer op:
-        return self.matnummer.lstrip("0-").rstrip("0").rstrip("-")
+        matnummer = self.matnummer.lstrip("0-").rstrip("0").rstrip("-")
+
+        # Fix 1-86xxx notatie:
+        regex = re.compile("(1)\\-(86)([0-9]{3})")
+        match = regex.match(matnummer)
+
+        if match:
+            matnummer = "%s%s-%s" % match.group(1, 2, 3)
+
+        return matnummer
 
 class Wijziging(object):
     """
@@ -904,8 +930,9 @@ class Wijziging(object):
             'door meerdere verstoringen': 'multiple disruptions',
             'door koperdiefstal': 'copper theft',
             'verwachte weersomstandigheden': 'expected weather conditions',
-            'door weersomstandigheden': 'bad weather conditions',
+            'door de weersomstandigheden': 'bad weather conditions',
             'sneeuw': 'snow',
+            'door harde wind op de Hogesnelheidslijn': 'strong winds on the high-speed line',
             'door het onschadelijk maken van een bom uit de Tweede Wereldoorlog': 'defusing a bomb from World War II',
             'door het onschadelijk maken van een bom uit de 2e WO': 'defusing a bomb from World War II',
             'door een evenement': 'an event',
