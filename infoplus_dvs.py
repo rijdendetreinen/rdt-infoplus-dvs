@@ -947,9 +947,10 @@ class Wijziging(object):
             'door blikseminslag': 'lightning',
             'door wateroverlast': 'flooding',
             'door problemen op het spoor in het buitenland': 'railway problems abroad',
-            'door een technische storing in een tunnel': 'a technical problem in a tunnel',
+            'door een storing in een tunnel': 'a problem in a tunnel',
             'door hinder op het spoor': 'interference on the line',
             'veiligheidsredenen': 'safety reasons',
+            'door het onverwacht ontbreken van personeel': 'missing crew',
             'door een vervangende trein': 'a replacement train',
             'door nog onbekende oorzaak': 'a yet unknown reason'
         }
