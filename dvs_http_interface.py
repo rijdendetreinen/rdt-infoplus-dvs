@@ -64,7 +64,7 @@ def station_details(station, taal='nl'):
 
                 trein_dict = dvs_http_parsers.trein_to_dict(trein, taal, tijd_nu, materieel=verbose)
 
-                if trein_dict != None and trein.status != "5":
+                if trein_dict != None and not trein.is_vertrokken():
                     vertrektijden.append(trein_dict)
 
             return {'result': 'OK', 'system_status': dvs_status, 'vertrektijden': vertrektijden}

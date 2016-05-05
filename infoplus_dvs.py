@@ -412,6 +412,7 @@ class Trein(object):
     rit_station = None
     rit_datum = None
     rit_timestamp = None
+    vertrokken_timestamp = None
 
     treinnr = None
     eindbestemming = []
@@ -639,6 +640,13 @@ class Trein(object):
                 return 'Reservation required'
             else:
                 return 'Reservering verplicht'
+
+    def markeer_vertrokken(self):
+        self.status = "5"
+        self.vertrokken_timestamp = datetime.datetime.now(pytz.utc)
+
+    def is_vertrokken(self):
+        return self.status == "5"
 
     def __repr__(self):
         return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % \
