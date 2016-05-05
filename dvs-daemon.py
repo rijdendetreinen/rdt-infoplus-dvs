@@ -436,6 +436,7 @@ class GarbageThread(threading.Thread):
 
     gc_threshold = 10           # 10 minuten na gepland vertrek wissen
     gc_threshold_static = 0     # injecties: 0 minuten na gepland vertrek wissen
+    gc_threshold_departed = 120 # ritten 120 minuten na vertrek wissen
 
     keep_departures = False     # debugoptie
 
@@ -465,15 +466,18 @@ class GarbageThread(threading.Thread):
                 self.gc_threshold = int(configuration['garbage_collection']['gc_threshold'])
             if 'gc_threshold_static' in configuration['garbage_collection']:
                 self.gc_threshold_static = int(configuration['garbage_collection']['gc_threshold_static'])
+            if 'gc_threshold_departed' in configuration['garbage_collection']:
+                self.gc_threshold_departed = int(configuration['garbage_collection']['gc_threshold_departed'])
 
         self.logger.info("GC thread geinitialiseerd")
         self.logger.info("Configuratie downtimedetectie: window: %sm, threshold: >=%s bericht/min, recovery time: %sm",
                          self.count_time_window,
                          self.count_threshold,
                          self.recovery_time)
-        self.logger.info("Configuratie garbage collection: threshold: %sm, threshold statisch: %sm",
+        self.logger.info("Configuratie garbage collection: threshold: %sm, threshold statisch: %sm, threshold vertrokken: %sm",
                          self.gc_threshold,
-                         self.gc_threshold_static)
+                         self.gc_threshold_static,
+                         self.gc_threshold_departed)
         self.stopped = event
         self.keep_departures = keep_departures
 
@@ -577,6 +581,7 @@ class GarbageThread(threading.Thread):
         # Bereken threshold:
         threshold = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold)
         threshold_statisch = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold_static)
+        threshold_departed = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold_departed)
 
         # Performance controle; start:
         start = datetime.now()
@@ -586,33 +591,43 @@ class GarbageThread(threading.Thread):
         for station in station_store:
             try:
                 for trein_rit, trein in station_store[station].items():
-                    if (trein.statisch == False and trein.vertrek_actueel < threshold) \
-                    or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
-                        # Geen trein verwerken die al als vertrokken is gemarkeerd:
-                        if trein.is_vertrokken():
-                            continue
+                    if trein.is_vertrokken():
+                        if trein.vertrokken_timestamp is None:
+                            # Timestamp ontbreekt, voeg alsnog toe:
+                            trein.markeer_vertrokken()
+                        else:
+                            # Controleer of threshold_departed overschreden is
+                            try:
+                                if trein.vertrokken_timestamp < threshold_departed and self.keep_departures is False:
+                                    del(station_store[station][trein_rit])
+                            except KeyError:
+                                self.logger.debug("GC: %s/%s al verwijderd", trein_rit, station)
+                    else:
+                        # Trein is nog niet vertrokken, controleer threshold om rit
+                        # als vertrokken te markeren:
+                        if (trein.statisch == False and trein.vertrek_actueel < threshold) \
+                        or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
+                            try:
+                                with locks['station']:
+                                    station_store[station][trein_rit].markeer_vertrokken()
 
-                        try:
-                            with locks['station']:
-                                station_store[station][trein_rit].markeer_vertrokken()
+                                verwerkte_items += 1
 
-                            verwerkte_items += 1
+                                if trein.is_opgeheven():
+                                    # Voor opgeheven treinen komt geen wisbericht,
+                                    # daarom is het te verwachten dat deze GC'd worden
+                                    # Log alleen debug melding
+                                    self.logger.debug('GC [SS] %s/%s gemarkeerd als vertrokken (opgeheven)' % (trein_rit, station))
+                                elif trein.statisch == True:
+                                    self.logger.debug('GC [SS] %s/%s gemarkeerd als vertrokken (statisch)' % (trein_rit, station))
+                                else:
+                                    # Waarschuwing indien trein niet opgeheven, maar
+                                    # wel 10-minuten window overschreden:
+                                    self.logger.warn('GC [SS] %s/%s gemarkeerd als vertrokken (geen wisbericht ontvangen)' % (trein_rit, station))
 
-                            if trein.is_opgeheven():
-                                # Voor opgeheven treinen komt geen wisbericht,
-                                # daarom is het te verwachten dat deze GC'd worden
-                                # Log alleen debug melding
-                                self.logger.debug('GC [SS] %s/%s gemarkeerd als vertrokken (opgeheven)' % (trein_rit, station))
-                            elif trein.statisch == True:
-                                self.logger.debug('GC [SS] %s/%s gemarkeerd als vertrokken (statisch)' % (trein_rit, station))
-                            else:
-                                # Waarschuwing indien trein niet opgeheven, maar
-                                # wel 10-minuten window overschreden:
-                                self.logger.warn('GC [SS] %s/%s gemarkeerd als vertrokken (geen wisbericht ontvangen)' % (trein_rit, station))
-
-                                counters['gc_station'] = counters['gc_station'] + 1
-                        except KeyError:
-                            self.logger.debug('GC [SS] Al verwijderd %s/%s', trein_rit, station)
+                                    counters['gc_station'] = counters['gc_station'] + 1
+                            except KeyError:
+                                self.logger.debug('GC [SS] Al verwijderd %s/%s', trein_rit, station)
             except KeyError:
                 self.logger.warn('GC [SS] Station verwijderd %s', station)
 
@@ -629,33 +644,46 @@ class GarbageThread(threading.Thread):
         for trein_rit in trein_store.keys():
             try:
                 for station, trein in trein_store[trein_rit].items():
-                    if (trein.statisch == False and trein.vertrek_actueel < threshold) \
-                    or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
-                        # Geen trein verwerken die al als vertrokken is gemarkeerd:
-                        if trein.is_vertrokken():
-                            continue
+                    if trein.is_vertrokken():
+                        if trein.vertrokken_timestamp is None:
+                            # Timestamp ontbreekt, voeg alsnog toe:
+                            trein.markeer_vertrokken()
+                            self.logger.warning("GC: trein %s/%s vertrokken maar timestamp leeg", trein_rit, station)
+                        else:
+                            # Controleer of threshold_departed overschreden is
+                            try:
+                                if trein.vertrokken_timestamp < threshold_departed and self.keep_departures is False:
+                                    del(trein_store[trein_rit][station])
+                                    self.logger.debug("GC: TS, trein %s/%s verwijderd", trein_rit, station)
+                            except KeyError:
+                                self.logger.debug("GC: %s/%s al verwijderd", trein_rit, station)
+                    else:
+                        # Trein is nog niet vertrokken, controleer threshold om rit
+                        # als vertrokken te markeren:
+                        if (trein.statisch == False and trein.vertrek_actueel < threshold) \
+                        or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
+                            # Geen trein verwerken die al als vertrokken is gemarkeerd:
+                            try:
+                                with locks['trein']:
+                                    trein_store[trein_rit][station].markeer_vertrokken()
 
-                        try:
-                            with locks['trein']:
-                                trein_store[trein_rit][station].markeer_vertrokken()
+                                verwerkte_items += 1
 
-                            verwerkte_items += 1
+                                if trein.is_opgeheven():
+                                    # Voor opgeheven treinen komt geen wisbericht,
+                                    # daarom is het te verwachten dat deze GC'd worden
+                                    # Log alleen debug melding
+                                    self.logger.debug('GC [TS] %s/%s gemarkeerd als vertrokken (opgeheven)' % (trein_rit, station))
+                                elif trein.statisch == True:
+                                    self.logger.debug('GC [TS] %s/%s gemarkeerd als vertrokken (statisch)' % (trein_rit, station))
+                                else:
+                                    # Waarschuwing indien trein niet opgeheven, maar
+                                    # wel 10-minuten window overschreden:
+                                    self.logger.warn('GC [TS] %s/%s gemarkeerd als vertrokken (geen wisbericht ontvangen)' % (trein_rit, station))
 
-                            if trein.is_opgeheven():
-                                # Voor opgeheven treinen komt geen wisbericht,
-                                # daarom is het te verwachten dat deze GC'd worden
-                                # Log alleen debug melding
-                                self.logger.debug('GC [TS] %s/%s gemarkeerd als vertrokken (opgeheven)' % (trein_rit, station))
-                            elif trein.statisch == True:
-                                self.logger.debug('GC [TS] %s/%s gemarkeerd als vertrokken (statisch)' % (trein_rit, station))
-                            else:
-                                # Waarschuwing indien trein niet opgeheven, maar
-                                # wel 10-minuten window overschreden:
-                                self.logger.warn('GC [TS] %s/%s gemarkeerd als vertrokken (geen wisbericht ontvangen)' % (trein_rit, station))
-
-                                counters['gc_trein'] = counters['gc_trein'] + 1
-                        except KeyError:
-                            self.logger.debug('GC [TS] Al verwijderd %s/%s', trein_rit, station)
+                                    counters['gc_trein'] = counters['gc_trein'] + 1
+                            except KeyError:
+                                self.logger.debug('GC [TS] Al verwijderd %s/%s', trein_rit, station)
             except KeyError:
                 self.logger.debug('GC [TS] Al verwijderd %s', trein_rit)
 
