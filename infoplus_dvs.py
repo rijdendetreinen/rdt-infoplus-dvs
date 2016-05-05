@@ -885,6 +885,7 @@ class Wijziging(object):
             'door een storing aan bediensysteem seinen en wissels': 'a control system failure',
             'door defect materieel': 'a broken down train',
             'door een defecte trein': 'a broken down train',
+            'door defecte treinen': 'broken down trains',
             'door een ontspoorde trein': 'a derailed train',
             'door een gestrande trein': 'a stranded train',
             'door een defecte spoorbrug': 'a defective railway bridge',
@@ -952,6 +953,7 @@ class Wijziging(object):
             'veiligheidsredenen': 'safety reasons',
             'door het onverwacht ontbreken van personeel': 'missing crew',
             'door een vervangende trein': 'a replacement train',
+            'door Koningsdag': 'King\'s day',
             'door nog onbekende oorzaak': 'a yet unknown reason'
         }
 
