@@ -2,7 +2,7 @@
 
 """
 InfoPlus DVS Daemon, voor het verwerken en opvragen van NS InfoPlus-DVS berichten.
-Copyright (C) 2013-2015 Geert Wirken
+Copyright (C) 2013-2016 Geert Wirken
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
