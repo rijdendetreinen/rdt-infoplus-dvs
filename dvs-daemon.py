@@ -482,13 +482,13 @@ class GarbageThread(threading.Thread):
         self.keep_departures = keep_departures
 
     def run(self):
-        self.logger.info("Initiele garbage collecting")
+        self.logger.debug("Initiele garbage collecting")
         self.garbage_collect()
 
         # Loop over garbage collecting iedere 1m:
         while not self.stopped.wait(60):
             try:
-                self.logger.info("Periodieke garbage collecting")
+                self.logger.debug("Periodieke garbage collecting")
                 self.garbage_collect()
 
                 self.logger.info(
@@ -695,7 +695,7 @@ class GarbageThread(threading.Thread):
         # Bereken duur voor GC en duur per item
         if verwerkte_items > 0:
             duur = datetime.now() - start
-            self.logger.info("GC [TS] * %s items verwerkt in %s (%s per verwerking)", verwerkte_items, duur, (duur / verwerkte_items))
+            self.logger.debug("GC [TS] * %s items verwerkt in %s (%s per verwerking)", verwerkte_items, duur, (duur / verwerkte_items))
 
         # Trigger Python GC na deze opruimronde:
         gc.collect()

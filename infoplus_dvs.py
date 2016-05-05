@@ -89,7 +89,7 @@ def parse_trein(data):
     if nin_node != None:
         trein.niet_instappen = parse_boolean(nin_node.text)
     else:
-        __logger__.warn("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinnr, trein.rit_station.code)
+        __logger__.debug("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinnr, trein.rit_station.code)
 
     trein.rangeerbeweging = parse_boolean(trein_node.find('{%s}RangeerBeweging' % namespace).text)
     trein.speciaal_kaartje = parse_boolean(trein_node.find('{%s}SpeciaalKaartje' % namespace).text)
