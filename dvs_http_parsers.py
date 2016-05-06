@@ -232,6 +232,11 @@ def serviceinfo_to_dict(serviceinfo, station):
         trein_dict['spoor'] = stop['actual_departure_platform']
         trein_dict['sprWijziging'] = True
 
+    for stop_data in service['stops']:
+        stop_dict = {}
+        stop_dict = parse_stop_data(stop_data, stop_dict)
+        trein_dict['vleugels'][0]['stopstations'].append(stop_dict)
+
     return trein_dict
 
 
@@ -271,30 +276,47 @@ def stopstations_to_list(stations, treinnr, ritdatum, serviceinfo_config):
 
             if extra_stop_data != None:
                 # Verwerk spoorinformatie:
-                station_dict['sprWijziging'] = False
-                station_dict['aankomstspoor'] = extra_stop_data['scheduled_arrival_platform']
-                station_dict['vertrekspoor'] = extra_stop_data['scheduled_departure_platform']
-
-                if extra_stop_data['actual_arrival_platform'] != None and \
-                    extra_stop_data['scheduled_arrival_platform'] != extra_stop_data['actual_arrival_platform']:
-                    station_dict['aankomstspoor'] = extra_stop_data['actual_arrival_platform']
-                    station_dict['sprWijziging'] = True
-
-                if extra_stop_data['actual_departure_platform'] != None and \
-                    extra_stop_data['scheduled_departure_platform'] != extra_stop_data['actual_departure_platform']:
-                    station_dict['vertrekspoor'] = extra_stop_data['actual_departure_platform']
-                    station_dict['sprWijziging'] = True
-
-                # Overige data:
-                station_dict['aankomst'] = extra_stop_data['arrival_time']
-                station_dict['vertrek'] = extra_stop_data['departure_time']
-                station_dict['vertragingAankomst'] = extra_stop_data['arrival_delay']
-                station_dict['vertragingVertrek'] = extra_stop_data['departure_delay']
+                station_dict = parse_stop_data(extra_stop_data, station_dict)
 
         # Voeg station toe aan de list met alle stations
         stations_list.append(station_dict)
 
     return stations_list
+
+
+def parse_stop_data(stop_data, station_dict):
+    if stop_data is None:
+        return station_dict
+
+    # Stel code en naam in (indien nog niet ingesteld):
+    if 'naam' not in station_dict:
+        station_dict['naam'] = stop_data['station_name']
+
+    if 'code' not in station_dict:
+        station_dict['code'] = stop_data['station']
+
+    # Verwerk spoorinformatie:
+    station_dict['sprWijziging'] = False
+    station_dict['aankomstspoor'] = stop_data['scheduled_arrival_platform']
+    station_dict['vertrekspoor'] = stop_data['scheduled_departure_platform']
+
+    if stop_data['actual_arrival_platform'] != None and \
+                    stop_data['scheduled_arrival_platform'] != stop_data['actual_arrival_platform']:
+        station_dict['aankomstspoor'] = stop_data['actual_arrival_platform']
+        station_dict['sprWijziging'] = True
+
+    if stop_data['actual_departure_platform'] != None and \
+                    stop_data['scheduled_departure_platform'] != stop_data['actual_departure_platform']:
+        station_dict['vertrekspoor'] = stop_data['actual_departure_platform']
+        station_dict['sprWijziging'] = True
+
+    # Overige data:
+    station_dict['aankomst'] = stop_data['arrival_time']
+    station_dict['vertrek'] = stop_data['departure_time']
+    station_dict['vertragingAankomst'] = stop_data['arrival_delay']
+    station_dict['vertragingVertrek'] = stop_data['departure_delay']
+
+    return station_dict
 
 
 def retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config):
