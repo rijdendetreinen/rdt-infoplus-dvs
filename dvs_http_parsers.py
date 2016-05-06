@@ -11,6 +11,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+
 def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, serviceinfo_config=None):
     """
     Vertaal een InfoPlus_DVS Trein object naar een dict,
@@ -178,6 +179,45 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
         trein_dict['vleugels'].append(vleugel_dict)
 
     return trein_dict
+
+
+def serviceinfo_to_dict(serviceinfo, station):
+    """
+    Vertaal een serviceinfo dict naar een dictionary zoals
+    deze door trein_to_dict wordt teruggegeven
+    """
+
+    if serviceinfo is None or station is None:
+        return None
+
+    if len(serviceinfo) == 0:
+        return None
+
+    service = serviceinfo[0]
+
+    # Check stops
+    stop = None
+    for check_stop in service['stops']:
+        if check_stop['station'].lower() == station.lower():
+            stop = check_stop
+
+    if check_stop is None:
+        return None
+
+    trein_dict = {
+        "status": 0,
+        "via": None,
+        "bestemming": service['stops'][-1]['station_name'],
+        "vervoerder": service['company_name'],
+        'soort': service['transport_mode_description'],
+        'soortAfk': None,
+        'treinNr': service['service_number'],
+        'id': service['service_number'],
+        'vertrek': stop['departure_time']
+    }
+
+    return trein_dict
+
 
 def stopstations_to_list(stations, treinnr, ritdatum, serviceinfo_config):
     """
