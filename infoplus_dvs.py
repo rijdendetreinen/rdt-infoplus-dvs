@@ -883,6 +883,7 @@ class Wijziging(object):
             'door een sein- en wisselstoring': 'signalling and points failure',
             'door een sein-en wisselstoring': 'signalling and points failure',
             'door een storing aan bediensysteem seinen en wissels': 'a control system failure',
+            'door een storing in de bediening van seinen': 'a control system failure',
             'door defect materieel': 'a broken down train',
             'door een defecte trein': 'a broken down train',
             'door defecte treinen': 'broken down trains',
