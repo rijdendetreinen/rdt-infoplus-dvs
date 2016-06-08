@@ -883,8 +883,10 @@ class Wijziging(object):
             'door een sein- en wisselstoring': 'signalling and points failure',
             'door een sein-en wisselstoring': 'signalling and points failure',
             'door een storing aan bediensysteem seinen en wissels': 'a control system failure',
+            'door een storing in de bediening van seinen': 'a control system failure',
             'door defect materieel': 'a broken down train',
             'door een defecte trein': 'a broken down train',
+            'door defecte treinen': 'broken down trains',
             'door een ontspoorde trein': 'a derailed train',
             'door een gestrande trein': 'a stranded train',
             'door een defecte spoorbrug': 'a defective railway bridge',
@@ -947,10 +949,12 @@ class Wijziging(object):
             'door blikseminslag': 'lightning',
             'door wateroverlast': 'flooding',
             'door problemen op het spoor in het buitenland': 'railway problems abroad',
-            'door een technische storing in een tunnel': 'a technical problem in a tunnel',
+            'door een storing in een tunnel': 'a problem in a tunnel',
             'door hinder op het spoor': 'interference on the line',
             'veiligheidsredenen': 'safety reasons',
+            'door het onverwacht ontbreken van personeel': 'missing crew',
             'door een vervangende trein': 'a replacement train',
+            'door Koningsdag': 'King\'s day',
             'door nog onbekende oorzaak': 'a yet unknown reason'
         }
 
