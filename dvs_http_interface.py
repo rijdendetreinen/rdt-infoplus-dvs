@@ -108,7 +108,7 @@ def trein_details(trein, station, taal='nl'):
             return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict}
         else:
             # Probeer trein te zoeken in serviceinfo:
-            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, "2016-05-06", config['serviceinfo'])
+            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, "2016-06-12", config['serviceinfo'])
             trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station)
 
             if trein_dict is not None:

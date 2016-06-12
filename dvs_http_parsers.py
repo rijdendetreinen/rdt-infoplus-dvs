@@ -201,13 +201,14 @@ def serviceinfo_to_dict(serviceinfo, station):
         if check_stop['station'].lower() == station.lower():
             stop = check_stop
 
-    if check_stop is None:
+    if stop is None:
         return None
 
     bestemming = service['stops'][-1]['station_name']
 
     trein_dict = {
         'status': 0,
+        'opgeheven': service['cancelled'],
         'via': None,
         'bestemming': bestemming,
         'vervoerder': service['company_name'],
@@ -215,10 +216,10 @@ def serviceinfo_to_dict(serviceinfo, station):
         'soortAfk': service['transport_mode'],
         'treinNr': service['service_number'],
         'id': service['service_number'],
-        'vertrek': stop['departure_time'],
-        'spoor': stop['scheduled_departure_platform'],
+        'vertrek': None,
+        'spoor': None,
         'sprWijziging': False,
-        'vertraging': stop['departure_delay'],
+        'vertraging': 0,
         'vleugels': [{
             'bestemming': bestemming,
             'mat': [],
@@ -227,6 +228,15 @@ def serviceinfo_to_dict(serviceinfo, station):
         'opmerkingen': [],
         'tips': []
     }
+
+    if stop['departure_time'] is not None:
+        trein_dict['vertrek'] = stop['departure_time']
+
+    if stop['scheduled_departure_platform'] is not None:
+        trein_dict['spoor'] = stop['scheduled_departure_platform']
+
+    if stop['departure_delay'] is not None:
+        trein_dict['vertraging'] = stop['departure_delay']
 
     if stop['actual_departure_platform'] is not None and stop['actual_departure_platform'] != stop['scheduled_departure_platform']:
         trein_dict['spoor'] = stop['actual_departure_platform']
