@@ -106,12 +106,24 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
 
     try:
         tijd_nu = datetime.datetime.now(pytz.utc)
+        serviceinfo = None
 
         # Stuur opdracht: haal alle informatie op voor dit treinnummer
         data = _send_dvs_command('trein/%s' % trein)
 
-        vertrekken = data['data']
-        dvs_status = data['status']['status']
+        if 'data' in data:
+            vertrekken = data['data']
+            dvs_status = data['status']['status']
+        else:
+            vertrekken = data
+            dvs_status = None
+
+        # Indien geen station opgegeven:
+        # Zoek rit in serviceinfo, gebruik eerste station als ritstation.
+        if station is None:
+            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
+            if serviceinfo is not None and 'stops' in serviceinfo[0]:
+                station = serviceinfo[0]['stops'][0]['station']
 
         # Lees trein array uit:
         if vertrekken != None and station.upper() in vertrekken:
@@ -124,7 +136,9 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
             return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'dvs'}
         else:
             # Probeer trein te zoeken in serviceinfo:
-            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
+            if serviceinfo is None:
+                # Niet opnieuw opvragen indien nog beschikbaar
+                serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
             trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station)
 
             if trein_dict is not None:
