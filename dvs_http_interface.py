@@ -5,7 +5,7 @@ op te vragen. Iedere request geeft een JSON response terug.
 """
 
 import zmq
-from datetime import datetime
+import datetime
 import pytz
 import bottle
 import logging
@@ -13,16 +13,19 @@ from bottle import response
 
 import dvs_http_parsers
 
-
 SERVER_TIMEOUT = 4
 config = {}
 
-
-@bottle.route('/station/<station>')
-@bottle.route('/station/<station>/<taal>')
+@bottle.route('/v1/station/<station>')
+@bottle.route('/v1/station/<station>/<taal>')
+@bottle.route('/v2/station/<station>')
+@bottle.route('/v2/station/<station>')
 def station_details(station, taal='nl'):
+    if bottle.request.query.get('taal') != '':
+        taal = bottle.request.query.get('taal')
+
     try:
-        tijd_nu = datetime.now(pytz.utc)
+        tijd_nu = datetime.datetime.now(pytz.utc)
 
         # Stuur opdracht:
         data = _send_dvs_command('station/%s' % station)
@@ -78,24 +81,37 @@ def station_details(station, taal='nl'):
             response.status = 500
             return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
 
+@bottle.route('/v2/trein/<trein>')
+@bottle.route('/v2/trein/<trein>/<datum>')
+@bottle.route('/v2/trein/<trein>/<datum>/<station>')
+def trein_details(trein, datum='vandaag', station=None):
+    taal = 'nl'
+    if bottle.request.query.get('taal') != '':
+        taal = bottle.request.query.get('taal')
 
-@bottle.route('/trein/<trein>/<station>')
-@bottle.route('/trein/<trein>/<station>/<taal>')
-def trein_details(trein, station, taal='nl'):
+    return get_trein_details(trein, datum=datum, station=station, taal=taal)
+
+@bottle.route('/v1/trein/<trein>/<station>')
+@bottle.route('/v1/trein/<trein>/<station>/<taal>')
+def trein_details_legacy(trein, station, taal='nl'):
+    """
+    Legacy methode voor opvragen treindetails
+    """
+
+    return get_trein_details(trein, station=station, taal=taal)
+
+def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
+    if datum == 'vandaag':
+        datum = get_current_servicedate()
+
     try:
-        tijd_nu = datetime.now(pytz.utc)
+        tijd_nu = datetime.datetime.now(pytz.utc)
 
         # Stuur opdracht: haal alle informatie op voor dit treinnummer
         data = _send_dvs_command('trein/%s' % trein)
 
-        if 'data' in data:
-            # Nieuw formaat met statusdata:
-            vertrekken = data['data']
-            dvs_status = data['status']['status']
-        else:
-            # Oude formaat:
-            vertrekken = data
-            dvs_status = None
+        vertrekken = data['data']
+        dvs_status = data['status']['status']
 
         # Lees trein array uit:
         if vertrekken != None and station.upper() in vertrekken:
@@ -105,14 +121,14 @@ def trein_details(trein, station, taal='nl'):
             trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
                 taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'])
 
-            return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict}
+            return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'dvs'}
         else:
             # Probeer trein te zoeken in serviceinfo:
-            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, "2016-06-12", config['serviceinfo'])
+            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
             trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station)
 
             if trein_dict is not None:
-                return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict}
+                return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'serviceinfo'}
             else:
                 return {'result': 'ERR', 'system_status': dvs_status, 'status': 'NOTFOUND'}
 
@@ -124,7 +140,12 @@ def trein_details(trein, station, taal='nl'):
             response.status = 500
             return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
 
-@bottle.route('/status')
+def get_current_servicedate():
+    # TODO: rekening houden met tijdzone, overgang om 4.00 uur 's nachts
+    return datetime.date.today().isoformat()
+
+@bottle.route('/v1/status')
+@bottle.route('/v2/status')
 def status():
     try:
         # Stuur opdracht:
