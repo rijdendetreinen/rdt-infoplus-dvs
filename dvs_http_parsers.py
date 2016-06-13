@@ -371,8 +371,10 @@ def retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config):
         except ValueError as error:
             _logger.error("Ongeldige JSON voor serviceinfo (datalengte: %s)")
         except urllib2.URLError as error:
-            if not isinstance(error.reason, socket.timeout):
+            if isinstance(error.reason, socket.timeout):
                 _logger.warn("Serviceinfo timeout: %s", error)
+            elif error.code == 404:
+                _logger.debug("Service niet gevonden: %s", error)
             else:
                 _logger.error("HTTP fout: %s. Geen serviceinfo beschikbaar", error)
         except Exception as error:
