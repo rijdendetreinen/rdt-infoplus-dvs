@@ -129,7 +129,7 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
             insert_vertrekstation = False
 
         # Lees trein array uit:
-        if vertrekken != None and station.upper() in vertrekken:
+        if vertrekken is not None and station is not None and station.upper() in vertrekken:
             trein_info = vertrekken[station.upper()]
 
             # Parse basisinformatie:
