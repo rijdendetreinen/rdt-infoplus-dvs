@@ -124,6 +124,9 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
             serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
             if serviceinfo is not None and 'stops' in serviceinfo[0]:
                 station = serviceinfo[0]['stops'][0]['station']
+            insert_vertrekstation = True
+        else:
+            insert_vertrekstation = False
 
         # Lees trein array uit:
         if vertrekken != None and station.upper() in vertrekken:
@@ -131,7 +134,7 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
 
             # Parse basisinformatie:
             trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
-                taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'])
+                taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'], insert_vertrekstation=insert_vertrekstation)
 
             return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'dvs'}
         else:

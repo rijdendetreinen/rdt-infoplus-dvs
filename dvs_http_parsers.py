@@ -12,7 +12,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, serviceinfo_config=None):
+def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, serviceinfo_config=None, insert_vertrekstation=False):
     """
     Vertaal een InfoPlus_DVS Trein object naar een dict,
     geschikt voor een JSON output.
@@ -160,6 +160,20 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
         trein_dict['via'] = ', '.join(
             via.middel_naam for via in verkorte_route)
 
+    insert_vertrekstation_dict = None
+    if insert_vertrekstation is True:
+        insert_vertrekstation_dict = {
+            'code': trein.rit_station.code,
+            'naam': trein.rit_station.lange_naam,
+            'vertrekspoor': trein_dict['spoor'],
+            'sprWijziging': trein_dict['sprWijziging'],
+            'vertrek': trein_dict['vertrek'],
+            'vertragingVertrek': trein_dict['vertraging'],
+            'aankomst': None,
+            'vertragingAankomst': 0,
+            'aankomstspoor': None
+        }
+
     # Treinvleugels:
     trein_dict['vleugels'] = []
     for vleugel in trein.vleugels:
@@ -174,7 +188,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
         if stopstations == True:
             vleugel_dict['stopstations'] = stopstations_to_list(
                 vleugel.stopstations_actueel, trein.rit_id,
-                trein.rit_datum, serviceinfo_config)
+                trein.rit_datum, serviceinfo_config, insert_vertrekstation_dict)
 
         trein_dict['vleugels'].append(vleugel_dict)
 
@@ -250,13 +264,17 @@ def serviceinfo_to_dict(serviceinfo, station):
     return trein_dict
 
 
-def stopstations_to_list(stations, treinnr, ritdatum, serviceinfo_config):
+def stopstations_to_list(stations, treinnr, ritdatum, serviceinfo_config, insert_vertrekstation_dict=None):
     """
     Vertaal de stopstations van een trein naar een list van
     stopstations, geschikt om als JSON result terug te geven.
     """
 
     stations_list = []
+
+    if insert_vertrekstation_dict is not None:
+        stations_list.append(insert_vertrekstation_dict )
+
     serviceinfo = retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config)
 
     destination_code = stations[-1].code.lower()
