@@ -132,22 +132,24 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
         if vertrekken is not None and station is not None and station.upper() in vertrekken:
             trein_info = vertrekken[station.upper()]
 
-            # Parse basisinformatie:
-            trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
-                taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'], insert_vertrekstation=insert_vertrekstation)
+            # Check ritdatum:
+            if trein_info.rit_datum == datum:
+                # Parse basisinformatie:
+                trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
+                    taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'], insert_vertrekstation=insert_vertrekstation)
 
-            return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'dvs'}
+                return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'dvs'}
+
+        # Probeer trein te zoeken in serviceinfo:
+        if serviceinfo is None:
+            # Niet opnieuw opvragen indien nog beschikbaar
+            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
+        trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station)
+
+        if trein_dict is not None:
+            return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'serviceinfo'}
         else:
-            # Probeer trein te zoeken in serviceinfo:
-            if serviceinfo is None:
-                # Niet opnieuw opvragen indien nog beschikbaar
-                serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
-            trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station)
-
-            if trein_dict is not None:
-                return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'serviceinfo'}
-            else:
-                return {'result': 'ERR', 'system_status': dvs_status, 'status': 'NOTFOUND'}
+            return {'result': 'ERR', 'system_status': dvs_status, 'status': 'NOTFOUND'}
 
     except Exception as e:
         try:
