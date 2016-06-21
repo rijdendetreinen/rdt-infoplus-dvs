@@ -103,6 +103,9 @@ def trein_details_legacy(trein, station, taal='nl'):
 def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
     if datum == 'vandaag':
         datum = get_current_servicedate()
+        vandaag = True
+    else:
+        vandaag = False
 
     try:
         tijd_nu = datetime.datetime.now(pytz.utc)
@@ -133,7 +136,7 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
             trein_info = vertrekken[station.upper()]
 
             # Check ritdatum:
-            if trein_info.rit_datum == datum:
+            if trein_info.rit_datum == datum or vandaag == True:
                 # Parse basisinformatie:
                 trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
                     taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'], insert_vertrekstation=insert_vertrekstation)
