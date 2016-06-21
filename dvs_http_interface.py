@@ -147,7 +147,7 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
         if serviceinfo is None:
             # Niet opnieuw opvragen indien nog beschikbaar
             serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
-        trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station)
+        trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station, negeer_stops_tm=(station is not None))
 
         if trein_dict is not None:
             return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'serviceinfo'}
