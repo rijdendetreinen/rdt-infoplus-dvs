@@ -195,7 +195,7 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
     return trein_dict
 
 
-def serviceinfo_to_dict(serviceinfo, station):
+def serviceinfo_to_dict(serviceinfo, station, negeer_stops_tm=False):
     """
     Vertaal een serviceinfo dict naar een dictionary zoals
     deze door trein_to_dict wordt teruggegeven
@@ -259,7 +259,12 @@ def serviceinfo_to_dict(serviceinfo, station):
     for stop_data in service['stops']:
         stop_dict = {}
         stop_dict = parse_stop_data(stop_data, stop_dict)
-        trein_dict['vleugels'][0]['stopstations'].append(stop_dict)
+
+        if negeer_stops_tm == False:
+            trein_dict['vleugels'][0]['stopstations'].append(stop_dict)
+        else:
+            if stop_dict['code'].upper() == station.upper():
+                negeer_stops_tm = False
 
     return trein_dict
 
@@ -373,6 +378,8 @@ def retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config):
         except urllib2.URLError as error:
             if isinstance(error.reason, socket.timeout):
                 _logger.warn("Serviceinfo timeout: %s", error)
+            elif error.errno == 101:
+                _logger.warn("Netwerkfout: %s", error)
             elif error.code == 404:
                 _logger.debug("Service niet gevonden: %s", error)
             else:
