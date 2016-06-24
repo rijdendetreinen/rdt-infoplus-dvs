@@ -123,17 +123,18 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
 
         # Indien geen station opgegeven:
         # Zoek rit in serviceinfo, gebruik eerste station als ritstation.
-        if station is None:
+        vertrekstation = station
+        if vertrekstation is None:
             serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
             if serviceinfo is not None and 'stops' in serviceinfo[0]:
-                station = serviceinfo[0]['stops'][0]['station']
+                vertrekstation = serviceinfo[0]['stops'][0]['station']
             insert_vertrekstation = True
         else:
             insert_vertrekstation = False
 
         # Lees trein array uit:
-        if vertrekken is not None and station is not None and station.upper() in vertrekken:
-            trein_info = vertrekken[station.upper()]
+        if vertrekken is not None and vertrekstation is not None and vertrekstation.upper() in vertrekken:
+            trein_info = vertrekken[vertrekstation.upper()]
 
             # Check ritdatum:
             if trein_info.rit_datum == datum or vandaag == True:
@@ -147,7 +148,8 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
         if serviceinfo is None:
             # Niet opnieuw opvragen indien nog beschikbaar
             serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
-        trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, station, negeer_stops_tm=(station is not None))
+
+        trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, vertrekstation, negeer_stops_tm=(station is not None))
 
         if trein_dict is not None:
             return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'serviceinfo'}
