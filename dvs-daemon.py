@@ -316,7 +316,7 @@ class WorkerThread(threading.Thread):
                         # Trein kwam op dit station nog niet voor, voeg toe:
                         station_store[rit_station_code][trein.treinnr] = trein
 
-                        if system_status['status'] == 'OK':
+                        if system_status['status'] == 'UP':
                             # Check op timestamp bericht:
                             # Tel als te laat indien vertrek < 70 minuten vanaf nu
                             verschil_vertrektijd = trein.vertrek - datetime.now(pytz.utc)
