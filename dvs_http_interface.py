@@ -165,8 +165,13 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
             return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
 
 def get_current_servicedate():
-    # TODO: rekening houden met tijdzone, overgang om 4.00 uur 's nachts
-    return datetime.date.today().isoformat()
+    if datetime.datetime.now().hour < 4:
+        # Geef datum van gisteren terug (voor 4.00 's nachts):
+        gisteren = datetime.timedelta(days=1)
+        return (datetime.date.today() - gisteren).isoformat()
+    else:
+        # Geef huidige datum terug
+        return datetime.date.today().isoformat()
 
 @bottle.route('/v1/status')
 @bottle.route('/v2/status')
