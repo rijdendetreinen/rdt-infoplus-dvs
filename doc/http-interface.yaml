@@ -1,0 +1,333 @@
+swagger: '2.0'
+info:
+  title: RDT infoplus-dvs
+  description: Actuele vertrektijden uit InfoPlus DVS
+  version: "2.0.0"
+schemes:
+  - http
+basePath: /v2
+produces:
+  - application/json
+paths:
+  /station/{station}:
+    get:
+      summary: Vertrektijden voor een station
+      parameters:
+        - name: station
+          in: path
+          description: Stationscode
+          required: true
+          type: string
+        - name: verbose
+          in: query
+          description: Verbose switch
+          required: false
+          type: boolean
+        - name: taal
+          in: query
+          description: Taalcode ('nl' of 'en')
+          required: false
+          type: string
+          enum:
+           - nl
+           - en
+      responses:
+        200:
+          description: Vertrektijden
+          schema:
+            $ref: '#/definitions/VertrekLijst'
+        default:
+          description: Onverwachte fout
+          schema:
+            $ref: '#/definitions/Error'
+  /trein/{trein}/{datum}:
+    get:
+      summary: Ritdetails voor trein op ritdatum
+      parameters:
+        - name: trein
+          in: path
+          description: ID voor trein (meestal treinnummer)
+          required: true
+          type: string
+        - name: datum
+          in: path
+          description: Dienstregelingsdatum in YYYY-MM-DD formaat of de string 'vandaag'
+          required: true
+          type: string
+        - name: verbose
+          in: query
+          description: Verbose switch
+          required: false
+          type: boolean
+        - name: taal
+          in: query
+          description: Taalcode ('nl' of 'en')
+          required: false
+          type: string
+          enum:
+           - nl
+           - en
+      responses:
+        200:
+          description: Ritdetails
+          schema:
+            $ref: '#/definitions/VertrekDetails'
+        default:
+          description: Onverwachte fout
+          schema:
+            $ref: '#/definitions/Error'
+  /trein/{trein}/{datum}/{station}:
+    get:
+      summary: Vertrekdetails voor trein op ritdatum
+      parameters:
+        - name: trein
+          in: path
+          description: ID voor trein (meestal treinnummer)
+          required: true
+          type: string
+        - name: datum
+          in: path
+          description: Dienstregelingsdatum in YYYY-MM-DD formaat of de string 'vandaag'
+          required: true
+          type: string
+        - name: station
+          in: path
+          description: Stationscode
+          required: true
+          type: string
+        - name: verbose
+          in: query
+          description: Verbose switch
+          required: false
+          type: boolean
+        - name: taal
+          in: query
+          description: Taalcode ('nl' of 'en')
+          required: false
+          type: string
+          enum:
+           - nl
+           - en
+      responses:
+        200:
+          description: Ritdetails
+          schema:
+            $ref: '#/definitions/VertrekDetails'
+        default:
+          description: Onverwachte fout
+          schema:
+            $ref: '#/definitions/Error'
+  /status:
+    get:
+      summary: Systeemstatus
+      responses:
+        200:
+          description: Statusinformatie
+          schema:
+            $ref: '#/definitions/Status'
+definitions:
+  VertrekLijst:
+    type: object
+    properties:
+      result:
+        type: string
+      system_status:
+        $ref: '#/definitions/SystemStatus'
+      vertrektijden:
+        type: array
+        items:
+          $ref: '#/definitions/Vertrek'
+  Vertrek:
+    type: object
+    required:
+      - status
+      - bestemming
+      - via
+      - treinNr
+      - id
+      - soort
+      - soortAfk
+      - vertraging
+      - opmerkingen
+      - tips
+      - opgeheven
+      - spoor
+      - vertrek
+      - sprWijziging
+      - vervoerder
+      - vleugels
+    properties:
+      status:
+        type: number
+        description: Status van het vertrek
+        enum:
+         - 0
+         - 2
+         - 5
+      treinNr:
+        type: string
+        description: Treinnummer
+      vertrek:
+        type: string
+        format: dateTime
+        description: Geplande vertrektijd
+      via:
+        type: string
+        description: Via-stations
+      bestemming:
+        type: string
+        description: Actuele eindbestemming
+      bestemmingOrigineel:
+        type: string
+        description: Originele eindbestemming (bij gewijzigde eindbestemming)
+      spoor:
+        type: string
+        description: Vertrekspoor
+      soort:
+        type: string
+        description: Lange omschrijving treinsoort
+        example: Intercity
+      soortAfk:
+        type: string
+        description: Verkorte omschrijving treinsoort
+        example: IC
+      vervoerder:
+        type: string
+        description: Vervoerder voor de rit
+      vertraging:
+        type: number
+        description: Vertraging in minuten
+      vleugels:
+        type: array
+        items:
+          $ref: '#/definitions/TreinVleugel'
+        description: Treinvleugels
+      opgeheven:
+        type: boolean
+        description: Trein is opgeheven indien true
+      sprWijziging:
+        type: boolean
+        description: Vertrekspoor gewijzigd t.o.v. planning indien true
+      opmerkingen:
+        type: array
+        items:
+          type: string
+        description: Opmerkingen/waarschuwingen voor deze trein
+      tips:
+        type: array
+        items:
+          type: string
+        description: Reistips voor deze trein
+      id:
+        type: string
+        description: Identifier voor deze trein op deze dienstregelingsdatum
+  TreinVleugel:
+    type: object
+    required:
+      - bestemming
+    properties:
+      bestemming:
+        type: string
+        description: Bestemming van deze treinvleugel
+      mat:
+        type: array
+        items:
+          type: array
+          items:
+            type: string
+      stopstations:
+        type: array
+        items:
+          $ref: '#/definitions/StopStation'
+  StopStation:
+    type: object
+    description: Stopstation langs route trein
+    required:
+      - code
+      - naam
+    properties:
+      code:
+        type: string
+        description: Stationscode
+      naam:
+        type: string
+        description: Stationsnaam
+      aankomst:
+        type: string
+        format: dateTime
+        description: Geplande aankomsttijd
+      vertrek:
+        type: string
+        format: dateTime
+        description: Geplande vertrektijd
+      aankomstspoor:
+        type: string
+        description: Aankomstspoor
+      vertrekspoor:
+        type: string
+        description: Vertrekspoor
+      sprWijziging:
+        type: boolean
+        description: Bij een spoorwijziging (vertrek of aankomst) true
+      vertragingAankomst:
+        type: number
+        description: Aankomstvertraging in minuten
+      vertragingVertrek:
+        type: number
+        description: Vertrekvertraging in minuten
+  VertrekDetails:
+    type: object
+    properties:
+      source:
+        type: string
+        description: Bron voor data
+        enum:
+          - dvs
+          - serviceinfo
+      system_status:
+        $ref: '#/definitions/SystemStatus'
+      result:
+        $ref: '#/definitions/Result'
+      trein:
+        $ref: '#/definitions/Vertrek'
+  Status:
+    type: object
+    properties:
+      result:
+        $ref: '#/definitions/Result'
+      data:
+        type: object
+        properties:
+          status:
+            $ref: '#/definitions/SystemStatus'
+          downsince:
+            type: string
+            format: dateTime
+            description: Tijd waarop downtime begon
+          recovering_since:
+            type: string
+            format: dateTime
+            description: Tijd waarop recovery begon
+  Result:
+    description: Resultaat
+    type: string
+    enum:
+      - OK
+      - ERR
+  SystemStatus:
+    description: Systeemstatus
+    type: string
+    enum:
+      - UP
+      - DOWN
+      - RECOVERING
+      - UNKNOWN
+  Error:
+    type: object
+    properties:
+      status:
+        type: string
+      system_status:
+        $ref: '#/definitions/SystemStatus'
+      result:
+        $ref: '#/definitions/Result'
