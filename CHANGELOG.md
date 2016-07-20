@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2
+
+* Vertalingen bijgewerkt
+
 ## 1.4.1
 
 * Geen melding 'voorste treindeel tot' voor locomotieven
