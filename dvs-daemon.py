@@ -101,6 +101,7 @@ def main():
     counters['msg'] = 0
     counters['dubbel'] = 0
     counters['ouder'] = 0
+    counters['laat'] = 0
     counters['gc_station'] = 0
     counters['gc_trein'] = 0
     counters['injecties'] = 0
@@ -314,6 +315,15 @@ class WorkerThread(threading.Thread):
                     else:
                         # Trein kwam op dit station nog niet voor, voeg toe:
                         station_store[rit_station_code][trein.treinnr] = trein
+
+                        if system_status['status'] == 'UP':
+                            # Check op timestamp bericht:
+                            # Tel als te laat indien vertrek < 70 minuten vanaf nu
+                            verschil_vertrektijd = trein.vertrek - datetime.now(pytz.utc)
+                            if verschil_vertrektijd.total_seconds() < 69*60:
+                                counters['laat'] += 1
+                                self.logger.warn('Trein %s/%s: te laat ontvangen: vertrek over %d minuten',
+                                                 trein.treinnr, trein.rit_station.code, float(verschil_vertrektijd.total_seconds()) / 60)
 
                     # Update of insert trein aan trein store:
                     if rit_station_code in trein_store[trein.treinnr]:
@@ -531,7 +541,8 @@ class GarbageThread(threading.Thread):
                         system_status['status'] = 'DOWN'
                         if system_status['down_since'] == None:
                             # Downtime start nu
-                            system_status['down_since'] = datetime.now()
+                            system_status['down_since'] = datetime.utcnow()
+
                             system_status['recovering_since'] = None
 
                     else:

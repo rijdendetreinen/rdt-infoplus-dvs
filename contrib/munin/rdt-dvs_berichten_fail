@@ -20,6 +20,12 @@ berichten_dubbel.info Aantal dubbele berichten
 berichten_dubbel.type DERIVE
 berichten_dubbel.min 0
 berichten_dubbel.colour 9300aa
+berichten_laat.colour aa1300
+berichten_laat.label te laat
+berichten_laat.info Aantal te late berichten
+berichten_laat.type DERIVE
+berichten_laat.min 0
+berichten_laat.colour ff8000
 
 EOM
         exit 0;;
@@ -29,3 +35,5 @@ printf "berichten_ouder.value "
 /opt/rdt/infoplus-dvs/dvs-dump.py count/ouder -q
 printf "berichten_dubbel.value "
 /opt/rdt/infoplus-dvs/dvs-dump.py count/dubbel -q
+printf "berichten_laat.value "
+/opt/rdt/infoplus-dvs/dvs-dump.py count/laat -q
