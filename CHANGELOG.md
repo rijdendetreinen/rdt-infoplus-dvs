@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.3
+
+* Detectie op DVS-berichten die minder dan 70 minuten voor vertrek worden ontvangen
+* Vertalingen bijgewerkt
+
 ## 1.4.2
 
 * Vertalingen bijgewerkt
