@@ -226,6 +226,10 @@ def parse_trein_dict(trein_dict, statisch=False):
     trein.vertraging = 0
     trein.vertraging_gedempt = 0
 
+    if 'departure_delay' in trein_dict:
+        trein.vertraging = int(trein_dict['departure_delay']) * 60
+        trein.vertraging_gedempt = trein.vertraging
+
     # Gepland en actueel vertrekspoor:
     trein.vertrekspoor = []
     if trein_dict['platform'] != None:
