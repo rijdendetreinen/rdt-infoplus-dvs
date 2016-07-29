@@ -624,7 +624,7 @@ class GarbageThread(threading.Thread):
                         # Trein is nog niet vertrokken, controleer threshold om rit
                         # als vertrokken te markeren:
                         if (trein.statisch == False and trein.vertrek_actueel < threshold) \
-                        or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
+                        or (trein.statisch == True and trein.vertrek_actueel + timedelta(minutes=trein.vertraging) < threshold_statisch):
                             try:
                                 with locks['station']:
                                     station_store[station][trein_rit].markeer_vertrokken()
