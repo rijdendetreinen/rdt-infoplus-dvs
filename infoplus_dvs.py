@@ -968,6 +968,7 @@ class Wijziging(object):
             'door het onverwacht ontbreken van personeel': 'missing crew',
             'door een vervangende trein': 'a replacement train',
             'door Koningsdag': 'King\'s day',
+            'door de Vierdaagse': 'the Four Days Marches',
             'door nog onbekende oorzaak': 'a yet unknown reason'
         }
 
