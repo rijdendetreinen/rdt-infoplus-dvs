@@ -89,7 +89,7 @@ def parse_trein(data):
     if nin_node != None:
         trein.niet_instappen = parse_boolean(nin_node.text)
     else:
-        __logger__.warn("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinnr, trein.rit_station.code)
+        __logger__.debug("Element NietInstappen ontbreekt (trein %s/%s)", trein.treinnr, trein.rit_station.code)
 
     trein.rangeerbeweging = parse_boolean(trein_node.find('{%s}RangeerBeweging' % namespace).text)
     trein.speciaal_kaartje = parse_boolean(trein_node.find('{%s}SpeciaalKaartje' % namespace).text)
@@ -225,6 +225,10 @@ def parse_trein_dict(trein_dict, statisch=False):
 
     trein.vertraging = 0
     trein.vertraging_gedempt = 0
+
+    if 'departure_delay' in trein_dict:
+        trein.vertraging = int(trein_dict['departure_delay']) * 60
+        trein.vertraging_gedempt = trein.vertraging
 
     # Gepland en actueel vertrekspoor:
     trein.vertrekspoor = []
@@ -412,6 +416,7 @@ class Trein(object):
     rit_station = None
     rit_datum = None
     rit_timestamp = None
+    vertrokken_timestamp = None
 
     treinnr = None
     eindbestemming = []
@@ -639,6 +644,13 @@ class Trein(object):
                 return 'Reservation required'
             else:
                 return 'Reservering verplicht'
+
+    def markeer_vertrokken(self):
+        self.status = "5"
+        self.vertrokken_timestamp = datetime.datetime.now(pytz.utc)
+
+    def is_vertrokken(self):
+        return self.status == "5"
 
     def __repr__(self):
         return '<Trein %-3s %6s v%s +%s %-4s %-3s -- %-4s>' % \

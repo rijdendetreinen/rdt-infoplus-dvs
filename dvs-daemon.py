@@ -255,75 +255,35 @@ class WorkerThread(threading.Thread):
                 trein = infoplus_dvs.parse_trein(content)
 
                 rit_station_code = trein.rit_station.code
-                
-                if trein.status == '5' and self.keep_departures is False:
-                    # Trein vertrokken
-                    # Verwijder uit station_store
-                    if rit_station_code in station_store \
-                    and trein.treinnr in station_store[rit_station_code]:
-                        with locks['station']:
-                            del(station_store[rit_station_code][trein.treinnr])
 
-                    # Verwijder uit trein_store
-                    if trein.treinnr in trein_store \
-                    and rit_station_code in trein_store[trein.treinnr]:
-                        del(trein_store[trein.treinnr][rit_station_code])
-                        if len(trein_store[trein.treinnr]) == 0:
-                            with locks['trein']:
-                                del(trein_store[trein.treinnr])
-                else:
-                    # Maak item in trein_store indien niet aanwezig
-                    if trein.treinnr not in trein_store:
-                        with locks['trein']:
-                            trein_store[trein.treinnr] = {}
+                if trein.status == '5':
+                    # Markeer als vertrokken, zodat er een timestamp op staat
+                    trein.markeer_vertrokken()
 
-                    # Maak item in station_store indien niet aanwezig:
-                    if rit_station_code not in station_store:
-                        with locks['station']:
-                            station_store[rit_station_code] = {}
+                # Maak item in trein_store indien niet aanwezig
+                if trein.treinnr not in trein_store:
+                    with locks['trein']:
+                        trein_store[trein.treinnr] = {}
 
-                    # Update of insert trein aan station store:
-                    if trein.treinnr in station_store[rit_station_code]:
-                        # Trein komt reeds voor in station store voor dit station
-                        if trein.rit_timestamp > station_store[rit_station_code][trein.treinnr].rit_timestamp:
-                            # Bericht is nieuwer, update store:
-                            station_store[rit_station_code][trein.treinnr] = trein
-                        elif trein.rit_timestamp == station_store[rit_station_code][trein.treinnr].rit_timestamp:
-                            # Bericht is nieuwer, update store:
-                            self.logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
-                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
-                                trein.treinnr, trein.rit_station.code)
+                # Maak item in station_store indien niet aanwezig:
+                if rit_station_code not in station_store:
+                    with locks['station']:
+                        station_store[rit_station_code] = {}
 
-                            # Update counter voor dubbele berichten:
-                            counters['dubbel'] += 1
-                        else:
-                            # Bepaal 1 seconde threshold:
-                            warn_threshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
-                            
-                            # Warning log message indien threshold van 1 seconde overschreden is:
-                            if trein.rit_timestamp <= warn_threshold:
-                                log_level = logging.WARNING
-                            else:
-                                log_level = logging.INFO
-
-                            self.logger.log(log_level, 'Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
-                                trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
-                                trein.treinnr, trein.rit_station.code)
-
-                            # Update counter voor verouderde berichten:
-                            counters['ouder'] += 1
-                    else:
-                        # Trein kwam op dit station nog niet voor, voeg toe:
+                # Update of insert trein aan station store:
+                if trein.treinnr in station_store[rit_station_code]:
+                    # Trein komt reeds voor in station store voor dit station
+                    if trein.rit_timestamp > station_store[rit_station_code][trein.treinnr].rit_timestamp:
+                        # Bericht is nieuwer, update store:
                         station_store[rit_station_code][trein.treinnr] = trein
+                    elif trein.rit_timestamp == station_store[rit_station_code][trein.treinnr].rit_timestamp:
+                        # Bericht is nieuwer, update store:
+                        self.logger.info('Dubbel bericht ontvangen: %s == %s, niet verwerkt (trein %s/%s)',
+                            trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
+                            trein.treinnr, trein.rit_station.code)
 
-                        if system_status['status'] == 'UP':
-                            # Check op timestamp bericht:
-                            # Tel als te laat indien vertrek < 70 minuten vanaf nu
-                            verschil_vertrektijd = trein.vertrek - datetime.now(pytz.utc)
-                            if verschil_vertrektijd.total_seconds() < 69*60:
-                                counters['laat'] += 1
-                                self.logger.warn('Trein %s/%s: te laat ontvangen: vertrek over %d minuten',
-                                                 trein.treinnr, trein.rit_station.code, float(verschil_vertrektijd.total_seconds()) / 60)
+                        # Update counter voor dubbele berichten:
+                        counters['dubbel'] += 1
 
                     # Update of insert trein aan trein store:
                     if rit_station_code in trein_store[trein.treinnr]:
@@ -332,8 +292,43 @@ class WorkerThread(threading.Thread):
                             # Bericht is nieuwer, update store:
                             trein_store[trein.treinnr][rit_station_code] = trein
                     else:
-                        # Treinnr kwam op dit station nog niet voor, voeg toe:
+                        # Bepaal 1 seconde threshold:
+                        warn_threshold = station_store[rit_station_code][trein.treinnr].rit_timestamp - timedelta(seconds=5)
+
+                        # Warning log message indien threshold van 1 seconde overschreden is:
+                        if trein.rit_timestamp <= warn_threshold:
+                            log_level = logging.WARNING
+                        else:
+                            log_level = logging.INFO
+
+                        self.logger.log(log_level, 'Ouder bericht ontvangen: %s < %s, niet verwerkt (trein %s/%s)',
+                            trein.rit_timestamp, station_store[rit_station_code][trein.treinnr].rit_timestamp,
+                            trein.treinnr, trein.rit_station.code)
+
+                        # Update counter voor verouderde berichten:
+                        counters['ouder'] += 1
+                else:
+                    # Trein kwam op dit station nog niet voor, voeg toe:
+                    station_store[rit_station_code][trein.treinnr] = trein
+
+                    if system_status['status'] == 'UP':
+                        # Check op timestamp bericht:
+                        # Tel als te laat indien vertrek < 70 minuten vanaf nu
+                        verschil_vertrektijd = trein.vertrek - datetime.now(pytz.utc)
+                        if verschil_vertrektijd.total_seconds() < 69 * 60:
+                            counters['laat'] += 1
+                            self.logger.warn('Trein %s/%s: te laat ontvangen: vertrek over %d minuten',
+                                             trein.treinnr, trein.rit_station.code, float(verschil_vertrektijd.total_seconds()) / 60)
+
+                # Update of insert trein aan trein store:
+                if rit_station_code in trein_store[trein.treinnr]:
+                    # Trein komt reeds voor in trein store voor dit treinnr
+                    if trein.rit_timestamp > trein_store[trein.treinnr][rit_station_code].rit_timestamp:
+                        # Bericht is nieuwer, update store:
                         trein_store[trein.treinnr][rit_station_code] = trein
+                else:
+                    # Treinnr kwam op dit station nog niet voor, voeg toe:
+                    trein_store[trein.treinnr][rit_station_code] = trein
 
             except infoplus_dvs.OngeldigDvsBericht:
                 self.logger.error('Ongeldig DVS bericht')
@@ -458,6 +453,7 @@ class GarbageThread(threading.Thread):
 
     gc_threshold = 10           # 10 minuten na gepland vertrek wissen
     gc_threshold_static = 0     # injecties: 0 minuten na gepland vertrek wissen
+    gc_threshold_departed = 120 # ritten 120 minuten na vertrek wissen
 
     keep_departures = False     # debugoptie
 
@@ -487,26 +483,29 @@ class GarbageThread(threading.Thread):
                 self.gc_threshold = int(configuration['garbage_collection']['gc_threshold'])
             if 'gc_threshold_static' in configuration['garbage_collection']:
                 self.gc_threshold_static = int(configuration['garbage_collection']['gc_threshold_static'])
+            if 'gc_threshold_departed' in configuration['garbage_collection']:
+                self.gc_threshold_departed = int(configuration['garbage_collection']['gc_threshold_departed'])
 
         self.logger.info("GC thread geinitialiseerd")
         self.logger.info("Configuratie downtimedetectie: window: %sm, threshold: >=%s bericht/min, recovery time: %sm",
                          self.count_time_window,
                          self.count_threshold,
                          self.recovery_time)
-        self.logger.info("Configuratie garbage collection: threshold: %sm, threshold statisch: %sm",
+        self.logger.info("Configuratie garbage collection: threshold: %sm, threshold statisch: %sm, threshold vertrokken: %sm",
                          self.gc_threshold,
-                         self.gc_threshold_static)
+                         self.gc_threshold_static,
+                         self.gc_threshold_departed)
         self.stopped = event
         self.keep_departures = keep_departures
 
     def run(self):
-        self.logger.info("Initiele garbage collecting")
+        self.logger.debug("Initiele garbage collecting")
         self.garbage_collect()
 
         # Loop over garbage collecting iedere 1m:
         while not self.stopped.wait(60):
             try:
-                self.logger.info("Periodieke garbage collecting")
+                self.logger.debug("Periodieke garbage collecting")
                 self.garbage_collect()
 
                 self.logger.info(
@@ -600,6 +599,7 @@ class GarbageThread(threading.Thread):
         # Bereken threshold:
         threshold = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold)
         threshold_statisch = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold_static)
+        threshold_departed = datetime.now(pytz.utc) - timedelta(minutes=self.gc_threshold_departed)
 
         # Performance controle; start:
         start = datetime.now()
@@ -609,32 +609,43 @@ class GarbageThread(threading.Thread):
         for station in station_store:
             try:
                 for trein_rit, trein in station_store[station].items():
-                    if (trein.statisch == False and trein.vertrek_actueel < threshold) \
-                    or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
-                        try:
-                            with locks['station']:
-                                if self.keep_departures is False:
+                    if trein.is_vertrokken():
+                        if trein.vertrokken_timestamp is None:
+                            # Timestamp ontbreekt, voeg alsnog toe:
+                            trein.markeer_vertrokken()
+                        else:
+                            # Controleer of threshold_departed overschreden is
+                            try:
+                                if trein.vertrokken_timestamp < threshold_departed and self.keep_departures is False:
                                     del(station_store[station][trein_rit])
+                            except KeyError:
+                                self.logger.debug("GC: %s/%s al verwijderd", trein_rit, station)
+                    else:
+                        # Trein is nog niet vertrokken, controleer threshold om rit
+                        # als vertrokken te markeren:
+                        if (trein.statisch == False and trein.vertrek_actueel < threshold) \
+                        or (trein.statisch == True and trein.vertrek_actueel + timedelta(seconds=trein.vertraging) < threshold_statisch):
+                            try:
+                                with locks['station']:
+                                    station_store[station][trein_rit].markeer_vertrokken()
+
+                                verwerkte_items += 1
+
+                                if trein.is_opgeheven():
+                                    # Voor opgeheven treinen komt geen wisbericht,
+                                    # daarom is het te verwachten dat deze GC'd worden
+                                    # Log alleen debug melding
+                                    self.logger.debug('GC [SS] %s/%s gemarkeerd als vertrokken (opgeheven)' % (trein_rit, station))
+                                elif trein.statisch == True:
+                                    self.logger.debug('GC [SS] %s/%s gemarkeerd als vertrokken (statisch)' % (trein_rit, station))
                                 else:
-                                    station_store[station][trein_rit].status = '5'
+                                    # Waarschuwing indien trein niet opgeheven, maar
+                                    # wel 10-minuten window overschreden:
+                                    self.logger.warn('GC [SS] %s/%s gemarkeerd als vertrokken (geen wisbericht ontvangen)' % (trein_rit, station))
 
-                            verwerkte_items += 1
-
-                            if trein.is_opgeheven():
-                                # Voor opgeheven treinen komt geen wisbericht,
-                                # daarom is het te verwachten dat deze GC'd worden
-                                # Log alleen debug melding
-                                self.logger.debug('GC [SS] Del %s/%s, opgeheven' % (trein_rit, station))
-                            elif trein.statisch == True:
-                                self.logger.debug('GC [SS] Del %s/%s, statisch' % (trein_rit, station))
-                            else:
-                                # Waarschuwing indien trein niet opgeheven, maar
-                                # wel 10-minuten window overschreden:
-                                self.logger.warn('GC [SS] Del %s/%s' % (trein_rit, station))
-
-                                counters['gc_station'] = counters['gc_station'] + 1
-                        except KeyError:
-                            self.logger.debug('GC [SS] Al verwijderd %s/%s', trein_rit, station)
+                                    counters['gc_station'] = counters['gc_station'] + 1
+                            except KeyError:
+                                self.logger.debug('GC [SS] Al verwijderd %s/%s', trein_rit, station)
             except KeyError:
                 self.logger.warn('GC [SS] Station verwijderd %s', station)
 
@@ -651,32 +662,46 @@ class GarbageThread(threading.Thread):
         for trein_rit in trein_store.keys():
             try:
                 for station, trein in trein_store[trein_rit].items():
-                    if (trein.statisch == False and trein.vertrek_actueel < threshold) \
-                    or (trein.statisch == True and trein.vertrek_actueel < threshold_statisch):
-                        try:
-                            with locks['trein']:
-                                if self.keep_departures is False:
+                    if trein.is_vertrokken():
+                        if trein.vertrokken_timestamp is None:
+                            # Timestamp ontbreekt, voeg alsnog toe:
+                            trein.markeer_vertrokken()
+                            self.logger.warning("GC: trein %s/%s vertrokken maar timestamp leeg", trein_rit, station)
+                        else:
+                            # Controleer of threshold_departed overschreden is
+                            try:
+                                if trein.vertrokken_timestamp < threshold_departed and self.keep_departures is False:
                                     del(trein_store[trein_rit][station])
+                                    self.logger.debug("GC: TS, trein %s/%s verwijderd", trein_rit, station)
+                            except KeyError:
+                                self.logger.debug("GC: %s/%s al verwijderd", trein_rit, station)
+                    else:
+                        # Trein is nog niet vertrokken, controleer threshold om rit
+                        # als vertrokken te markeren:
+                        if (trein.statisch == False and trein.vertrek_actueel < threshold) \
+                        or (trein.statisch == True and trein.vertrek_actueel + timedelta(seconds=trein.vertraging) < threshold_statisch):
+                            # Geen trein verwerken die al als vertrokken is gemarkeerd:
+                            try:
+                                with locks['trein']:
+                                    trein_store[trein_rit][station].markeer_vertrokken()
+
+                                verwerkte_items += 1
+
+                                if trein.is_opgeheven():
+                                    # Voor opgeheven treinen komt geen wisbericht,
+                                    # daarom is het te verwachten dat deze GC'd worden
+                                    # Log alleen debug melding
+                                    self.logger.debug('GC [TS] %s/%s gemarkeerd als vertrokken (opgeheven)' % (trein_rit, station))
+                                elif trein.statisch == True:
+                                    self.logger.debug('GC [TS] %s/%s gemarkeerd als vertrokken (statisch)' % (trein_rit, station))
                                 else:
-                                    trein_store[trein_rit][station].status = '5'
+                                    # Waarschuwing indien trein niet opgeheven, maar
+                                    # wel 10-minuten window overschreden:
+                                    self.logger.warn('GC [TS] %s/%s gemarkeerd als vertrokken (geen wisbericht ontvangen)' % (trein_rit, station))
 
-                            verwerkte_items += 1
-
-                            if trein.is_opgeheven():
-                                # Voor opgeheven treinen komt geen wisbericht,
-                                # daarom is het te verwachten dat deze GC'd worden
-                                # Log alleen debug melding
-                                self.logger.debug('GC [TS] Del %s/%s, opgeheven' % (trein_rit, station))
-                            elif trein.statisch == True:
-                                self.logger.debug('GC [TS] Del %s/%s, statisch' % (trein_rit, station))
-                            else:
-                                # Waarschuwing indien trein niet opgeheven, maar
-                                # wel 10-minuten window overschreden:
-                                self.logger.warn('GC [TS] Del %s/%s' % (trein_rit, station))
-
-                                counters['gc_trein'] = counters['gc_trein'] + 1
-                        except KeyError:
-                            self.logger.debug('GC [TS] Al verwijderd %s/%s', trein_rit, station)
+                                    counters['gc_trein'] = counters['gc_trein'] + 1
+                            except KeyError:
+                                self.logger.debug('GC [TS] Al verwijderd %s/%s', trein_rit, station)
             except KeyError:
                 self.logger.debug('GC [TS] Al verwijderd %s', trein_rit)
 
@@ -688,10 +713,11 @@ class GarbageThread(threading.Thread):
         # Bereken duur voor GC en duur per item
         if verwerkte_items > 0:
             duur = datetime.now() - start
-            self.logger.info("GC [TS] * %s items verwerkt in %s (%s per verwerking)", verwerkte_items, duur, (duur / verwerkte_items))
+            self.logger.debug("GC [TS] * %s items verwerkt in %s (%s per verwerking)", verwerkte_items, duur, (duur / verwerkte_items))
 
         # Trigger Python GC na deze opruimronde:
         gc.collect()
+
 
         return
 
