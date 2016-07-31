@@ -207,24 +207,32 @@ def serviceinfo_to_dict(serviceinfo, station, negeer_stops_tm=False):
     if len(serviceinfo) == 0:
         return None
 
-    service = serviceinfo[0]
-
     # Check stops
     stop = None
-    for check_stop in service['stops']:
-        if check_stop['station'].lower() == station.lower():
-            stop = check_stop
+
+    bestemmingen = []
+    for service in serviceinfo:
+        bestemmingen.append(service['stops'][-1]['station_name'])
+
+        for check_stop in service['stops']:
+            if check_stop['station'].lower() == station.lower():
+                stop = check_stop
+
+    # Haal identieke bestemmingen weg
+    if len(bestemmingen) > 1 and bestemmingen[0] == bestemmingen[1]:
+        del bestemmingen[1]
 
     if stop is None:
         return None
 
-    bestemming = service['stops'][-1]['station_name']
+    # Gebruik eerste vleugel voor basisinformatie
+    service = serviceinfo[0]
 
     trein_dict = {
         'status': 0,
         'opgeheven': service['cancelled'],
         'via': None,
-        'bestemming': bestemming,
+        'bestemming': "/".join(bestemmingen),
         'vervoerder': service['company_name'],
         'soort': service['transport_mode_description'],
         'soortAfk': service['transport_mode'],
@@ -234,11 +242,7 @@ def serviceinfo_to_dict(serviceinfo, station, negeer_stops_tm=False):
         'spoor': None,
         'sprWijziging': False,
         'vertraging': 0,
-        'vleugels': [{
-            'bestemming': bestemming,
-            'mat': [],
-            'stopstations': []
-        }],
+        'vleugels': [],
         'opmerkingen': [],
         'tips': []
     }
@@ -256,15 +260,32 @@ def serviceinfo_to_dict(serviceinfo, station, negeer_stops_tm=False):
         trein_dict['spoor'] = stop['actual_departure_platform']
         trein_dict['sprWijziging'] = True
 
-    for stop_data in service['stops']:
-        stop_dict = {}
-        stop_dict = parse_stop_data(stop_data, stop_dict)
+    # Verwerk vleugels:
+    for service in serviceinfo:
+        negeer_stops_tm_vleugel = negeer_stops_tm
+        bestemming = service['stops'][-1]['station_name']
 
-        if negeer_stops_tm == False:
-            trein_dict['vleugels'][0]['stopstations'].append(stop_dict)
-        else:
-            if stop_dict['code'].upper() == station.upper():
-                negeer_stops_tm = False
+        vleugel = {
+            'bestemming': bestemming,
+            'mat': [],
+            'stopstations': []
+        }
+
+        for stop_data in service['stops']:
+            stop_dict = {}
+            stop_dict = parse_stop_data(stop_data, stop_dict)
+
+            if negeer_stops_tm_vleugel == False:
+                vleugel['stopstations'].append(stop_dict)
+            else:
+                if stop_dict['code'].upper() == station.upper():
+                    negeer_stops_tm_vleugel = False
+
+        trein_dict['vleugels'].append(vleugel)
+
+    # Haal identieke vleugels weg
+    if len(trein_dict['vleugels']) > 1 and trein_dict['vleugels'][0] == trein_dict['vleugels'][1]:
+        del trein_dict['vleugels'][1]
 
     return trein_dict
 
