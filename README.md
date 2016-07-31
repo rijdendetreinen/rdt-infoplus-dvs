@@ -155,15 +155,11 @@ Het is mogelijk om de host en poort aan te passen met de parameters `--server` e
 
 ### HTTP interface
 
+RDT infoplus-dvs biedt een REST API aan voor het opvragen van vertrektijden en ritdetails. De API is beschreven in het document [HTTP interface](doc/http-interface.md) en in de [OpenAPI definitie](doc/http-interface.yaml).
+
 De HTTP interface kan voor ontwikkeldoeleinden gestart worden met de tool `dvs-http.py`. Deze tool start een [Bottle](http://bottlepy.org/docs/dev/index.html) ontwikkelserver op http://localhost:8080/ (of optioneel op een andere host/poort-combinatie). Voor productiedoeleinden kun je de WSGI-koppeling in `dvs-http.wsgi` gebruiken.
 
-De HTTP-interface ontsluit een JSON webservice die reageert op de volgende URL's:
-
-* `/station/<stationcode>` en `/station/<stationcode>/<taal>` - Geeft de vertrektijden per station terug. Specificeer optioneel 'nl' of 'en' als taalcode om wijzigingen en dergelijke te vertalen (standaard is Nederlands). Optionele parameters: `sorteer` met mogelijke waarden 'gepland', 'actueel', 'vertrek', of 'vertraging', en `verbose` (indien de waarde 'true' is wordt meer informatie teruggegeven).
-* `/trein/<treinnummer>/<stationcode>` en `/trein/<treinnummer>/<stationcode>` - Geeft uitgebreide verbose per trein op een bepaald station terug, zoals de route per treinvleugel.
-* `/status` - Geeft de systeemstatus terug (UP, DOWN, UNKNOWN of RECOVERING) en eventuele starttijd van downtime en recovertijd.
-
-De HTTP-interface kan op een andere server draaien dan de daemon zelf. In het WSGI-bestand wordt de host ingesteld waarmee verbinding gemaakt wordt.
+De HTTP-interface kan op een andere server draaien dan de daemon zelf. Optioneel kan de HTTP-interface gekoppeld worden aan [rdt-serviceinfo](https://github.com/geertw/rdt-serviceinfo) voor het verrijken van de routestops met vertrek- en aankomsttijden, en voor het opvragen van ritten die niet (meer) in DVS zitten.
 
 Aandachtspunten
 ---------------

@@ -5,7 +5,7 @@ op te vragen. Iedere request geeft een JSON response terug.
 """
 
 import zmq
-from datetime import datetime
+import datetime
 import pytz
 import bottle
 import logging
@@ -13,16 +13,19 @@ from bottle import response
 
 import dvs_http_parsers
 
-
 SERVER_TIMEOUT = 4
 config = {}
 
-
-@bottle.route('/station/<station>')
-@bottle.route('/station/<station>/<taal>')
+@bottle.route('/v1/station/<station>')
+@bottle.route('/v1/station/<station>/<taal>')
+@bottle.route('/v2/station/<station>')
+@bottle.route('/v2/station/<station>')
 def station_details(station, taal='nl'):
+    if bottle.request.query.get('taal') != '':
+        taal = bottle.request.query.get('taal')
+
     try:
-        tijd_nu = datetime.now(pytz.utc)
+        tijd_nu = datetime.datetime.now(pytz.utc)
 
         # Stuur opdracht:
         data = _send_dvs_command('station/%s' % station)
@@ -64,7 +67,7 @@ def station_details(station, taal='nl'):
 
                 trein_dict = dvs_http_parsers.trein_to_dict(trein, taal, tijd_nu, materieel=verbose)
 
-                if trein_dict != None:
+                if trein_dict != None and not trein.is_vertrokken():
                     vertrektijden.append(trein_dict)
 
             return {'result': 'OK', 'system_status': dvs_status, 'vertrektijden': vertrektijden}
@@ -78,34 +81,78 @@ def station_details(station, taal='nl'):
             response.status = 500
             return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
 
+@bottle.route('/v2/trein/<trein>')
+@bottle.route('/v2/trein/<trein>/<datum>')
+@bottle.route('/v2/trein/<trein>/<datum>/<station>')
+def trein_details(trein, datum='vandaag', station=None):
+    taal = 'nl'
+    if bottle.request.query.get('taal') != '':
+        taal = bottle.request.query.get('taal')
 
-@bottle.route('/trein/<trein>/<station>')
-@bottle.route('/trein/<trein>/<station>/<taal>')
-def trein_details(trein, station, taal='nl'):
+    return get_trein_details(trein, datum=datum, station=station, taal=taal)
+
+@bottle.route('/v1/trein/<trein>/<station>')
+@bottle.route('/v1/trein/<trein>/<station>/<taal>')
+def trein_details_legacy(trein, station, taal='nl'):
+    """
+    Legacy methode voor opvragen treindetails
+    """
+
+    return get_trein_details(trein, station=station, taal=taal)
+
+def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
+    if datum == 'vandaag':
+        datum = get_current_servicedate()
+        vandaag = True
+    else:
+        vandaag = False
+
     try:
-        tijd_nu = datetime.now(pytz.utc)
+        tijd_nu = datetime.datetime.now(pytz.utc)
+        serviceinfo = None
 
         # Stuur opdracht: haal alle informatie op voor dit treinnummer
         data = _send_dvs_command('trein/%s' % trein)
 
         if 'data' in data:
-            # Nieuw formaat met statusdata:
             vertrekken = data['data']
             dvs_status = data['status']['status']
         else:
-            # Oude formaat:
             vertrekken = data
             dvs_status = None
 
+        # Indien geen station opgegeven:
+        # Zoek rit in serviceinfo, gebruik eerste station als ritstation.
+        vertrekstation = station
+        if vertrekstation is None:
+            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
+            if serviceinfo is not None and 'stops' in serviceinfo[0]:
+                vertrekstation = serviceinfo[0]['stops'][0]['station']
+            insert_vertrekstation = True
+        else:
+            insert_vertrekstation = False
+
         # Lees trein array uit:
-        if vertrekken != None and station.upper() in vertrekken:
-            trein_info = vertrekken[station.upper()]
+        if vertrekken is not None and vertrekstation is not None and vertrekstation.upper() in vertrekken:
+            trein_info = vertrekken[vertrekstation.upper()]
 
-            # Parse basisinformatie:
-            trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
-                taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'])
+            # Check ritdatum:
+            if trein_info.rit_datum == datum or vandaag == True:
+                # Parse basisinformatie:
+                trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
+                    taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'], insert_vertrekstation=insert_vertrekstation)
 
-            return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict}
+                return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'dvs'}
+
+        # Probeer trein te zoeken in serviceinfo:
+        if serviceinfo is None:
+            # Niet opnieuw opvragen indien nog beschikbaar
+            serviceinfo = dvs_http_parsers.retrieve_serviceinfo(trein, datum, config['serviceinfo'])
+
+        trein_dict = dvs_http_parsers.serviceinfo_to_dict(serviceinfo, vertrekstation, negeer_stops_tm=(station is not None))
+
+        if trein_dict is not None:
+            return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'serviceinfo'}
         else:
             return {'result': 'ERR', 'system_status': dvs_status, 'status': 'NOTFOUND'}
 
@@ -117,7 +164,17 @@ def trein_details(trein, station, taal='nl'):
             response.status = 500
             return { 'result': 'ERR', 'system_status': 'UNKOWN', 'status': str(e) }
 
-@bottle.route('/status')
+def get_current_servicedate():
+    if datetime.datetime.now().hour < 4:
+        # Geef datum van gisteren terug (voor 4.00 's nachts):
+        gisteren = datetime.timedelta(days=1)
+        return (datetime.date.today() - gisteren).isoformat()
+    else:
+        # Geef huidige datum terug
+        return datetime.date.today().isoformat()
+
+@bottle.route('/v1/status')
+@bottle.route('/v2/status')
 def status():
     try:
         # Stuur opdracht:
