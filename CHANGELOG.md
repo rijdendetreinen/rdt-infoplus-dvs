@@ -1,8 +1,20 @@
 # Changelog
 
+## 1.5.0
+
+* Let op: HTTP interface is gewijzigd. Bestaande URL's hebben nu /v1 als
+  prefix, gebruik /v2 voor nieuwe toepassingen
+* Opvragen ritinformatie toegevoegd
+* Voor ritinfo en vertrekdetails is nu een fallback op rdt-serviceinfo
+* Ritten worden tot 120 minuten na vertrek in geheugen bewaard
+* Ondersteuning voor DVS injecties met vertraging
+* Documentatie HTTP interface verbeterd (zie /doc)
+* Vertalingen bijgewerkt
+
 ## 1.4.3
 
-* Detectie op DVS-berichten die minder dan 70 minuten voor vertrek worden ontvangen
+* Detectie op DVS-berichten die minder dan 70 minuten voor vertrek
+  worden ontvangen
 * Vertalingen bijgewerkt
 
 ## 1.4.2
@@ -43,7 +55,8 @@
 
 ## 1.2.5
 
-* Verwerken berichten gebeurt op aparte worker thread (voorkomt verloren berichten bij DVS bursts)
+* Verwerken berichten gebeurt op aparte worker thread (voorkomt verloren
+  berichten bij DVS bursts)
 * ZeroMQ HWM (high water mark) op onbeperkt gezet
 * Vertalingen bijgewerkt
 * Kleine bugfixes, code opgeschoond
@@ -65,9 +78,11 @@
 
 ## 1.2.1
 
-* Aantal extra vertalingen naar Engels voor oorzakentabel (opgeheven/vertraagde treinen)
+* Aantal extra vertalingen naar Engels voor oorzakentabel
+  (opgeheven/vertraagde treinen)
 * Treinnaam verhuisd naar treintips (HTTP interface)
-* Vertaalde treinnaam bij IC Direct (waar treinnaamveld wordt misbruikt voor toeslaginfo)
+* Vertaalde treinnaam bij IC Direct (waar treinnaamveld wordt misbruikt
+  voor toeslaginfo)
 
 ## 1.2.0a
 
@@ -116,7 +131,8 @@
 ## 1.0.1
 
 * Munin plugins toegevoegd
-* Grootte van trein- en stationstores en berichtenteller toegevoegd als ZMQ commando
+* Grootte van trein- en stationstores en berichtenteller toegevoegd als
+  ZMQ commando
 * Diverse wijzigingsoorzaken vertaald naar Engels
 
 ## 1.0.0
