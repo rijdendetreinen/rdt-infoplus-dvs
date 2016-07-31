@@ -366,7 +366,7 @@ def retrieve_serviceinfo(treinnr, ritdatum, serviceinfo_config):
     else:
         try:
             trein_url = "%sservice/%s/%s" % (serviceinfo_config['url'], ritdatum, treinnr)
-            response = urllib2.urlopen(trein_url, timeout=2)
+            response = urllib2.urlopen(trein_url, timeout=4)
             data = json.load(response)
 
             if 'services' in data:
