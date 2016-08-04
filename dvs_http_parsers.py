@@ -369,6 +369,8 @@ def parse_stop_data(stop_data, station_dict):
     station_dict['vertrek'] = stop_data['departure_time']
     station_dict['vertragingAankomst'] = stop_data['arrival_delay']
     station_dict['vertragingVertrek'] = stop_data['departure_delay']
+    station_dict['opgehevenAankomst'] = stop_data['cancelled_arrival']
+    station_dict['opgehevenVertrek'] = stop_data['cancelled_departure']
 
     return station_dict
 
