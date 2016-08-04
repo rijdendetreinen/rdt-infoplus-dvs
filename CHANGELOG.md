@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+
+* Geef status door van opgeheven stops (uit serviceinfo)
+
 ## 1.5.0
 
 * Let op: HTTP interface is gewijzigd. Bestaande URL's hebben nu /v1 als
