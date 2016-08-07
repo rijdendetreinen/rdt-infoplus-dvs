@@ -509,7 +509,7 @@ class Trein(object):
 
         return self.treinnaam
 
-    def wijzigingen_str(self, taal='nl', alleen_belangrijk=True, trein=None):
+    def wijzigingen_str(self, taal='nl', alleen_belangrijk=True, trein=None, geen_station_opmerkingen=False):
         """
         Geef alle wijzigingsberichten op trein- en vleugelniveau
         terug als list met strings. Berichten op vleugelniveau krijgen een
@@ -518,6 +518,9 @@ class Trein(object):
         De parameter alleen_belangrijk geeft alleen 'belangrijke' bepaalt of
         alle wijzigingsberichten worden teruggegeven, of alleen de belangrijke.
         Dit wordt bepaald door Wijziging.is_belangrijk().
+
+        De parameter geen_station_opmerkingen bepaalt (indien True) dat alleen
+        berichten die op ritniveau nuttig zijn worden teruggegeven.
         """
 
         wijzigingen = []
@@ -525,7 +528,8 @@ class Trein(object):
         # Eerst de wijzigingen op treinniveau:
         for wijziging in self.wijzigingen:
             if wijziging.wijziging_type != '40' and \
-            (wijziging.is_belangrijk() or alleen_belangrijk != True):
+                    (wijziging.is_belangrijk() or alleen_belangrijk != True) and \
+                    (wijziging.is_stations_opmerking() is False or geen_station_opmerkingen is False):
                 # Voeg bericht toe aan list met berichten:
                 wijzigingen.append(wijziging.to_str(taal, trein))
 
@@ -536,8 +540,9 @@ class Trein(object):
                 # en op type 20 (gewijzigd vertrekspoor)
                 # Type 20 zit bijna altijd al op treinniveau
                 if wijziging.wijziging_type != '40' and \
-                wijziging.wijziging_type != '20' and \
-                (wijziging.is_belangrijk() or alleen_belangrijk != True):
+                                wijziging.wijziging_type != '20' and \
+                        (wijziging.is_belangrijk() or alleen_belangrijk != True) and \
+                        (wijziging.is_stations_opmerking() is False or geen_station_opmerkingen is False):
                     # Vertaal Wijziging object naar string:
                     bericht = wijziging.to_str(taal, trein)
 
@@ -778,6 +783,20 @@ class Wijziging(object):
                 return True
         else:
             return True
+
+    def is_stations_opmerking(self):
+        if self.wijziging_type == '10':
+            return True
+        elif self.wijziging_type == '20':
+            return True
+        elif self.wijziging_type == '22':
+            return True
+        elif self.wijziging_type == '31':
+            return True
+        elif self.wijziging_type == '32':
+            return True
+        else:
+            return False
 
     def to_str(self, taal='nl', trein=None):
         """

@@ -140,7 +140,10 @@ def get_trein_details(trein, datum='vandaag', station=None, taal='nl'):
             if trein_info.rit_datum == datum or vandaag == True:
                 # Parse basisinformatie:
                 trein_dict = dvs_http_parsers.trein_to_dict(trein_info,
-                    taal, tijd_nu, materieel=True, stopstations=True, serviceinfo_config=config['serviceinfo'], insert_vertrekstation=insert_vertrekstation)
+                                                            taal, tijd_nu, materieel=True, stopstations=True,
+                                                            serviceinfo_config=config['serviceinfo'],
+                                                            insert_vertrekstation=insert_vertrekstation,
+                                                            geen_station_opmerkingen=(station is None))
 
                 return {'result': 'OK', 'system_status': dvs_status, 'trein': trein_dict, 'source': 'dvs'}
 
