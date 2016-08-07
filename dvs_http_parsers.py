@@ -12,7 +12,7 @@ import logging
 _logger = logging.getLogger(__name__)
 
 
-def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, serviceinfo_config=None, insert_vertrekstation=False):
+def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, serviceinfo_config=None, insert_vertrekstation=False, geen_station_opmerkingen=False):
     """
     Vertaal een InfoPlus_DVS Trein object naar een dict,
     geschikt voor een JSON output.
@@ -52,8 +52,12 @@ def trein_to_dict(trein, taal, tijd_nu, materieel=False, stopstations=False, ser
     else:
         trein_dict['sprWijziging'] = False
 
-    trein_dict['opmerkingen'] = trein.wijzigingen_str(taal, True, trein)
-    trein_dict['tips'] = trein.tips(taal)
+    trein_dict['opmerkingen'] = trein.wijzigingen_str(taal, True, trein, geen_station_opmerkingen)
+
+    if geen_station_opmerkingen is False:
+        trein_dict['tips'] = trein.tips(taal)
+    else:
+        trein_dict['tips'] = []
 
     # Controleer of alle treindelen naar de vleugel-eindbestemming gaan
     afwijkende_eindbestemming = {}

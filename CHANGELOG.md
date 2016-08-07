@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.2
+
+* Verwerk attribuut voor opgeheven vertrek uit DVS injecties
+* Geef bij ritinfo geen stationsopmerkingen terug
+
 ## 1.5.1
 
 * Geef status door van opgeheven stops (uit serviceinfo)
