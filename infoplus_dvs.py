@@ -198,7 +198,7 @@ def parse_trein_dict(trein_dict, statisch=False):
     # Maak trein object:
     trein = Trein()
     trein.statisch = statisch
-
+    trein.wijzigingen = []
 
     # Metadata over rit:
     if int(trein_dict['service_number']) == 0:
@@ -260,8 +260,11 @@ def parse_trein_dict(trein_dict, statisch=False):
             trein.verkorte_route.append(Station(via_station[0], via_station[1]))
     trein.verkorte_route_actueel = trein.verkorte_route
 
-    return trein
+    # Trein is opgeheven
+    if 'cancelled' in trein_dict and trein_dict['cancelled'] is True:
+        trein.wijzigingen.append(Wijziging('32'))
 
+    return trein
 
 
 def parse_stations(station_nodes, namespace):
