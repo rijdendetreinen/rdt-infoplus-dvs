@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.3
+
+* Vertalingen bijgewerkt
+
 ## 1.5.2
 
 * Verwerk attribuut voor opgeheven vertrek uit DVS injecties
