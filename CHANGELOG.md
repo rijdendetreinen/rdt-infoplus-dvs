@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.4
+
+* Vertalingen bijgewerkt
+* Voorbeeldconfiguratie aangepast (envelope standaard ingesteld)
+
 ## 1.5.3
 
 * Vertalingen bijgewerkt
@@ -42,8 +47,8 @@
 
 ## 1.4.0
 
-* Ondersteuning voor InfoPlus DVS-PP
-* Materieelnummers (uit DVS-PP)
+* Ondersteuning voor InfoPlus DVS-PPV
+* Materieelnummers (uit DVS-PPV)
 * Attendering op afwijkende eindbestemming treinstellen
 * Ondersteuning voor nieuwe oorzaakteksten
 * Meer debugopties mogelijk
