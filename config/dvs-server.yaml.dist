@@ -8,8 +8,8 @@ logging:
     log_config: config/logging.yaml
 
 # Optionele instellingen:
-#zmq:
-#  envelope: /RIG/InfoPlusDVSInterface
+zmq:
+    envelope: /RIG/InfoPlusDVSInterface
 
 # Tenzij instellingen voor downtimedetectie en GC ingesteld worden, worden
 # de standaardinstellingen overgenomen
