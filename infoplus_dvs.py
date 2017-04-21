@@ -902,6 +902,7 @@ class Wijziging(object):
         vertalingen = {
             'door geplande werkzaamheden': 'planned engineering work',
             'door werkzaamheden': 'engineering work',
+            'door werkzaamheden elders': 'engineering work elsewhere',
             'door onverwachte werkzaamheden': 'unexpected engineering work',
             'door uitgelopen werkzaamheden': 'over-running engineering works',
             'door uitloop van werkzaamheden': 'over-running engineering works',
@@ -970,6 +971,7 @@ class Wijziging(object):
             'door meerdere verstoringen': 'multiple disruptions',
             'door koperdiefstal': 'copper theft',
             'verwachte weersomstandigheden': 'expected weather conditions',
+            'door de verwachte weersomstandigheden': 'expected weather conditions',
             'door de weersomstandigheden': 'bad weather conditions',
             'sneeuw': 'snow',
             'door rijp aan de bovenleiding': 'frost on the overhead wires',
@@ -994,6 +996,7 @@ class Wijziging(object):
             'door hinder op het spoor': 'interference on the line',
             'veiligheidsredenen': 'safety reasons',
             'door het onverwacht ontbreken van personeel': 'missing crew',
+            'door problemen met de personeelsinzet': 'staffing problems',
             'door een vervangende trein': 'a replacement train',
             'door het vervangen van een spoorbrug': 'replacement of a railway bridge',
             'door Koningsdag': 'King\'s day',
