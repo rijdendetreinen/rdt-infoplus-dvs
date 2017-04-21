@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.5
+
+* Vertalingen bijgewerkt
+
 ## 1.5.4
 
 * Vertalingen bijgewerkt
