@@ -35,6 +35,12 @@ Requirements:
 * python-yaml
 * python-zmq
 
+
+Docker
+------
+
+In deze repository zijn twee Dockerfiles aanwezig, één voor de DVS server en één voor de HTTP API (deze bevindt zich in Dockerfile.api). In de Docker containers worden alle vereiste libraries automatisch geïnstalleerd.
+
 Installatie
 -----------
 

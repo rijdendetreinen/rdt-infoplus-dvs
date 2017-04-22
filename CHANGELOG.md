@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.6
+
+* Docker containers toegevoegd
+
 ## 1.5.5
 
 * Vertalingen bijgewerkt
