@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.7
+
+* Tel ongeldige berichten niet mee voor aantal berichten
+  (in verband met downtime-detectie)
+
 ## 1.5.6
 
 * Docker containers toegevoegd

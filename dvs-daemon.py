@@ -330,6 +330,8 @@ class WorkerThread(threading.Thread):
                     # Treinnr kwam op dit station nog niet voor, voeg toe:
                     trein_store[trein.treinnr][rit_station_code] = trein
 
+                counters['msg'] += + 1
+
             except infoplus_dvs.OngeldigDvsBericht:
                 self.logger.error('Ongeldig DVS bericht')
                 self.logger.debug('Ongeldig DVS bericht: %s', content)
@@ -337,8 +339,6 @@ class WorkerThread(threading.Thread):
                 self.logger.error(
                     'Fout tijdens DVS bericht verwerken', exc_info=True)
                 self.logger.error('DVS crash bericht: %s', content)
-                
-            counters['msg'] += + 1
 
             pass
 
