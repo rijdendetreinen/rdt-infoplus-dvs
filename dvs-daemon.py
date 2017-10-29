@@ -148,6 +148,9 @@ def main():
 
     # Stel ZeroMQ in:
     server_socket = context.socket(zmq.SUB)
+
+    # High water mark op 10.000 berichten:
+    server_socket.set_hwm(10000)
     server_socket.connect(dvs_server)
 
     # Stel envelope in:
@@ -156,12 +159,6 @@ def main():
         envelope = config['zmq']['envelope']
 
     server_socket.setsockopt(zmq.SUBSCRIBE, envelope)
-
-    # Stel HWM in (fallback voor oude pyzmq versies):
-    try:
-        server_socket.setsockopt(zmq.RCVHWM, 0)
-    except AttributeError:
-        server_socket.setsockopt(zmq.HWM, 0)
 
     # Registreer starttijd server:
     starttime = datetime.now()

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.8
+
+* Upgrade HWM naar zmq >= 3 API
+* Vertalingen bijgewerkt
+
 ## 1.5.7
 
 * Tel ongeldige berichten niet mee voor aantal berichten
