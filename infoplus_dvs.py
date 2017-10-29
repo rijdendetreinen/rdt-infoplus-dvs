@@ -903,6 +903,7 @@ class Wijziging(object):
             'door geplande werkzaamheden': 'planned engineering work',
             'door werkzaamheden': 'engineering work',
             'door werkzaamheden elders': 'engineering work elsewhere',
+            'door werkzaamheden aan de Hogesnelheidslijn': 'engineering work on the HSL',
             'door onverwachte werkzaamheden': 'unexpected engineering work',
             'door uitgelopen werkzaamheden': 'over-running engineering works',
             'door uitloop van werkzaamheden': 'over-running engineering works',
@@ -943,6 +944,7 @@ class Wijziging(object):
             'door een aanrijding met een voertuig': 'a collision with a vehicle',
             'door een auto op het spoor': 'a car on the track',
             'door mensen op het spoor': 'persons on the track',
+            'door mensen langs het spoor': 'people along the track',
             'door een dier op het spoor': 'an animal on the track',
             'door een boom op het spoor': 'a tree on the track',
             'door een verstoring elders': 'a disruption elsewhere',
@@ -956,6 +958,7 @@ class Wijziging(object):
             'door een beschadigde overweg': 'a damaged level crossing',
             'door een defecte overweg': 'a defective level crossing',
             'door een versperring': 'an obstruction on the line',
+            'door een versperring van het spoor': 'an obstruction on the line',
             'door inzet van de brandweer': 'deployment of the fire brigade',
             'door inzet van de politie': 'police action',
             'door brand in een trein': 'fire in a train',
@@ -1001,6 +1004,7 @@ class Wijziging(object):
             'door het vervangen van een spoorbrug': 'replacement of a railway bridge',
             'door Koningsdag': 'King\'s day',
             'door de Vierdaagse': 'the Four Days Marches',
+            'door een object op het spoor': 'an object on the track',
             'door nog onbekende oorzaak': 'a yet unknown reason'
         }
 
