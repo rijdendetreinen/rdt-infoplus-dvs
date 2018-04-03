@@ -1,0 +1,14 @@
+version: '2'
+services:
+  dvs-api:
+    image: dvs-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - 9000:9000/tcp
+  dvs-daemon:
+    image: dvs-daemon:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
