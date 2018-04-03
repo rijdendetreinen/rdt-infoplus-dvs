@@ -5,12 +5,12 @@ COPY dvs-http.wsgi .
 COPY requirements.txt .
 COPY config/dvs-server.yaml config/dvs-server.yaml
 COPY config/http.yaml config/http.yaml
+COPY config/logging.yaml config/logging.yaml
+
+RUN mkdir logs
 
 RUN pip install -r requirements.txt
-RUN pip install gunicorn
 
-CMD [ "gunicorn", "dvs-http" ]
 CMD [ "python", "dvs-daemon.py"]
 
-EXPOSE 8120
-EXPOSE 8140 
+EXPOSE 8120 8140
